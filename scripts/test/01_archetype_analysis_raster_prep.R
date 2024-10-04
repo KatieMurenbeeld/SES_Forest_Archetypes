@@ -32,6 +32,7 @@ writeRaster(fed_rich_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Ana
 tree_cover_proj <- project(tree_cover, projection)
 tree_cover_proj_subs <- subst(tree_cover_proj, 254:255, 0)
 tree_cover_proj_resamp_ave <- resample(tree_cover_proj_subs, ref_rast_proj, "average", threads = TRUE)
+tree_cover_proj_resamp_ave[is.na(tree_cover_proj_resamp_ave)] <- 0
 tree_cover_proj_crop <- crop(tree_cover_proj_resamp_ave, ref_rast_proj, mask = TRUE)
 plot(tree_cover_proj_crop)
 writeRaster(tree_cover_proj_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/conus_tree_cover_crop_", 

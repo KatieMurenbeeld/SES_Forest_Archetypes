@@ -126,6 +126,8 @@ writeRaster(whp_interp, paste0(here::here("data/processed/merged/"), "conus_whp_
 whp_focal <- focal(conus_whp_3km_agg, w=3, fun=mean, na.policy="only", na.rm = TRUE)
 
 # Crop interpolated (focal and IDW) to conus states
+# Set the projection
+projection <- "epsg:5070"
 
 ### Load the states from tigris
 states <- tigris::states(cb = TRUE)
@@ -144,7 +146,7 @@ continental.states <- us.states[us.states$state != "AK" & us.states$state != "HI
 conus_states <- states %>%
   filter(STUSPS %in% continental.states$state) %>%
   dplyr::select(STUSPS, GEOID, geometry) %>%
-  st_transform(., crs = crs(conus_whp_3km_agg))
+  st_transform(., crs = crs(projection))
 
 plot(conus_states$geometry)
 plot(crop(whp_focal, conus_states))

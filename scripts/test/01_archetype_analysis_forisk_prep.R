@@ -124,15 +124,20 @@ ref_rast_proj <- project(ref_rast, projection)
 
 zmc5sf05_proj <- project(zmc5sf05, projection)
 zmc5sf05_resamp <- resample(zmc5sf05_proj, ref_rast_proj, "bilinear")
+zmc5sf05_resamp[is.na(zmc5sf05_resamp)] <- 0 #I'm not sure why I need to do this, but I do
 zmc5sf05_crop <- crop(zmc5sf05_resamp, ref_rast_proj, mask = TRUE) 
 
 zmc5sf1_proj <- project(zmc5sf1, projection)
 zmc5sf1_resamp <- resample(zmc5sf1_proj, ref_rast_proj, "bilinear")
+zmc5sf1_resamp[is.na(zmc5sf1_resamp)] <- 0 
 zmc5sf1_crop <- crop(zmc5sf1_resamp, ref_rast_proj, mask = TRUE)
 
 zmc5sf2_proj <- project(zmc5sf2, projection)
 zmc5sf2_resamp <- resample(zmc5sf2_proj, ref_rast_proj, "bilinear")
+zmc5sf2_resamp[is.na(zmc5sf2_resamp)] <- 0 
 zmc5sf2_crop <- crop(zmc5sf2_resamp, ref_rast_proj, mask = TRUE)
+#nrow(as.data.frame(zmc5sf2_crop))
+
 
 mill_proj <- conus_mills %>% st_transform(., crs = crs(ref_rast_proj))
 millchange_rast <- rasterize(vect(mill_proj), ref_rast_proj, field = "change_millcap")
@@ -147,3 +152,4 @@ writeRaster(zmc5sf1_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Anal
                                  Sys.Date(), ".tif"), overwrite = TRUE)
 writeRaster(zmc5sf2_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/millchange_interp-2_",
                                  Sys.Date(), ".tif"), overwrite = TRUE)
+

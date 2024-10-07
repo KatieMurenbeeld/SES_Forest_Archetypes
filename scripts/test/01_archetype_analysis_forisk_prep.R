@@ -24,6 +24,12 @@ library(gstat)
 # 1. Load the data
 mill_sf <- read_sf("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/2024_Q1_Forisk_North_American_Ind_Cap_DB_Shape/Forisk_NA_FI_Capacity_DB_2024_Q1.shp")
 
+# Set the projection
+projection <- "epsg:5070"
+# load and reproject the raster data
+ref_rast <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/merged/conus_whp_3km_agg_interp_crop_2024-09-27.tif")
+ref_rast_proj <- project(ref_rast, projection)
+
 ##Get Continental US list
 us.abbr <- unique(fips_codes$state)[1:51]
 us.name <- unique(fips_codes$state_name)[1:51]
@@ -76,32 +82,49 @@ print ("Row and Col positions of NA values")
 which(is.na(conus_mills$millcap_5yr), arr.ind = TRUE)
 
 ## Interpolate del mill capacity
-nodes <- st_make_grid(counties,
-                      n = c(50,50),
-                      what = "centers")
-nodes2 <- st_make_grid(conus_mills,
-                       n = c(50,50),
+## Create a template raster for the shapefiles
+XMIN <- ext(ref_rast_proj)$xmin
+XMAX <- ext(ref_rast_proj)$xmax
+YMIN <- ext(ref_rast_proj)$ymin
+YMAX <- ext(ref_rast_proj)$ymax
+aspectRatio <- (YMAX-YMIN)/(XMAX-XMIN)
+cellSize <- 3000
+NCOLS <- as.integer((XMAX-XMIN)/cellSize)
+NROWS <- as.integer(NCOLS * aspectRatio)
+templateRas <- rast(ncol=NCOLS, nrow=NROWS, 
+                    xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX,
+                    vals=1, crs=crs(ref_rast_proj))
+
+grd <- st_as_stars(templateRas)
+
+#nodes <- st_make_grid(counties,n = c(50,50), what = "centers")
+#nodes2 <- st_make_grid(conus_mills,n = c(50,50),what = "centers")
+
+nodes3 <- st_make_grid(grd,
+                       n = c(100, 100),
                        what = "centers")
 
 # remove mills that have the same lat, lon
 conus_mills_nodeupe <- conus_mills[!duplicated(conus_mills[,22:23]),]
+conus_mills_nodeupe_proj <- st_transform(conus_mills_nodeupe, projection)
 
-dist <- distance(vect(nodes), vect(conus_mills_nodeupe))
+dist <- distance(vect(nodes3), vect(conus_mills_nodeupe_proj))
 nearest_conus <- apply(dist, 1, function(x) which(x == min(x)))
-millcap5.nn <- conus_mills$millcap_5yr[nearest_conus]
-currcap.nn <- conus_mills$Current_Ca[nearest_conus]
-totwood.nn <- conus_mills$Total_Wood[nearest_conus]
-preds <- st_as_sf(nodes)
+millcap5.nn <- conus_mills_nodeupe_proj$millcap_5yr[nearest_conus]
+currcap.nn <- conus_mills_nodeupe_proj$Current_Ca[nearest_conus]
+totwood.nn <- conus_mills_nodeupe_proj$Total_Wood[nearest_conus]
+preds <- st_as_sf(nodes3)
 preds$millcap5 <- millcap5.nn
 preds$currcap <- currcap.nn
 preds$totwood <- totwood.nn
 preds <- as(preds, "Spatial")
 sp::gridded(preds) <- TRUE
 preds.rast <- rast(preds)
+plot(preds.rast$millcap5)
 
-mc5sf05 <- gstat(id = "millcap_5yr", formula = millcap_5yr~1, data=conus_mills,  nmax=7, set=list(idp = 0.5))
-mc5sf1 <- gstat(id = "millcap_5yr", formula = millcap_5yr~1, data=conus_mills,  nmax=7, set=list(idp = 1))
-mc5sf2 <- gstat(id = "millcap_5yr", formula = millcap_5yr~1, data=conus_mills,  nmax=7, set=list(idp = 2))
+mc5sf05 <- gstat(id = "millcap_5yr", formula = millcap_5yr~1, data=conus_mills_nodeupe_proj,  nmax=7, set=list(idp = 0.5))
+mc5sf1 <- gstat(id = "millcap_5yr", formula = millcap_5yr~1, data=conus_mills_nodeupe_proj,  nmax=7, set=list(idp = 1))
+mc5sf2 <- gstat(id = "millcap_5yr", formula = millcap_5yr~1, data=conus_mills_nodeupe_proj,  nmax=7, set=list(idp = 2))
 
 interpolate_gstat <- function(model, x, crs, ...) {
   v <- st_as_sf(x, coords=c("x", "y"), crs=crs)
@@ -109,34 +132,36 @@ interpolate_gstat <- function(model, x, crs, ...) {
   as.data.frame(p)[,1:2]
 }
 
-zmc5sf05 <- interpolate(preds.rast, mc5sf05, debug.level=0, fun=interpolate_gstat, crs=crs(preds.rast), index=1)
-zmc5sf1 <- interpolate(preds.rast, mc5sf1, debug.level=0, fun=interpolate_gstat, crs=crs(preds.rast), index=1)
-zmc5sf2 <- interpolate(preds.rast, mc5sf2, debug.level=0, fun=interpolate_gstat, crs=crs(preds.rast), index=1)
+zmc5sf05 <- interpolate(preds.rast, mc5sf05, debug.level=0, fun=interpolate_gstat, crs=crs(projection), index=1)
+zmc5sf1 <- interpolate(preds.rast, mc5sf1, debug.level=0, fun=interpolate_gstat, crs=crs(projection), index=1)
+zmc5sf2 <- interpolate(preds.rast, mc5sf2, debug.level=0, fun=interpolate_gstat, crs=crs(projection), index=1)
 
 # 3. Rasterize the data using the raster created in the 00_archetype-analysis_download-prep-fire.R
 # Resample and crop the mill capacity change predictions to the reference raster.
 # created in the 00_archetype-analysis_download-prep-fire.R
-# Set the projection
-projection <- "epsg:5070"
-# load and reproject the raster data
-ref_rast <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/merged/conus_whp_3km_agg_interp_crop_2024-09-27.tif")
-ref_rast_proj <- project(ref_rast, projection)
 
-zmc5sf05_proj <- project(zmc5sf05, projection)
-zmc5sf05_resamp <- resample(zmc5sf05_proj, ref_rast_proj, "bilinear")
-zmc5sf05_resamp[is.na(zmc5sf05_resamp)] <- 0 #I'm not sure why I need to do this, but I do
+
+#zmc5sf05_proj <- project(zmc5sf05, projection)
+zmc5sf05_resamp <- resample(zmc5sf05, ref_rast_proj, "bilinear")
+plot(zmc5sf05_resamp)
 zmc5sf05_crop <- crop(zmc5sf05_resamp, ref_rast_proj, mask = TRUE) 
+plot(zmc5sf05_crop)
+nrow(as.data.frame(zmc5sf05_crop))
 
-zmc5sf1_proj <- project(zmc5sf1, projection)
-zmc5sf1_resamp <- resample(zmc5sf1_proj, ref_rast_proj, "bilinear")
-zmc5sf1_resamp[is.na(zmc5sf1_resamp)] <- 0 
+
+#zmc5sf1_proj <- project(zmc5sf1, projection)
+zmc5sf1_resamp <- resample(zmc5sf1, ref_rast_proj, "bilinear")
+#zmc5sf1_resamp[is.na(zmc5sf1_resamp)] <- 0 
 zmc5sf1_crop <- crop(zmc5sf1_resamp, ref_rast_proj, mask = TRUE)
+plot(zmc5sf1_crop)
+nrow(as.data.frame(zmc5sf1_crop))
 
-zmc5sf2_proj <- project(zmc5sf2, projection)
-zmc5sf2_resamp <- resample(zmc5sf2_proj, ref_rast_proj, "bilinear")
-zmc5sf2_resamp[is.na(zmc5sf2_resamp)] <- 0 
+#zmc5sf2_proj <- project(zmc5sf2, projection)
+zmc5sf2_resamp <- resample(zmc5sf2, ref_rast_proj, "bilinear")
+#zmc5sf2_resamp[is.na(zmc5sf2_resamp)] <- 0 
 zmc5sf2_crop <- crop(zmc5sf2_resamp, ref_rast_proj, mask = TRUE)
-#nrow(as.data.frame(zmc5sf2_crop))
+plot(zmc5sf2_crop)
+nrow(as.data.frame(zmc5sf2_crop))
 
 
 mill_proj <- conus_mills %>% st_transform(., crs = crs(ref_rast_proj))

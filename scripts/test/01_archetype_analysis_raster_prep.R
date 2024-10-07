@@ -40,7 +40,6 @@ writeRaster(tree_cover_proj_crop, paste0("/Users/katiemurenbeeld/Analysis/Archet
 
 # For the stand age
 tree_age_proj <- project(tree_age, projection)
-#tree_age_agg_proj <- aggregate(tree_age_proj, fact = 3, fun = "mean", na.rm = TRUE)
 tree_age_resamp <- resample(tree_age_proj, ref_rast_proj, "bilinear")
 tree_age_resamp[is.na(tree_age_resamp)] <- 0
 tree_age_resamp_crop <- crop(tree_age_resamp, ref_rast_proj, mask = TRUE)

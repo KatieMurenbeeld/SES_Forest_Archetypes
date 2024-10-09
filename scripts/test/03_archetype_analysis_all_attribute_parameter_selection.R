@@ -12,8 +12,8 @@ library(spdep)
 library(classInt)
 
 #----Load the data----
-rst_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-03.tif")
-rst <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-03.tif")
+rst_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
+rst <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 
 # Format for use in geocmeans
 dataset <- lapply(names(rst_sc), function(n){
@@ -47,9 +47,8 @@ ggplot(FCMvalues) +
   scale_fill_viridis() +
   coord_fixed(ratio=2)
 
-# Highest silhouette index = 0.49 with k = 6 and m = 1.6
-# Silhouette index = 0.48 with k = 9 and m = 1.6
-# Silhouette index = 0.45 with k = 8 and m = 1.5
+# Highest silhouette index = 0.49  with k = 6 and m = 1.6
+# Silhouette index = 0.49 with k = 10 and m = 1.6
 
 #----Use a generalized fuzzy c-means to determine the value for m and beta
 # k = 6
@@ -77,67 +76,34 @@ ggplot(GFCMvalues_k6) +
   scale_fill_viridis() +
   coord_fixed(ratio=1)
 
-# Silhouette index = 0.44, k = 6, m = 1.8, beta = 0.2. 
-# Silhouette index = 0.43 k = 6, m = 1.7, beta = 0.1. 
-# Silhouette index = 0.37, k = 6, m = 1.6, beta = 0.1
+# Silhouette index = 0.46, k = 6, m = 1.7, beta = 0.2
 
-# k = 9
-GFCMvalues_k9 <- select_parameters.mc(algo = "GFCM", data = dataset,
-                                     k = 9, m = seq(1.1,2,0.1), beta = seq(0.1,0.9,0.1),
+# k = 10
+GFCMvalues_k10 <- select_parameters.mc(algo = "GFCM", data = dataset,
+                                     k = 10, m = seq(1.1,2,0.1), beta = seq(0.1,0.9,0.1),
                                      spconsist = FALSE, verbose = TRUE, init = "kpp",
                                      indices = c("XieBeni.index", "Explained.inertia",
                                                  "Negentropy.index", "Silhouette.index"))  
 
-write_csv(GFCMvalues_k9, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/gfcm_all_attri_param_indices_k9_",
+write_csv(GFCMvalues_k10, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/gfcm_all_attri_param_indices_k10_",
                                 Sys.Date(), ".csv"), append = FALSE)
 
 
 # plotting the silhouette index
-ggplot(GFCMvalues_k9) + 
+ggplot(GFCMvalues_k10) + 
   geom_raster(aes(x = m, y = beta, fill = Silhouette.index)) + 
   geom_text(aes(x = m, y = beta, label = round(Silhouette.index,2)), size = 2)+
   scale_fill_viridis() +
   coord_fixed(ratio=1)
 
 # plotting the Xie Beni
-ggplot(GFCMvalues_k9) + 
+ggplot(GFCMvalues_k10) + 
   geom_raster(aes(x = m, y = beta, fill = XieBeni.index)) + 
   geom_text(aes(x = m, y = beta, label = round(XieBeni.index, 2)), size = 2)+
   scale_fill_viridis() +
   coord_fixed(ratio=1)
 
-# Silhouette index = 0.44, k = 9, m = 1.8, beta = 0.2. 
-# Silhouette index = 0.43 k = 9, m = 1.7, beta = 0.1. 
-# Silhouette index = 0.37, k = 9, m = 1.6, beta = 0.1
-
-# k = 8
-GFCMvalues_k8 <- select_parameters.mc(algo = "GFCM", data = dataset,
-                                     k = 8, m = seq(1.1,2,0.1), beta = seq(0.1,0.9,0.1),
-                                     spconsist = FALSE, verbose = TRUE, init = "kpp",
-                                     indices = c("XieBeni.index", "Explained.inertia",
-                                                 "Negentropy.index", "Silhouette.index"))  
-
-write_csv(GFCMvalues_k8, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/gfcm_all_attri_param_indices_k8_",
-                                Sys.Date(), ".csv"), append = FALSE)
-
-
-# plotting the silhouette index
-ggplot(GFCMvalues_k8) + 
-  geom_raster(aes(x = m, y = beta, fill = Silhouette.index)) + 
-  geom_text(aes(x = m, y = beta, label = round(Silhouette.index,2)), size = 2)+
-  scale_fill_viridis() +
-  coord_fixed(ratio=1)
-
-# plotting the Xie Beni
-ggplot(GFCMvalues_k8) + 
-  geom_raster(aes(x = m, y = beta, fill = XieBeni.index)) + 
-  geom_text(aes(x = m, y = beta, label = round(XieBeni.index, 2)), size = 2)+
-  scale_fill_viridis() +
-  coord_fixed(ratio=1)
-
-# Silhouette index = 0.44, k = 8, m = , beta =  
-# Silhouette index = 0.43 k = 8, m = 1.7, beta = 0.1. 
-# Silhouette index = 0.37, k = 8, m = 1.6, beta = 0.1
+# Silhouette index = 0.42, k = 10, m = 1.6, beta = 0.1  
 
 # Spatial FCM
 w1 <- matrix(1, nrow = 3, ncol = 3)
@@ -145,7 +111,7 @@ w2 <- matrix(1, nrow = 5, ncol = 5)
 w3 <- matrix(1, nrow = 7, ncol = 7)
 
 SFCMvalues <- select_parameters.mc(algo = "SFCM", data = dataset, 
-                                          k = 8, m = 1.8,
+                                          k = 6, m = 1.7,
                                           alpha = seq(0.1,2,0.1),
                                           window = list(w1,w2,w3),
                                           spconsist = TRUE, nrep = 5, 
@@ -179,16 +145,16 @@ ggplot(SFCMvalues) +
   scale_fill_viridis() +
   coord_fixed(ratio=0.5)
 
-# Silhouette index = 0.38, k = 8, m = 1.8, window = 3x3, alpha = 1.3.
-# Silhouette index = 0.37, k = 8, m = 1.8, window = 7x7, alpha = 1.2.
+# Silhouette index = 0.48, k = 6, m = 1.7, window = 7x7 (w3), alpha = 0.2
+
 
 # Spatial GFCM
 # Start here when you get home. 
 future::plan(future::multisession(workers = 2))
 SGFCMvalues <- select_parameters.mc(algo = "SGFCM", data = dataset, 
-                                    k = 8, m = 1.8,
+                                    k = 6, m = 1.7,
                                     beta = seq(0.1,0.9,0.1), alpha = seq(0.5,2,0.1),
-                                    window = w1,
+                                    window = w3,
                                     spconsist = TRUE, nrep = 5, 
                                     verbose = TRUE, chunk_size = 4,
                                     seed = 456, init = "kpp",
@@ -220,10 +186,11 @@ ggplot(SGFCMvalues) +
   scale_fill_viridis() +
   coord_fixed(ratio=1)
 
-# Silhouette index = 0.48, k = 8, m = 1.8, beta = 0.3, alpha = 1.3
+# Silhouette index = 0.54, k = 6, m = 1.7, beta = 0.2, alpha = 1.1, w = 7x7 (but xie beni highest)
+# Silhouette index = 0.51, k = 6, m = 1.7, beta = 0.2, alpha = 1.7, w = 7x7 (xie beni lower)
 
 
-#---------------------------------------------------------------------------
+#-------------------ignore code below: delete later--------------------------------------------------------
 # alpha of 1.3 will be good
 SGFCM_result <- SGFCMeans(dataset_pmrc_poli, k = 8, m = 1.6, standardize = FALSE,
                           lag_method = "mean",

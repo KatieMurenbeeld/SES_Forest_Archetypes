@@ -28,17 +28,17 @@ fed_rich_crop <- crop(fed_rich_align, ref_rast_proj, mask = TRUE)
 writeRaster(fed_rich_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/conus_fed_rich_crop_", 
                                   Sys.Date(), ".tif"))
 
-# For the tree cover
+# For the tree cover. Reproject. Subset for layers/bands 254:255, resample, 
 tree_cover_proj <- project(tree_cover, projection)
 tree_cover_proj_subs <- subst(tree_cover_proj, 254:255, 0)
 tree_cover_proj_resamp_ave <- resample(tree_cover_proj_subs, ref_rast_proj, "average", threads = TRUE)
-tree_cover_proj_resamp_ave[is.na(tree_cover_proj_resamp_ave)] <- 0
+#tree_cover_proj_resamp_ave[is.na(tree_cover_proj_resamp_ave)] <- 0
 tree_cover_proj_crop <- crop(tree_cover_proj_resamp_ave, ref_rast_proj, mask = TRUE)
 plot(tree_cover_proj_crop)
 writeRaster(tree_cover_proj_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/conus_tree_cover_crop_", 
                                          Sys.Date(), ".tif"))
 
-# For the stand age
+# For the stand age. Reproject, resample and fill missing data with 0 (no trees so no tree age)
 tree_age_proj <- project(tree_age, projection)
 tree_age_resamp <- resample(tree_age_proj, ref_rast_proj, "bilinear")
 tree_age_resamp[is.na(tree_age_resamp)] <- 0
@@ -46,4 +46,15 @@ tree_age_resamp_crop <- crop(tree_age_resamp, ref_rast_proj, mask = TRUE)
 plot(tree_age_resamp_crop)
 writeRaster(tree_age_resamp_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/conus_tree_age_crop_", 
                                     Sys.Date(), ".tif"))
+
+plot(tree_cover_proj_resamp_ave)
+
+nrow(as.data.frame(ref_rast_proj))
+nrow(as.data.frame(tree_age_resamp_crop))
+nrow(as.data.frame(tree_cover_proj_resamp_ave))
+nrow(as.data.frame(tree_cover_proj_crop))
+
+
+
+
 

@@ -20,8 +20,8 @@ distwild_crop <-  rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/
 distcrit_crop <-  rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/dist_to_crithab_3km_pred_crop_2024-10-01.tif")
 millchng_crop <-  rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/millchange_interp-2_2024-10-04.tif")
 fedrich_crop <-  rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/conus_fed_rich_crop_2024-10-01.tif")
-treecov_crop <-  rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/conus_tree_cover_crop_2024-10-03.tif")
-treeage_crop <-  rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/conus_tree_age_crop_2024-10-01.tif")
+treecov_crop <-  rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/conus_tree_cover_crop_2024-10-08.tif")
+treeage_crop <-  rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/conus_tree_age_crop_2024-10-08.tif")
 forgain_crop <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/forest_gain_3km_crop_2024-10-01.tif")
 whp_crop <-  rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/merged/conus_whp_3km_agg_interp_crop_2024-09-27.tif")
 
@@ -57,7 +57,11 @@ rast_stack <- c(aip_crop, bric_crop, forpay_crop, forprod_crop,
                 treecov_crop, treeage_crop, forgain_crop, whp_crop, 
                 netmig_crop)
 
-
+names(rast_stack) <- c("aip", "comm_cap", "pct_forpay", "forprod", 
+                       "lesshs", "hsbrd", "engbrd", "pm25", "travtime",
+                       "rough", "precseas", "tempseas", "distwild", "distcrit", 
+                       "pct_delmill", "fedrich", "treecov", "treeage", "forgain",
+                       "whp", "netmig")
 
 ## Save the raster
 writeRaster(x = rast_stack, filename = paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_", 
@@ -73,6 +77,9 @@ eco_rast_stack <- c(forprod_crop, rough_crop,
                     precseas_crop, tempseas_crop,
                     treecov_crop, treeage_crop,
                     forgain_crop, whp_crop)
+
+names(eco_rast_stack) <- c("forproc", "rough", "precseas", "tempseas",
+                           "treecov", "treeage", "forgain", "whp")
 
 ## Save the raster
 writeRaster(x = eco_rast_stack, filename = paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_eco_attributes_", 
@@ -91,6 +98,14 @@ soc_rast_stack <- c(aip_crop, bric_crop,
                     distwild_crop, distcrit_crop, 
                     millchng_crop, fedrich_crop,
                     netmig_crop)
+
+names(soc_rast_stack) <- c("aip", "comm_cap", 
+                           "pct_forpay",  "lesshs", 
+                           "hsbrd", "engbrd", 
+                           "pm25",  "travtime", 
+                           "distwild", "distcrit", 
+                           "pct_delmill", "fedrich", 
+                           "netmig")
 
 ## Save the raster
 writeRaster(x = soc_rast_stack, filename = paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_soc_attributes_", 

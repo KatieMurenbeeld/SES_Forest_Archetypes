@@ -31,8 +31,9 @@ sgfcm_all_result_k8_mod <- readRDS(here::here("outputs/SGFCM_all_attr_k8_2024-10
 data <- as.data.frame(scale(sgfcm_all_attri))
 data$groups_k6 <- sgfcm_all_result_k6_mod$Groups
 data$groups_k8 <- sgfcm_all_result_k8_mod$Groups
-groupvar <- "groups"
-vars <- names(data)
+
+data$groups_k6 <- gsub('V', 'A', data$groups_k6)
+data$groups_k8 <- gsub('V', 'A', data$groups_k8)
 
 k6_means_long <- data %>%
   group_by(groups_k6) %>%

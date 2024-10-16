@@ -53,34 +53,3 @@ plot(map_SGFCM_result_k8[["Groups"]])
 writeRaster(map_SGFCM_result_k8[["Groups"]], filename = paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k8_", 
                                                                Sys.Date(), ".tif"))
 
-## Save a few data frames to help with visualization
-SGFCM_k6_groups <- SGFCM_all_result_k6$Groups
-df_all <- as.data.frame(scale(rst), na.rm = TRUE)
-vplots_k6 <- violinPlots(df_all, SGFCM_all_result_k6$Groups)
-vplots_k8 <- violinPlots(df_all, SGFCM_all_result_k6$Groups)
-
-for ( i in 1:2){
-  print(i)
-  vplots_tmp <- vplots_k6[[i]] +
-    scale_x_discrete(labels=c("A 1", "A 2", 
-                              "A 3", "A 4",
-                              "A 5", "A 6")) + 
-    scale_fill_brewer(labels=c("A 1", "A 2", 
-                               "A 3", "A 4",
-                               "A 5", "A 6"),
-                      palette = "Set2") +
-    geom_violin() + 
-    geom_hline(yintercept = 0) +
-    labs(title = "SGFCM k = 6", 
-         subtitle = names(df_all)[i],
-         fill = "Archetype") +
-    theme_bw() + 
-    theme(text = element_text(size = 20),
-          axis.title.x = element_blank(),
-          axis.text.x = element_text(size = 16), 
-          axis.title.y = element_blank(),
-          axis.text.y = element_text(size = 16))
-  plot(vplots_tmp)
-  ggsave(paste0("~/Analysis/SES_Forest_Archetypes/outputs/plots/SGFCM_k6_vplot_", names(df_all)[i], "_", Sys.Date(), ".png"), 
-         plot = vplots_tmp, width = 12, height = 12, dpi = 300)
-}

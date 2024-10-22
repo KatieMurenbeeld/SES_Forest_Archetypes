@@ -30,9 +30,10 @@ w <- matrix(1, nrow = 3, ncol = 3)
 
 SGFCM_eco_result <- SGFCMeans(dataset, k = 3, m = 1.6, standardize = FALSE,
                               lag_method = "mean",
-                              window = w, alpha = 0.8, beta = 0.1,
+                              window = w, alpha = 0.7, beta = 0.4,
                               seed = 6891, tol = 0.001, verbose = TRUE, init = "kpp")
-
+saveRDS(SGFCM_eco_result, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/outputs/SGFCM_eco_attr_", 
+                                    Sys.Date(), ".rds"))
 map_SGFCM_result <- rast(SGFCM_eco_result$rasters)
 plot(map_SGFCM_result[["Groups"]])
 writeRaster(map_SGFCM_result[["Groups"]], filename = paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_eco_result_", 

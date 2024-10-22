@@ -14,8 +14,8 @@ library(tigris)
 # Load the data
 fs_nf <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeForest.shp")
 fs_reg <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeRegion.shp")
-sgfcm_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_eco_attributes_2024-10-02.tif")
-sgfcm_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_eco_result_2024-10-03.tif") 
+sgfcm_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_eco_attributes_2024-10-08.tif")
+sgfcm_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_eco_result_2024-10-21.tif") 
 
 ## Reproject the forest service shapes to NAD83
 projection <- "epsg: 5070"
@@ -24,11 +24,11 @@ fs_nf.proj <- fs_nf %>%
   filter(REGION != "10") %>%
   filter(FORESTORGC != "0816") %>%
   st_transform(., crs=projection)
-fs_nf.crop <- st_crop(fs_nf.proj, ext(sgfcm_all_result))
+fs_nf.crop <- st_crop(fs_nf.proj, ext(sgfcm_result))
 fs_reg.proj <- fs_reg %>% 
   filter(REGION != "10") %>%
   st_transform(., crs=projection)
-fs_reg.crop <- st_crop(fs_reg.proj, ext(sgfcm_all_result))
+fs_reg.crop <- st_crop(fs_reg.proj, ext(sgfcm_result))
 
 ## Create a map of the clusters with the Region and National Forest boundaries
 sgfcm.df <- sgfcm_result$Groups %>% as.data.frame(xy = TRUE)

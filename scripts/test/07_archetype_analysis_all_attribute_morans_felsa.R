@@ -55,7 +55,7 @@ cols <- RColorBrewer::brewer.pal(n = 7, "Blues")
 vals <- terra::values(fuzzy_elsa_k6_rast, mat = FALSE)
 limits <- classIntervals(vals[!is.na(vals)],  n = 7, style = "kmeans") 
 plot(fuzzy_elsa_k6_rast, col = cols, breaks = limits$brks)
-#writeRaster(fuzzy_elsa_k6_rast, here::here(paste0("outputs/SGFCM_k6_felsa_", Sys.Date(), ".tif")))
+writeRaster(fuzzy_elsa_k6_rast, here::here(paste0("outputs/SGFCM_k6_felsa_", Sys.Date(), ".tif")))
 
 ## k = 8
 fuzzy_elsa_k8_rast <- calcFuzzyELSA(SGFCM_all_result_k8, window = matrix(1,nrow = 3, ncol = 3))
@@ -64,7 +64,7 @@ cols <- RColorBrewer::brewer.pal(n = 7, "Blues")
 vals <- terra::values(fuzzy_elsa_k8_rast, mat = FALSE)
 limits <- classIntervals(vals[!is.na(vals)],  n = 7, style = "kmeans") 
 plot(fuzzy_elsa_k8_rast, col = cols, breaks = limits$brks)
-#writeRaster(fuzzy_elsa_k8_rast, here::here(paste0("outputs/SGFCM_k8_felsa_", Sys.Date(), ".tif")))
+writeRaster(fuzzy_elsa_k8_rast, here::here(paste0("outputs/SGFCM_k8_felsa_", Sys.Date(), ".tif")))
 
 
 

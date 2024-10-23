@@ -7,6 +7,7 @@ library(geocmeans)
 library(exactextractr)
 library(tidyverse)
 library(scales)
+library(stringr)
 #library(ggsn)
 
 # load the attribute data
@@ -88,6 +89,8 @@ felsa_sf <- st_as_sf(felsa_sf)
 write_sf(felsa_sf, here::here(paste0("data/processed/felsa_nf_", 
                                      Sys.Date(), ".shp")), overwrite = TRUE)
 
+felsa_sf <- read_sf(here::here("data/processed/felsa_nf_2024-10-22.shp"))
+
 # get the average felsa score for each region
 reg_calc_felsa <- function(area_to_calc, felsa_rast){
   l <- nrow(area_to_calc)
@@ -124,6 +127,8 @@ felsa_reg_sf <- st_as_sf(felsa_reg_sf)
 
 write_sf(felsa_reg_sf, here::here(paste0("data/processed/felsa_reg_", 
                                          Sys.Date(), ".shp")), overwrite = TRUE)
+
+felsa_reg_sf <- read_sf(here::here("data/processed/felsa_reg_2024-10-22.shp"))
 
 ## Make Maps
 felsa_all_df <- fuzzy_elsa_all$aip %>% as.data.frame(xy = TRUE)
@@ -251,26 +256,30 @@ ggsave(here::here(paste0("outputs/plots/felsa_soc_nf_mean_", Sys.Date(), ".png")
 
 
 # scatter plot
+# add a region column to the fesla_sf shapefile
+felsa_sf <- felsa_sf %>%
+  mutate(region = substr(FORESTORGC, 1, 2))
+
 test_scatter <- felsa_sf %>%
-  ggplot(aes(x=felsa_eco, y=felsa_soc, group=FORESTORGC, color=FORESTORGC)) +
+  ggplot(aes(x=felsa_eco, y=felsa_soc, group=region, color=region)) +
   geom_point() + 
   #scale_x_continuous(breaks = seq(10, 110, by = 10)) +
   theme_bw() +
-  theme(legend.position="none")
+  theme(legend.position="bottom")
 test_scatter
 #ggsave(here::here("figures/test_felsa_scatter_2024-09-04.png"), test_scatter, 
 #       width = 6, height = 4, dpi = 300)
 
 # use scaled values?
 test_scatter_zsc <- felsa_sf %>%
-  #ggplot(aes(x=scale(felsa_eco), y=scale(felsa_soc), group=FORESTORGC, color=FORESTORGC)) +
-  ggplot(aes(x=scale(felsa_eco), y=scale(felsa_soc))) +
-  geom_point(color = "green4") + 
+  ggplot(aes(x=scale(felsa_eco), y=scale(felsa_soc), group=region, color=region)) +
+  #ggplot(aes(x=scale(felsa_eco), y=scale(felsa_soc))) +
+  geom_point() + 
   geom_hline(yintercept = 0) + 
   geom_vline(xintercept = 0) +
   #scale_x_continuous(breaks = seq(10, 110, by = 10)) +
   theme_bw() +
-  theme(legend.position="none")
+  theme(legend.position="right")
 test_scatter_zsc
 ggsave(here::here(paste0("outputs/plots/test_felsa_scatter_zsc_", Sys.Date(), ".png")),
        plot = test_scatter_zsc, width = 5, height = 5, dpi = 300)
@@ -299,10 +308,22 @@ felsa_sf_sc <- felsa_sf %>%
          felsa_soc_sc = rescale(felsa_soc, to = c(0, 1)))
 
 test_scatter_sc <- felsa_sf_sc %>%
-  ggplot(aes(x= felsa_eco_sc, y= felsa_soc_sc, group=FORESTORGC, color=FORESTORGC)) +
+  ggplot(aes(x= felsa_eco_sc, y= felsa_soc_sc, group=region, color=region)) +
   geom_point() + 
   #scale_x_continuous(breaks = seq(10, 110, by = 10)) +
   theme_bw() +
   theme(legend.position="none")
 test_scatter_sc
+
+
+
+#----FELSA correlation-----
+
+
+
+
+
+
+
+
 

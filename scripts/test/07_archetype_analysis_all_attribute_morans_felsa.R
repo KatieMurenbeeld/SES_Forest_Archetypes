@@ -25,9 +25,6 @@ dataset <- lapply(names(rst_sc), function(n){
 })
 names(dataset) <- names(rst_sc)
 
-# Calculate the correlation between the attributes
-
-
 # Use Spatial Generalized Fuzzy C-Means clustering 
 # FCM seed = 1234, Silhouette index = 0.48, k = 6, m = 1.9, window =  7x7 (w2), alpha = 0.6, beta = 0.4
 # FCM seed = 1234, Silhouette index = 0.45, k = 8, m = 1.9, window =  3x3 (w1), alpha = 0.5, beta = 0.4

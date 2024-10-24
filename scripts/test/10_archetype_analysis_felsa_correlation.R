@@ -10,10 +10,13 @@ library(future)
 library(classInt)
 library(elsa)
 
+
+
 #----Load the felsa rasters----
 fuzzy_elsa_all <- rast(here::here("outputs/SGFCM_k6_felsa_2024-10-22.tif"))
 fuzzy_elsa_eco <- rast(here::here("outputs/SGFCM_eco_felsa_2024-10-22.tif"))
 fuzzy_elsa_soc <- rast(here::here("outputs/SGFCM_soc_k3_felsa_2024-10-22.tif"))
+fuzzy_elsa_soc_k6 <- rast(here::here("outputs/SGFCM_soc_k6_felsa_2024-10-22.tif"))
 
 # create a raster stack of the fuzzy elsas
 felsa_all_eco <- c(fuzzy_elsa_all, fuzzy_elsa_eco)
@@ -37,4 +40,12 @@ felsa_eco_soc_cor_5 <- focalPairs(felsa_eco_sco, w = 5, "pearson")
 felsa_eco_soc_cor_5
 plot(felsa_eco_soc_cor_5$lyr1)
 
+stk <- c(fuzzy_elsa_all, fuzzy_elsa_eco, fuzzy_elsa_soc)
+plot(stk)
+names(stk) <- c("all", "eco", "soc")
+ts2 <- lm(all ~ eco, data=stk)
+ts2
+summary(ts2)
 
+ts3 <- lm(all ~ soc, data=stk)
+summary(ts3)

@@ -11,6 +11,7 @@ library(distributional)
 library(ggdist)
 library(ggsci)
 library(tigris)
+library(forcats)
 
 # Load the data
 sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
@@ -59,21 +60,50 @@ k8_sd_long <- data %>%
 
 k8_long <- left_join(k8_means_long, k8_sd_long)
 
+# reorder the variables
+k6_long_reorder <- k6_long %>% 
+  mutate(var_name = fct_relevel(var_name, 
+                            "treecov", "forprod", "tempseas", 
+                            "precseas", "rough", "whp", 
+                            "forgain", "distcrit", "distwild",
+                            "pm25", "fedrich", 
+                            "treeage", "pct_forpay", "pct_delmill",
+                            "netmig", "comm_cap", "aip", 
+                            "travtime", "hsbrd", "engbrd"))
 
-k6_var_interp <- ggplot(k6_long, aes(x = var_name, y = mean, fill = groups_k6)) +
+k6_long_reorder <- k6_long_reorder %>%
+  mutate(ostrom = case_when(var_name == "treecov" | var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "whp" ~ "resource system",
+                            var_name == "distwild" | var_name == "distcrit" | var_name == "forgain" ~ "resource unit",
+                            var_name == "fedrich" | var_name == "pm25" | var_name == "treeage" | var_name == "pct_forpay" | var_name == "pct_delmill" | var_name == "netmig" | var_name == "comm_cap" | var_name == "aip" | var_name == "travtime" | var_name == "hsbrd" | var_name == "engbrd" | var_name == "lesshs" ~ "users"))
+
+
+k6_var_interp <- ggplot(k6_long_reorder, aes(x = var_name, y = mean, fill = ostrom)) +
   geom_col() +
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
                 position=position_dodge(.9)) +
-  scale_fill_brewer(palette = "Set2") +
+  #scale_fill_brewer(palette = "Set2") +
   coord_flip() +
   facet_wrap(~groups_k6) +
   theme(text = element_text(size = 20),
-        legend.position = "none", 
+        legend.position = "right", 
         axis.title.y = element_blank()) 
 
-
+k6_var_interp
 ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_var_interp_", Sys.Date(), ".png"), 
        plot = k6_var_interp, width = 12, height = 8, dpi = 300) 
+
+k6_var_interp_sd <- ggplot(k6_long_reorder, aes(x = var_name, y = sd, fill = ostrom)) +
+  geom_col() +
+  #scale_fill_brewer(palette = "Set2") +
+  coord_flip() +
+  facet_wrap(~groups_k6) +
+  theme(text = element_text(size = 20),
+        legend.position = "right", 
+        axis.title.y = element_blank()) 
+
+k6_var_interp_sd
+ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_var_interp_sd_", Sys.Date(), ".png"), 
+       plot = k6_var_interp_sd, width = 12, height = 8, dpi = 300) 
 
 ggplot(k8_long, aes(x = var_name, y = mean, fill = groups_k8)) +
   geom_col() +

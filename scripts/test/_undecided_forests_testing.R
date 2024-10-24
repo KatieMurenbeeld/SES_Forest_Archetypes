@@ -11,6 +11,7 @@ library(distributional)
 library(ggdist)
 library(ggsci)
 library(tigris)
+library(exactextractr)
 
 # Load the data
 sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
@@ -31,7 +32,6 @@ names(dataset) <- names(sgfcm_all_attri_sc)
 # FCM seed = 1234, Silhouette index = 0.45, k = 8, m = 1.9, window =  3x3 (w1), alpha = 0.5, beta = 0.4
 
 w1 <- matrix(1, nrow = 3, ncol = 3)
-w2 <- matrix(1, nrow = 7, ncol = 7)
 
 SGFCM_all_result_k6 <- SGFCMeans(dataset, k = 6, m = 1.9, standardize = FALSE,
                                  lag_method = "mean",
@@ -39,24 +39,19 @@ SGFCM_all_result_k6 <- SGFCMeans(dataset, k = 6, m = 1.9, standardize = FALSE,
                                  seed = 6891, tol = 0.001, verbose = TRUE, init = "kpp")
 
 
-SGFCM_all_result_k8 <- SGFCMeans(dataset, k = 8, m = 1.9, standardize = FALSE,
-                                 lag_method = "mean",
-                                 window = w1, alpha = 0.5, beta = 0.4,
-                                 seed = 6891, tol = 0.001, verbose = TRUE, init = "kpp")
 
 # crop to regions 1 and 4
+fs_nf <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeForest.shp")
 fs_reg <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeRegion.shp")
 
 projection <- "epsg: 5070"
 
 fs_nf.proj <- fs_nf %>% 
   filter(REGION != "10") %>%
-  #filter(REGION == "01" | REGION == "04") %>%
-  #filter(FORESTORGC == "0414") %>%
   st_transform(., crs=projection)
 fs_nf.crop <- st_crop(fs_nf.proj, ext(sgfcm_all_attri_sc))
 fs_reg.proj <- fs_reg %>% 
-  filter(REGION == "01" | REGION == "04") %>%
+  filter(REGION != "10") %>%
   st_transform(., crs=projection)
 fs_reg.crop <- st_crop(fs_reg.proj, ext(sgfcm_all_attri_sc))
 
@@ -75,74 +70,38 @@ nf_create_buffers <- function(area_with_nf, dist_m){
 
 nf_buffers <- nf_create_buffers(fs_nf.crop, 50000)
 
-thres <- seq(0.05, 1, 0.05)
+# Get raster of groups and belonging from the sgfcm results
 
-sgfcm_all_k6_maps <- mapClusters(object = SGFCM_all_result_k6, undecided = 0.167)
+arch_rst <- rast(SGFCM_all_result_k6$rasters)
 
-test <- as.data.frame(SGFCM_all_result_k6$Belongings)
-test_rst_df <- as.data.frame(SGFCM_all_result_k6$rasters, xy = TRUE)
-test_rst <- rast(SGFCM_all_result_k6$rasters)
+arch_rst_crop <- crop(arch_rst, nf_buffers, mask = TRUE)
+plot(arch_rst_crop$Groups)
+arch_rst_belong <- subset(arch_rst_crop, 1:6)
+plot(arch_rst_belong)
 
-test_rst_crop <- crop(test_rst, nf_buffers, mask = TRUE)
-plot(test_rst_crop)
-rst_crop_df <- as.data.frame(test_rst_crop, xy = TRUE)
+# create a map of the NF + buffers with final archetype groups and regional boundaries
+sgfcm.k6.all.df <- arch_rst_crop$Groups %>% as.data.frame(xy = TRUE)
 
-#rst_crop_df$threshold <- 0.1
-#rst_crop_df$threshold
+all_k6_nf_buff_map <- ggplot() +
+  geom_raster(aes(x = sgfcm.k6.all.df$x, y = sgfcm.k6.all.df$y, fill = as.factor(sgfcm.k6.all.df$Groups))) +
+  geom_sf(data = fs_nf.crop, fill = NA, color = "black") +
+  geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 1.1) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "All Attributes:",
+       subtitle = "k=6, m=1.9, alpha = 0.6, beta = 0.4, window = 7x7", 
+       fill = "Archetypes") +
+  theme_bw() + 
+  theme(text = element_text(size = 20),
+        legend.position = "bottom",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
 
-test_rst_belong <- subset(test_rst_crop, 1:6)
-plot(test_rst_belong)
-#test_rst_crop$undecided <- 0
+all_k6_nf_buff_map
+ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_nf_buff_map_", Sys.Date(), ".png"), 
+       plot = all_k6_nf_buff_map, width = 12, height = 12, dpi = 300) 
 
-thres <- 0.4
-r_undecided <- max(test_rst_belong)
-plot(r_undecided)
-
-thres <- 0.1
-r_undecided <- any(max(test_rst_belong) < thres) # < threshold so that 1 = undecided
-plot(r_undecided)
-sum(values(r_undecided), na.rm=TRUE)
-ncell(r_undecided)
-freq_df <- freq(r_undecided)
-#pct_undecided <- (freq_df$count[freq_df$value == 1] / sum(freq_df$count)) * 100
-(freq_df$count[freq_df$value == 1] / sum(freq_df$count)) * 100
-freq_df$count[freq_df$value == 1]
-
-thres <- seq(0.1, 1, 0.1)
-
-undecided_df <- data.frame(
-  forest = as.character(),
-  pct_undecided = as.numeric(),
-  threshold = as.numeric()
-)
-
-for (t in thres){
-  #print(paste0("threshold = ", t))
-  forest <- nf_buffers$FORESTORGC
-  threshold <- t
-  tmp_undecided <- any(max(test_rst_belong) < t)
-  tmp_df <- freq(tmp_undecided)
-  if (length(tmp_df$count[tmp_df$value == 1]) == 0){
-    pct_undecided <- 0
-  }else{
-  pct_undecided <- (tmp_df$count[tmp_df$value == 1] / sum(tmp_df$count)) * 100
-  }
-  #print(paste0("% undecided = ", pct_undecided))
-  undecided_df[nrow(undecided_df) + 1,] <- as.list(c(forest, 
-                                                     pct_undecided,
-                                                     threshold))
-}
-
-plot(undecided_df$threshold, undecided_df$pct_undecided)
-
-
-test_rst <- rast(SGFCM_all_result_k6$rasters)
-
-test_rst_crop <- crop(test_rst, nf_buffers, mask = TRUE)
-plot(test_rst_crop$group1)
-test_rst_belong <- subset(test_rst_crop, 1:6)
-plot(test_rst_belong$group1)
-
+# create up the threshold sequence and empty data frame
 thres <- seq(0.1, 1, 0.05)
 
 undecided_df <- data.frame(
@@ -152,26 +111,27 @@ undecided_df <- data.frame(
   threshold = as.numeric()
 )
 
+# run a for loop that
+## 1. crops the belongings raster to the national forest and buffer
+## 2. for each threshold determines the number of undecided (any group belonging < threshold)
+## 3. calculates the percentage of undecided pixels out of all pixels in the forest (not including NAs)
+## 4. fills in the undecided data frame
+
+#for (nf in nf_buffers$FORESTORGC){
+#  tmp_shp <- nf_buffers %>%
+#    filter(FORESTORGC == nf)
+#  print(nf)
+#  print(nf_buffers$REGION[nf_buffers$FORESTORGC == nf])
+#}
 
 for (nf in nf_buffers$FORESTORGC){
   tmp_shp <- nf_buffers %>%
     filter(FORESTORGC == nf)
-  print(nf)
-  print(nf_buffers$REGION[nf_buffers$FORESTORGC == nf])
-}
-
-for (nf in nf_buffers$FORESTORGC){
-  #print(nf)
-  tmp_shp <- nf_buffers %>%
-    filter(FORESTORGC == nf)
-  tmp_rast <- crop(test_rst_belong, tmp_shp, mask = TRUE)
+  tmp_rast <- crop(arch_rst_belong, tmp_shp, mask = TRUE)
   for (t in thres){
-    #print(paste0("threshold = ", t))
     region <- nf_buffers$REGION[nf_buffers$FORESTORGC == nf]
     forest <- nf
     threshold <- t
-    #tmp_rast <- crop()
-    #tmp_undecided <- any(max(test_rst_belong) < t)
     tmp_undecided <- any(max(tmp_rast) < t)
     tmp_df <- freq(tmp_undecided)
     if (length(tmp_df$count[tmp_df$value == 1]) == 0){
@@ -179,7 +139,6 @@ for (nf in nf_buffers$FORESTORGC){
     }else{
       pct_undecided <- (tmp_df$count[tmp_df$value == 1] / sum(tmp_df$count)) * 100
     }
-  #print(paste0("% undecided = ", pct_undecided))
     undecided_df[nrow(undecided_df) + 1,] <- as.list(c(region,
                                                        forest, 
                                                        pct_undecided,
@@ -187,16 +146,17 @@ for (nf in nf_buffers$FORESTORGC){
   }
 }
 
-#filter <- undecided_df %>%
-#  filter(forest == "0419")
+# save the data frame as a csv
+write_csv(undecided_df, here::here(paste0("outputs/tables/usfs_nf_undecided_thresholds_", Sys.Date(), ".csv")))
 
-ggplot(data = undecided_df, mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided), color = forest)) + 
+# plot the results as regional panels with a line for each forest in the region
+undecided_plot <- ggplot(data = undecided_df, mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided), color = forest)) + 
   geom_line() + 
-  facet_wrap(~region) + 
+  facet_wrap(~region, ncol = 4) + 
   theme(legend.position = "none")
+undecided_plot
 
-
-
-
-
+# save the plot
+ggsave(here::here(paste0("outputs/plots/usfs_nf_undecided_thresholds_", Sys.Date(), ".png")), 
+       undecided_plot, width = 8, height = 5, dpi = 300)
 

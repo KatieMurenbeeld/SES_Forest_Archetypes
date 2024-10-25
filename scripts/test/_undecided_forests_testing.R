@@ -17,7 +17,7 @@ library(exactextractr)
 sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 sgfcm_all_attri_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
 
-#sgfcm_all_k6_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k6_2024-10-15.tif")
+sgfcm_all_k6_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k6_2024-10-15.tif")
 #sgfcm_all_k8_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k8_2024-10-15.tif")
 
 # Format for use in geocmeans
@@ -147,7 +147,8 @@ for (nf in nf_buffers$FORESTORGC){
 }
 
 # save the data frame as a csv
-write_csv(undecided_df, here::here(paste0("outputs/tables/usfs_nf_undecided_thresholds_", Sys.Date(), ".csv")))
+#write_csv(undecided_df, here::here(paste0("outputs/tables/usfs_nf_undecided_thresholds_", Sys.Date(), ".csv")))
+undecided_df <- read_csv(here::here("outputs/tables/usfs_nf_undecided_thresholds_2024-10-24.csv"))
 
 # plot the results as regional panels with a line for each forest in the region
 undecided_plot <- ggplot(data = undecided_df, mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided), color = forest)) + 
@@ -160,3 +161,60 @@ undecided_plot
 ggsave(here::here(paste0("outputs/plots/usfs_nf_undecided_thresholds_", Sys.Date(), ".png")), 
        undecided_plot, width = 8, height = 5, dpi = 300)
 
+
+# from the undecided threshold plot, find the "outlier" 
+undecided_plot <- ggplot(data = undecided_df %>%
+                           filter(forest == "0805"), mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided), color = forest)) + 
+  geom_line() + 
+  facet_wrap(~region, ncol = 4) + 
+  theme(legend.position = "right")
+undecided_plot
+
+
+
+
+
+# determine the forests with a "dominant" archetype
+v <- nf_buffers %>% st_cast("MULTIPOLYGON")
+z <- crop(sgfcm_all_k6_result, v, mask = TRUE)
+
+x <- exact_extract(z, v, coverage_area = TRUE)
+names(x) <- v$FORESTORGC
+
+areas <- bind_rows(x, .id = "FORESTORGC") %>%
+  group_by(FORESTORGC, value) %>%
+  summarize(total_arch_area = sum(coverage_area)) %>%
+  group_by(FORESTORGC) %>%
+  mutate(proportion_pct = round((total_arch_area/sum(total_arch_area))*100, 2)) %>%
+  mutate(proportion = (total_arch_area/sum(total_arch_area)))
+
+areas <- areas %>% 
+  replace_na(list(value = 0))
+
+areas_wide <- areas %>%
+  dplyr::select(-total_arch_area) %>%
+  dplyr::select(-proportion) %>%
+  pivot_wider(names_from = value, values_from = proportion_pct)
+
+
+arche1 <-  areas_wide %>%
+  filter(`1` >= 50.0)
+arche2 <-  areas_wide %>%
+  filter(`2` >= 50.0)
+arche3 <-  areas_wide %>%
+  filter(`3` >= 50.0)
+arche4 <-  areas_wide %>%
+  filter(`4` >= 50.0)
+arche5 <-  areas_wide %>%
+  filter(`5` >= 50.0)
+arche6 <-  areas_wide %>%
+  filter(`6` >= 50.0)
+arche_na <-  areas_wide %>%
+  filter(`NA` >= 50.0)
+
+forest_arches <- areas_wide %>%
+  filter(`1` >= 50 | `2` >= 50 | `3` >= 50 | `4` >= 50 | `5` >= 50 | `6` >= 50)
+
+tmp_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0915")
+plot(crop(sgfcm_all_k6_result, tmp_shp, mask = TRUE))

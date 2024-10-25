@@ -12,6 +12,7 @@ library(ggdist)
 library(ggsci)
 library(tigris)
 library(exactextractr)
+library(styler)
 
 # Load the data
 sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
@@ -21,13 +22,13 @@ sgfcm_all_k6_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/
 #sgfcm_all_k8_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k8_2024-10-15.tif")
 
 # Format for use in geocmeans
-dataset <- lapply(names(sgfcm_all_attri_sc), function(n){
+dataset <- lapply(names(sgfcm_all_attri_sc), function(n) {
   aband <- sgfcm_all_attri_sc[[n]]
   return(aband)
 })
 names(dataset) <- names(sgfcm_all_attri_sc)
 
-# Use Spatial Generalized Fuzzy C-Means clustering 
+# Use Spatial Generalized Fuzzy C-Means clustering
 # FCM seed = 1234, Silhouette index = 0.48, k = 6, m = 1.9, window =  7x7 (w2), alpha = 0.6, beta = 0.4
 # FCM seed = 1234, Silhouette index = 0.45, k = 8, m = 1.9, window =  3x3 (w1), alpha = 0.5, beta = 0.4
 
@@ -46,7 +47,7 @@ fs_reg <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/origi
 
 projection <- "epsg: 5070"
 
-fs_nf.proj <- fs_nf %>% 
+fs_nf.proj <- fs_nf %>%
   filter(REGION != "10") %>%
   st_transform(., crs=projection)
 fs_nf.crop <- st_crop(fs_nf.proj, ext(sgfcm_all_attri_sc))
@@ -70,7 +71,7 @@ nf_create_buffers <- function(area_with_nf, dist_m){
 
 nf_buffers <- nf_create_buffers(fs_nf.crop, 50000)
 
-# Get raster of groups and belonging from the sgfcm results
+#----Get raster of groups and belonging from the sgfcm results-----
 
 arch_rst <- rast(SGFCM_all_result_k6$rasters)
 
@@ -79,7 +80,7 @@ plot(arch_rst_crop$Groups)
 arch_rst_belong <- subset(arch_rst_crop, 1:6)
 plot(arch_rst_belong)
 
-# create a map of the NF + buffers with final archetype groups and regional boundaries
+#----create a map of the NF + buffers with final archetype groups and regional boundaries-----
 sgfcm.k6.all.df <- arch_rst_crop$Groups %>% as.data.frame(xy = TRUE)
 
 all_k6_nf_buff_map <- ggplot() +
@@ -95,13 +96,13 @@ all_k6_nf_buff_map <- ggplot() +
         legend.position = "bottom",
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
-        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5), "mm"))
 
 all_k6_nf_buff_map
 ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_nf_buff_map_", Sys.Date(), ".png"), 
        plot = all_k6_nf_buff_map, width = 12, height = 12, dpi = 300) 
 
-# create up the threshold sequence and empty data frame
+#----create the threshold sequence and empty data frame----
 thres <- seq(0.1, 1, 0.05)
 
 undecided_df <- data.frame(
@@ -111,7 +112,7 @@ undecided_df <- data.frame(
   threshold = as.numeric()
 )
 
-# run a for loop that
+#----run a for loop that----
 ## 1. crops the belongings raster to the national forest and buffer
 ## 2. for each threshold determines the number of undecided (any group belonging < threshold)
 ## 3. calculates the percentage of undecided pixels out of all pixels in the forest (not including NAs)
@@ -124,7 +125,7 @@ undecided_df <- data.frame(
 #  print(nf_buffers$REGION[nf_buffers$FORESTORGC == nf])
 #}
 
-for (nf in nf_buffers$FORESTORGC){
+for (nf in nf_buffers$FORESTORGC) {
   tmp_shp <- nf_buffers %>%
     filter(FORESTORGC == nf)
   tmp_rast <- crop(arch_rst_belong, tmp_shp, mask = TRUE)
@@ -134,23 +135,23 @@ for (nf in nf_buffers$FORESTORGC){
     threshold <- t
     tmp_undecided <- any(max(tmp_rast) < t)
     tmp_df <- freq(tmp_undecided)
-    if (length(tmp_df$count[tmp_df$value == 1]) == 0){
+    if (length(tmp_df$count[tmp_df$value == 1]) == 0) {
       pct_undecided <- 0
-    }else{
+    } else {
       pct_undecided <- (tmp_df$count[tmp_df$value == 1] / sum(tmp_df$count)) * 100
     }
-    undecided_df[nrow(undecided_df) + 1,] <- as.list(c(region,
+    undecided_df[nrow(undecided_df) + 1, ] <- as.list(c(region,
                                                        forest, 
                                                        pct_undecided,
                                                        threshold))
   }
 }
 
-# save the data frame as a csv
+#----save the data frame as a csv----
 #write_csv(undecided_df, here::here(paste0("outputs/tables/usfs_nf_undecided_thresholds_", Sys.Date(), ".csv")))
 undecided_df <- read_csv(here::here("outputs/tables/usfs_nf_undecided_thresholds_2024-10-24.csv"))
 
-# plot the results as regional panels with a line for each forest in the region
+#----plot the results as regional panels with a line for each forest in the region----
 undecided_plot <- ggplot(data = undecided_df, mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided), color = forest)) + 
   geom_line() + 
   facet_wrap(~region, ncol = 4) + 
@@ -162,7 +163,7 @@ ggsave(here::here(paste0("outputs/plots/usfs_nf_undecided_thresholds_", Sys.Date
        undecided_plot, width = 8, height = 5, dpi = 300)
 
 
-# from the undecided threshold plot, find the "outlier" 
+#----from the undecided threshold plot, find the "outliers"------
 undecided_plot <- ggplot(data = undecided_df %>%
                            filter(forest == "0805"), mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided), color = forest)) + 
   geom_line() + 
@@ -174,7 +175,7 @@ undecided_plot
 
 
 
-# determine the forests with a "dominant" archetype
+#----determine the forests with a "dominant" archetype-------
 v <- nf_buffers %>% st_cast("MULTIPOLYGON")
 z <- crop(sgfcm_all_k6_result, v, mask = TRUE)
 

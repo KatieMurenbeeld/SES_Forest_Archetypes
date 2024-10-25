@@ -13,6 +13,7 @@ library(stars)
 projection <- "epsg:5070"
 
 # Load the data
+# https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/BQKU4M
 aip <- read_dta("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/aip_files/aip_counties_ideology_v2022a.dta")
 
 # Load the reference raster and reproject

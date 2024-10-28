@@ -213,8 +213,11 @@ SGFCMvalues_k6 <- select_parameters.mc(algo = "SGFCM", data = dataset,
                                                 "Negentropy.index", "Silhouette.index"))
 
 
-write_csv(SGFCMvalues_k6, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/sgfcm_all_attri_param_indices_k6_", 
-                             Sys.Date(), ".csv"), append = FALSE)
+#write_csv(SGFCMvalues_k6, here::here(paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/sgfcm_all_attri_param_indices_k6_", 
+#                             Sys.Date(), ".csv")), append = FALSE)
+write_csv(SGFCMvalues_k6, here::here("outputs/sgfcm_all_attri_param_indices_k6_2024-10-28.csv"))
+SGFCMvalues_k6_check <- read_csv(here::here("outputs/sgfcm_all_attri_param_indices_k6_2024-10-28.csv"))
+
 # showing the silhouette index
 ggplot(SGFCMvalues_k6) + 
   geom_raster(aes(x = alpha, y = beta, fill = Silhouette.index)) + 
@@ -238,7 +241,7 @@ ggplot(SGFCMvalues_k6) +
   coord_fixed(ratio=1)
 
 # Silhouette index = 0.51, k = 5, m = 2.0, beta = 0.8, alpha = 1.2, w = 3x3 (w1)
-# FCM seed = 1234, SI = 0.48, k = 6, m = 1.9, window =  7x7 (w3), alpha = 0.6, beta = 0.4
+# FCM seed = 1234, SI = 0.48, XB = 607.38, k = 6, m = 1.9, window =  7x7 (w3), alpha = 0.6, beta = 0.4
 
 # k = 8
 SGFCMvalues_k8 <- select_parameters.mc(algo = "SGFCM", data = dataset,

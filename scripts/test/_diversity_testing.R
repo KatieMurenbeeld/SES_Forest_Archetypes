@@ -70,16 +70,24 @@ SGFCM_soc_result_k6 <- SGFCMeans(dataset, k = 6, m = 1.9, standardize = FALSE,
 
 nf_buffers <- read_sf(here::here("data/processed/nf_buffers_50k_2024-10-22.shp"))
 
-tmp_shp <- nf_buffers %>%
-  filter(FORESTORGC == "0412")
+nf0118_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0118")
+nf0621_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0621")
+nf0903_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0903")
+nf0909_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0909")
+
+
 
 arch_soc_rst <- rast(SGFCM_soc_result_k6$rasters)
 arch_eco_rst <- rast(SGFCM_eco_result_k6$rasters)
 arch_all_rst <- rast(SGFCM_all_result_k6$rasters)
 
-arch_all_rst_crop <- crop(arch_all_rst, nf_buffers, mask = TRUE)
-arch_eco_rst_crop <- crop(arch_eco_rst, nf_buffers, mask = TRUE)
-arch_soc_rst_crop <- crop(arch_soc_rst, nf_buffers, mask = TRUE)
+arch_all_rst_crop <- crop(arch_all_rst, nf0909_shp, mask = TRUE)
+arch_eco_rst_crop <- crop(arch_eco_rst, nf0909_shp, mask = TRUE)
+arch_soc_rst_crop <- crop(arch_soc_rst, nf0909_shp, mask = TRUE)
 
 arch_all_rst_belong <- subset(arch_all_rst_crop, 1:6)
 arch_all_rst_conus_belong <- subset(arch_all_rst, 1:6)
@@ -117,6 +125,18 @@ soc_ent_rst <- rast(soc_ent)
 soc_ent_conus <- cbind(arch_soc_rst_conus_df, soc_ent_conus)
 soc_ent_rst_conus <- rast(soc_ent_conus)
 
+plot(arch_all_rst_crop$Groups)
+#plot(arch_all_rst_crop$group1)
+plot(all_ent_rst$all_ent)
+plot(eco_ent_rst$eco_ent)
+plot(soc_ent_rst$soc_ent)
+
+#attach(mtcars)
+par(mfrow=c(2,2))
+plot(arch_all_rst_crop$Groups, main = "NF 0909: Crisp Archetype")
+plot(all_ent_rst$all_ent, main = "Entropy: All Variables")
+plot(eco_ent_rst$eco_ent, main = "Entropy: Eco Variables")
+plot(soc_ent_rst$soc_ent, main = "Entropy: Soc Variables")
 
 plot(all_ent_rst_conus$all_ent_conus)
 plot(eco_ent_rst_conus$eco_ent_conus)
@@ -162,4 +182,96 @@ ggplot() +
   geom_raster(data = test_ent_conus , aes(x = x, y = y, fill = fct_ent_2))
 mean(test_ent$test_ent)
 
+# crop to regions 1 and 4
+fs_nf <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeForest.shp")
+fs_reg <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeRegion.shp")
 
+projection <- "epsg: 5070"
+
+fs_nf.proj <- fs_nf %>%
+  filter(REGION != "10") %>%
+  st_transform(., crs=projection)
+fs_nf.crop <- st_crop(fs_nf.proj, ext(sgfcm_all_attri_sc))
+fs_reg.proj <- fs_reg %>% 
+  filter(REGION != "10") %>%
+  st_transform(., crs=projection)
+fs_reg.crop <- st_crop(fs_reg.proj, ext(sgfcm_all_attri_sc))
+
+#----create a map of the NF + buffers with final archetype groups and regional boundaries-----
+
+all_k6_nf_ent_map <- ggplot() +
+  geom_raster(aes(x = all_ent_conus$x, y = all_ent_conus$y, fill = all_ent_conus$all_ent_conus)) +
+  #geom_sf(data = fs_nf.crop, fill = NA, color = "black") +
+  geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 1.1) +
+  #scale_fill_brewer(palette = "Set2") +
+  labs(title = "All Attributes:",
+       subtitle = "k=6, m=1.9, alpha = 0.6, beta = 0.4, window = 7x7", 
+       fill = "Archetypes") +
+  theme_bw() + 
+  theme(text = element_text(size = 20),
+        legend.position = "bottom",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5), "mm"))
+
+all_k6_nf_ent_map
+#ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_nf_ent_map_", Sys.Date(), ".png"), 
+#       plot = all_k6_nf_ent_map, width = 12, height = 12, dpi = 300)
+
+all_ent_conus_map <- ggplot() +
+  geom_raster(aes(x = all_ent_conus$x, y = all_ent_conus$y, fill = all_ent_conus$all_ent_conus)) + 
+  scale_fill_viridis(option = "C", limits = c(0, 1)) + 
+  theme_bw() +
+  theme(aspect.ratio = 1,
+        text = element_text(size = 12),
+        legend.position = "none",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5), "mm"))
+
+all_ent_conus_map
+
+eco_ent_conus_map <- ggplot() +
+  geom_raster(aes(x = eco_ent_conus$x, y = eco_ent_conus$y, fill = eco_ent_conus$eco_ent_conus)) + 
+  scale_fill_viridis(option = "C", limits = c(0, 1)) + 
+  theme_bw() +
+  theme(aspect.ratio = 1,
+        text = element_text(size = 12),
+        legend.position = "none",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5), "mm"))
+
+eco_ent_conus_map
+
+soc_ent_conus_map <- ggplot() +
+  geom_raster(aes(x = soc_ent_conus$x, y = soc_ent_conus$y, fill = soc_ent_conus$soc_ent_conus)) + 
+  scale_fill_viridis(option = "C", limits = c(0, 1)) + 
+  theme_bw() +
+  theme(aspect.ratio = 1, 
+        text = element_text(size = 12),
+        legend.position = "none",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5), "mm"))
+
+soc_ent_conus_map
+
+patch1 <- eco_ent_conus_map / soc_ent_conus_map
+patch1
+
+all_ent_conus_map | patch1
+
+all_ent_conus_map + plot_spacer() | patch1 + plot_layout(widths = c(4, 1, 2), guides = "collect")
+
+(eco_ent_conus_map | soc_ent_conus_map) /
+  all_ent_conus_map + plot_layout(widths = c(3, 2))
+
+all_ent_conus_map + eco_ent_conus_map + soc_ent_conus_map +
+  plot_layout(widths = c(2, 2))

@@ -85,9 +85,32 @@ ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k8_reg_nf_map_", 
        plot = all_k8_rg_nf_map, width = 12, height = 12, dpi = 300) 
 
 # Look at the belongings for each cluster/archetype
+rst_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
+rst <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 
+# Format for use in geocmeans
+dataset <- lapply(names(rst_sc), function(n){
+  aband <- rst_sc[[n]]
+  return(aband)
+})
+names(dataset) <- names(rst_sc)
 
+# Use Spatial Generalized Fuzzy C-Means clustering 
+# FCM seed = 1234, Silhouette index = 0.48, k = 6, m = 1.9, window =  7x7 (w2), alpha = 0.6, beta = 0.4
+# FCM seed = 1234, Silhouette index = 0.45, k = 8, m = 1.9, window =  3x3 (w1), alpha = 0.5, beta = 0.4
 
+w1 <- matrix(1, nrow = 3, ncol = 3)
+w2 <- matrix(1, nrow = 7, ncol = 7)
 
+SGFCM_all_result_k6 <- SGFCMeans(dataset, k = 6, m = 1.9, standardize = FALSE,
+                                 lag_method = "mean",
+                                 window = w2, alpha = 0.6, beta = 0.4,
+                                 seed = 6891, tol = 0.001, verbose = TRUE, init = "kpp")
 
-
+arch_all_rst <- rast(SGFCM_all_result_k6$rasters)
+plot(arch_all_rst$group1)
+plot(arch_all_rst$group2)
+plot(arch_all_rst$group3)
+plot(arch_all_rst$group4)
+plot(arch_all_rst$group5)
+plot(arch_all_rst$group6)

@@ -46,7 +46,13 @@ k6_sd_long <- data %>%
   summarise(across(where(is.numeric), ~ sd(.x, na.rm = TRUE))) %>% 
   pivot_longer(!groups_k6, names_to = "var_name", values_to = "sd")
 
+k6_med_long <- data %>%
+  group_by(groups_k6) %>%
+  summarise(across(where(is.numeric), ~ median(.x, na.rm = TRUE))) %>% 
+  pivot_longer(!groups_k6, names_to = "var_name", values_to = "median")
+
 k6_long <- left_join(k6_means_long, k6_sd_long)
+k6_long <- left_join(k6_long, k6_med_long)
 
 k8_means_long <- data %>%
   group_by(groups_k8) %>%
@@ -104,6 +110,21 @@ k6_var_interp_sd <- ggplot(k6_long_reorder, aes(x = var_name, y = sd, fill = ost
 k6_var_interp_sd
 ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_var_interp_sd_", Sys.Date(), ".png"), 
        plot = k6_var_interp_sd, width = 12, height = 8, dpi = 300) 
+
+k6_var_interp_med <- ggplot(k6_long_reorder, aes(x = var_name, y = median, fill = ostrom)) +
+  geom_col() +
+  geom_errorbar(aes(ymin=median-sd, ymax=median+sd), width=.2,
+                position=position_dodge(.9)) +
+  #scale_fill_brewer(palette = "Set2") +
+  coord_flip() +
+  facet_wrap(~groups_k6) +
+  theme(text = element_text(size = 20),
+        legend.position = "right", 
+        axis.title.y = element_blank()) 
+
+k6_var_interp_med
+ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_var_interp_med_", Sys.Date(), ".png"), 
+       plot = k6_var_interp_med, width = 12, height = 8, dpi = 300)
 
 ggplot(k8_long, aes(x = var_name, y = mean, fill = groups_k8)) +
   geom_col() +

@@ -15,7 +15,7 @@ library(cowplot)
 rst_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
 rst <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 
-# load the fuzzy elsa rasters
+# load the entropy rasters
 ent_all <- rast(here::here("outputs/SGFCM_all_k6_entropy_2024-11-01.tif"))
 ent_eco_k3 <- rast(here::here("outputs/SGFCM_eco_k3_entropy_2024-11-01.tif"))
 ent_eco_k6 <- rast(here::here("outputs/SGFCM_eco_k6_entropy_2024-11-01.tif"))
@@ -88,11 +88,11 @@ ent_sf <- left_join(ent_sf, ent_mean_soc_k6, by = "FORESTORGC") %>%
 ent_sf <- st_as_sf(ent_sf)
 ent_df <- as.data.frame(st_drop_geometry(ent_sf))
 
-write_csv(ent_df, here::here(paste0("outputs/nf_entropy_", Sys.Date(), ".csv")))
-write_sf(ent_sf, here::here(paste0("data/processed/ent_nf_", 
-                                     Sys.Date(), ".shp")), overwrite = TRUE)
-
-#ent_sf <- read_sf(here::here("data/processed/ent_nf_2024-11-01.shp"))
+#write_csv(ent_df, here::here(paste0("outputs/nf_entropy_", Sys.Date(), ".csv")))
+#write_sf(ent_sf, here::here(paste0("data/processed/ent_nf_", 
+#                                     Sys.Date(), ".shp")), overwrite = TRUE)
+ent_df <- read_csv(here::here("outputs/nf_entropy_2024-11-01.csv"))
+ent_sf <- read_sf(here::here("data/processed/ent_nf_2024-11-01.shp"))
 
 # get the average felsa score for each region
 reg_calc_ent <- function(area_to_calc, ent_rast){
@@ -141,12 +141,12 @@ ent_reg_sf <- left_join(ent_reg_sf, ent_mean_soc_reg_k6, by = "REGION") %>%
 ent_reg_sf <- st_as_sf(ent_reg_sf)
 ent_reg_df <- as.data.frame(st_drop_geometry(ent_reg_sf))
 
-write_csv(ent_reg_df, here::here(paste0("outputs/reg_entropy_", Sys.Date(), ".csv")))
+#write_csv(ent_reg_df, here::here(paste0("outputs/reg_entropy_", Sys.Date(), ".csv")))
+#write_sf(ent_reg_sf, here::here(paste0("data/processed/ent_reg_", 
+#                                         Sys.Date(), ".shp")), overwrite = TRUE)
 
-write_sf(ent_reg_sf, here::here(paste0("data/processed/ent_reg_", 
-                                         Sys.Date(), ".shp")), overwrite = TRUE)
-
-#ent_reg_sf <- read_sf(here::here("data/processed/ent_reg_2024-11-01.shp"))
+ent_reg_df <- read_csv(here::here("outputs/reg_entropy_2024-11-01.csv"))
+ent_reg_sf <- read_sf(here::here("data/processed/ent_reg_2024-11-01.shp"))
 
 ## Make Maps
 ent_all_df <- ent_all$all_ent_conus %>% as.data.frame(xy = TRUE)
@@ -312,7 +312,7 @@ test_scatter_k3 <- ent_sf %>%
   theme_bw() +
   theme(legend.position="bottom")
 test_scatter_k3
-#ggsave(here::here(paste0("figures/test_ent_k3_scatter_", Sys.Date(), ".png"), test_scatter_k3, 
+#ggsave(here::here(paste0("outputs/plots/test_ent_k3_scatter_", Sys.Date(), ".png"), test_scatter_k3, 
 #       width = 6, height = 4, dpi = 300)
 
 test_scatter_k6 <- ent_sf %>%
@@ -323,11 +323,11 @@ test_scatter_k6 <- ent_sf %>%
   theme_bw() +
   theme(legend.position="bottom")
 test_scatter_k6
-#ggsave(here::here(paste0("figures/test_ent_k6_scatter_", Sys.Date(), ".png"), test_scatter_k6, 
+#ggsave(here::here(paste0("outputs/plots/test_ent_k6_scatter_", Sys.Date(), ".png"), test_scatter_k6, 
 #       width = 6, height = 4, dpi = 300)
 
 test_scatter <- ent_sf %>%
-  ggplot(aes(x=ent_k3_soc, y=ent_all, group=region, color=region)) +
+  ggplot(aes(x=ent_k6_soc, y=ent_all, group=region, color=region)) +
   geom_point() + 
   xlim(0, 1) +
   ylim(0, 1) +
@@ -335,6 +335,14 @@ test_scatter <- ent_sf %>%
   theme(legend.position="bottom")
 test_scatter
 
+test_scatter <- ent_sf %>%
+  ggplot(aes(x=ent_k6_eco, y=ent_all, group=region, color=region)) +
+  geom_point() + 
+  xlim(0, 1) +
+  ylim(0, 1) +
+  theme_bw() +
+  theme(legend.position="bottom")
+test_scatter
 
 
 

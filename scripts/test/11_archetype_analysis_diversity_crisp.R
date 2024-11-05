@@ -67,7 +67,6 @@ write_sf(shan_h_sf, here::here(paste0("data/processed/shan_h_nf_",
 
 # make map
 shan_nf <- ggplot() +
-  #geom_sf(data = fs_nf.crop, fill = NA, color = "black", linewidth = 0.75) +
   geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 0.75) +
   geom_sf(data = shan_h_sf, aes(fill = shan_div_sc)) +
   labs(title = "Shannon Entropy (H) of Archetypes",
@@ -115,8 +114,6 @@ write_sf(shan_h_reg_sf, here::here(paste0("data/processed/shan_h_reg_",
 
 # make map
 shan_reg <- ggplot() +
-  #geom_sf(data = fs_nf.crop, fill = NA, color = "black", linewidth = 0.75) +
-  #geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 0.75) +
   geom_sf(data = shan_h_reg_sf, aes(fill = shan_div_sc)) +
   labs(title = "Shannon Entropy (H) of Archetypes",
        subtitle = "Calculated for each Region") +

@@ -9,6 +9,7 @@ library(tidyverse)
 library(scales)
 library(stringr)
 library(cowplot)
+library(viridis)
 #library(ggsn)
 
 # load the attribute data
@@ -153,11 +154,11 @@ ent_all_df <- ent_all$all_ent_conus %>% as.data.frame(xy = TRUE)
 ent_soc_df <- ent_soc_k6$all_ent_conus %>% as.data.frame(xy = TRUE)
 ent_eco_df <- ent_eco_k6$all_ent_conus %>% as.data.frame(xy = TRUE)
 
-## Map with NF boundaries and all attributes
+## Map with NF and region boundaries and archetype entropy
 ent_all_nf_map <- ggplot() +
   geom_raster(aes(x = ent_all_df$x, y = ent_all_df$y, fill = ent_all_df$all_ent_conus)) +
   geom_sf(data = fs_nf.crop, fill = NA, color = "black") +
-  #geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 1.1) +
+  geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 1.1) +
   labs(title = "Entropy: All Attributes",
        fill = "Entropy") +
   scale_fill_viridis(limits = c(0, 1)) +
@@ -193,6 +194,24 @@ mean_ent_all_nf <- ggplot() +
 #mean_ent_all_nf
 ggsave(here::here(paste0("outputs/plots/ent_all_nf_mean_", Sys.Date(), ".png")),
        plot = mean_ent_all_nf, width = 7, height = 5, dpi = 300)  
+
+mean_ent_all_reg <- ggplot() +
+  #geom_sf(data = fs_nf.crop, fill = NA, color = "black", linewidth = 0.75) +
+  geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 1) +
+  geom_sf(data = ent_reg_sf, aes(fill = ent_all, color = NULL)) +
+  labs(title = "Entropy of SE Archetypes: k = 6",
+       subtitle = "Average for Regions", 
+       fill = "Entropy") +
+  scale_fill_viridis(limits = c(0, 1)) +
+  theme_bw() + 
+  theme(text = element_text(size = 16),
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
+
+#mean_ent_all_reg
+ggsave(here::here(paste0("outputs/plots/ent_all_reg_mean_", Sys.Date(), ".png")),
+       plot = mean_ent_all_reg, width = 7, height = 5, dpi = 300)  
 
 # make map with insets
 nf0118_shp <- nf_buffers %>%

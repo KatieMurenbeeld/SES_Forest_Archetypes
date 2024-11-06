@@ -38,5 +38,19 @@ map_SGFCM_result <- rast(SGFCM_eco_result$rasters)
 plot(map_SGFCM_result[["Groups"]])
 writeRaster(map_SGFCM_result[["Groups"]], filename = paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_eco_result_", 
                                                             Sys.Date(), ".tif"), overwrite = TRUE)
+# repeat with the parameters from all attributes SGFCM 
+# FCM seed = 1234, Silhouette index = 0.48, k = 6, m = 1.9, window =  7x7 (w2), alpha = 0.6, beta = 0.4
+w2 <- matrix(1, nrow = 7, ncol = 7)
+
+SGFCM_eco_result_k6 <- SGFCMeans(dataset, k = 6, m = 1.9, standardize = FALSE,
+                              lag_method = "mean",
+                              window = w2, alpha = 0.6, beta = 0.4,
+                              seed = 6891, tol = 0.001, verbose = TRUE, init = "kpp")
+saveRDS(SGFCM_eco_result_k6, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_eco_result_k6_", 
+                                 Sys.Date(), ".rds"))
+map_SGFCM_result_k6 <- rast(SGFCM_eco_result_k6$rasters)
+plot(map_SGFCM_result_k6[["Groups"]])
+writeRaster(map_SGFCM_result_k6[["Groups"]], filename = paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_eco_result_k6_", 
+                                                            Sys.Date(), ".tif"), overwrite = TRUE)
 
 

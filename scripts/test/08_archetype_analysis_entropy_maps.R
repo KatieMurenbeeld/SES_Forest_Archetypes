@@ -336,14 +336,16 @@ test_scatter_k3
 
 test_scatter_k6 <- ent_sf %>%
   ggplot(aes(x=ent_k6_eco, y=ent_k6_soc, group=region, color=region)) +
-  geom_point() + 
+  geom_point() +
+  geom_hline(yintercept = 0.5) + 
+  geom_vline(xintercept = 0.5) +
   xlim(0, 1) +
   ylim(0, 1) +
   theme_bw() +
   theme(legend.position="bottom")
 test_scatter_k6
-#ggsave(here::here(paste0("outputs/plots/test_ent_k6_scatter_", Sys.Date(), ".png"), test_scatter_k6, 
-#       width = 6, height = 4, dpi = 300)
+ggsave(here::here(paste0("outputs/plots/test_ent_k6_scatter_", Sys.Date(), ".png")), test_scatter_k6, 
+       width = 4, height = 4, dpi = 300)
 
 test_scatter <- ent_sf %>%
   ggplot(aes(x=ent_k6_soc, y=ent_all, group=region, color=region)) +

@@ -36,6 +36,10 @@ data$groups_k8 <- sgfcm_all_result_k8_mod$Groups
 data$groups_k6 <- gsub('V', 'A', data$groups_k6)
 data$groups_k8 <- gsub('V', 'A', data$groups_k8)
 
+k6_long_df <- data %>%
+  dplyr::select(-groups_k8) %>%
+  pivot_longer(!groups_k6, names_to = "var_name")
+
 k6_means_long <- data %>%
   group_by(groups_k6) %>%
   summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE))) %>% 
@@ -95,8 +99,8 @@ k6_var_interp <- ggplot(k6_long_reorder, aes(x = var_name, y = mean, fill = ostr
         axis.title.y = element_blank()) 
 
 k6_var_interp
-ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_var_interp_", Sys.Date(), ".png"), 
-       plot = k6_var_interp, width = 12, height = 8, dpi = 300) 
+#ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_var_interp_", Sys.Date(), ".png"), 
+#       plot = k6_var_interp, width = 12, height = 8, dpi = 300) 
 
 k6_var_interp_sd <- ggplot(k6_long_reorder, aes(x = var_name, y = sd, fill = ostrom)) +
   geom_col() +
@@ -134,6 +138,110 @@ ggplot(k8_long, aes(x = var_name, y = mean, fill = groups_k8)) +
   facet_wrap(~groups_k8, ncol = 4) +
   theme(legend.position = "none", 
         axis.title.y = element_blank()) 
+
+# Create bar plots of the variables where IQR != 0
+check_iqr_overlap <- function(x) {
+  # Calculate the 25th and 75th percentiles
+  lower <- quantile(x, 0.25, na.rm = TRUE)
+  upper <- quantile(x, 0.75, na.rm = TRUE)
+  
+  # Check if the IQR range overlaps 0
+  return(lower <= 0 & upper >= 0)
+}
+
+overlap <- k6_long_df %>% 
+  group_by(groups_k6, var_name) %>% 
+  summarise(overlap = check_iqr_overlap(value), .groups="drop")
+
+
+k6_long_join <- k6_long_df %>% 
+  left_join(overlap) %>% 
+  filter(overlap == FALSE)
+
+# reorder the variables
+k6_long_overlap_reorder <- k6_long_join %>% 
+  mutate(var_name = fct_relevel(var_name, 
+                                "treecov", "forprod", "tempseas", 
+                                "precseas", "rough", "whp", 
+                                "forgain", 
+                                #"distcrit", 
+                                "distwild",
+                                "pm25", "fedrich", 
+                                "treeage", "pct_forpay", "pct_delmill",
+                                "netmig", "comm_cap", "aip", 
+                                "travtime", "hsbrd", "engbrd"))
+
+k6_long_overlap_reorder <- k6_long_overlap_reorder %>% # need to remove dist to critical habitat
+  mutate(ostrom = case_when(var_name == "treecov" | var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "whp" ~ "resource system",
+                            var_name == "distwild" | var_name == "forgain" ~ "resource unit",
+                            var_name == "fedrich" | var_name == "pm25" | var_name == "treeage" | var_name == "pct_forpay" | var_name == "pct_delmill" | var_name == "netmig" | var_name == "comm_cap" | var_name == "aip" | var_name == "travtime" | var_name == "hsbrd" | var_name == "engbrd" | var_name == "lesshs" ~ "users"))
+
+
+k6_iqr_no_overlap <- ggplot(data=k6_long_overlap_reorder, mapping = aes(x=var_name, y=value, fill=ostrom)) +
+  geom_boxplot(outliers = FALSE, coef=0) +
+  geom_hline(yintercept = 0, linetype=2) +
+  #scale_fill_manual(values=c15)+
+  coord_flip()+
+  theme_bw()+
+  facet_wrap(vars(groups_k6))
+
+k6_iqr_no_overlap
+ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_var_interp_iqr_no_overlap_", Sys.Date(), ".png"), 
+       plot = k6_iqr_no_overlap, width = 12, height = 8, dpi = 300)
+
+# Create bar plots of the standard deviation for the values that do overlap with 0
+k6_long_join_overlap_true <- k6_long_df %>% 
+  left_join(overlap) %>% 
+  filter(overlap == TRUE)
+
+k6_sd_overlap <- k6_long_join_overlap_true %>% 
+  group_by(groups_k6, var_name) %>% 
+  summarise(sd = sd(value), .groups="drop")
+
+# reorder the variables
+k6_sd_overlap_reorder <- k6_sd_overlap %>% 
+  mutate(var_name = fct_relevel(var_name, 
+                                #"treecov", 
+                                "forprod", "tempseas", 
+                                "precseas", "rough", "whp", 
+                                "forgain", 
+                                "distcrit", 
+                                "distwild",
+                                #"pm25", 
+                                "fedrich", 
+                                "treeage", "pct_forpay", 
+                                #"pct_delmill",
+                                "netmig", "comm_cap", "aip", 
+                                "travtime", "hsbrd", "engbrd"))
+
+k6_sd_long_overlap_reorder <- k6_sd_overlap_reorder %>% # need to remove treecover, pm25, and pct_delmill
+  mutate(ostrom = case_when(var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "whp" ~ "resource system",
+                            var_name == "distwild" | var_name == "distcrit" |  var_name == "forgain" ~ "resource unit",
+                            var_name == "fedrich" | var_name == "treeage" | var_name == "pct_forpay" | var_name == "netmig" | var_name == "comm_cap" | var_name == "aip" | var_name == "travtime" | var_name == "hsbrd" | var_name == "engbrd" | var_name == "lesshs" ~ "users"))
+
+
+k6_sd_overlap <- ggplot(k6_long_overlap_reorder, aes(x = var_name, y = sd, fill = ostrom)) +
+  geom_col() +
+  #scale_fill_brewer(palette = "Set2") +
+  coord_flip() +
+  facet_wrap(~groups_k6) +
+  theme(text = element_text(size = 20),
+        legend.position = "right", 
+        axis.title.y = element_blank()) 
+
+k6_sd_overlap
+ggsave(paste0("~/Analysis/Archetype_Analysis/figures/sgfcm_all_k6_var_interp_sd_overlap_", Sys.Date(), ".png"), 
+       plot = k6_sd_overlap, width = 12, height = 8, dpi = 300)
+
+
+ggplot(data=k6_long_overlap_reorder, mapping = aes(x=var_name, y=sd, fill=ostrom)) +
+  geom_boxplot(outliers = FALSE, coef=0) +
+  geom_hline(yintercept = 0, linetype=2) +
+  #scale_fill_manual(values=c15)+
+  coord_flip()+
+  theme_bw()+
+  facet_wrap(vars(groups_k6))
+
 
 #----Create violin plots-------------
 df_all <- as.data.frame(scale(rst), na.rm = TRUE)

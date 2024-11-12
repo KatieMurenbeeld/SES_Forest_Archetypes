@@ -79,7 +79,7 @@ k6_long_reorder <- k6_long %>%
                             "pm25", "fedrich", 
                             "treeage", "pct_forpay", "pct_delmill",
                             "netmig", "comm_cap", "aip", 
-                            "travtime", "hsbrd", "engbrd"))
+                            "travtime", "hsbrd", "engbrd", "lesshs"))
 
 k6_long_reorder <- k6_long_reorder %>%
   mutate(ostrom = case_when(var_name == "treecov" | var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "whp" ~ "resource system",
@@ -168,10 +168,12 @@ k6_long_overlap_reorder <- k6_long_join %>%
                                 "distwild",
                                 "pm25", "fedrich", 
                                 "treeage", "pct_forpay", "pct_delmill",
-                                "netmig", "comm_cap", "aip", 
-                                "travtime", "hsbrd", "engbrd"))
+                                "netmig", "comm_cap", "aip",
+                                "travtime", "hsbrd", "engbrd"
+                                #"lesshs"
+                                ))
 
-k6_long_overlap_reorder <- k6_long_overlap_reorder %>% # need to remove dist to critical habitat
+k6_long_overlap_reorder <- k6_long_overlap_reorder %>% # need to remove dist to critical habitat and less hs
   mutate(ostrom = case_when(var_name == "treecov" | var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "whp" ~ "resource system",
                             var_name == "distwild" | var_name == "forgain" ~ "resource unit",
                             var_name == "fedrich" | var_name == "pm25" | var_name == "treeage" | var_name == "pct_forpay" | var_name == "pct_delmill" | var_name == "netmig" | var_name == "comm_cap" | var_name == "aip" | var_name == "travtime" | var_name == "hsbrd" | var_name == "engbrd" | var_name == "lesshs" ~ "users"))
@@ -212,7 +214,7 @@ k6_sd_overlap_reorder <- k6_sd_overlap %>%
                                 "treeage", "pct_forpay", 
                                 #"pct_delmill",
                                 "netmig", "comm_cap", "aip", 
-                                "travtime", "hsbrd", "engbrd"))
+                                "travtime", "hsbrd", "engbrd", "lesshs"))
 
 k6_sd_long_overlap_reorder <- k6_sd_overlap_reorder %>% # need to remove treecover, pm25, and pct_delmill
   mutate(ostrom = case_when(var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "whp" ~ "resource system",
@@ -220,7 +222,7 @@ k6_sd_long_overlap_reorder <- k6_sd_overlap_reorder %>% # need to remove treecov
                             var_name == "fedrich" | var_name == "treeage" | var_name == "pct_forpay" | var_name == "netmig" | var_name == "comm_cap" | var_name == "aip" | var_name == "travtime" | var_name == "hsbrd" | var_name == "engbrd" | var_name == "lesshs" ~ "users"))
 
 
-k6_sd_overlap <- ggplot(k6_long_overlap_reorder, aes(x = var_name, y = sd, fill = ostrom)) +
+k6_sd_overlap <- ggplot(k6_sd_long_overlap_reorder, aes(x = var_name, y = sd, fill = ostrom)) +
   geom_col() +
   #scale_fill_brewer(palette = "Set2") +
   coord_flip() +

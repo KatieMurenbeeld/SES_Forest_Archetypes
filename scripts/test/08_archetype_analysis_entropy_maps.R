@@ -39,7 +39,6 @@ fs_reg.proj <- fs_reg %>%
 fs_reg.crop <- st_crop(fs_reg.proj, ext(rst_sc))
 
 # read in the 50km buffer shape
-
 nf_buffers <- read_sf(here::here("data/processed/nf_buffers_50k_2024-10-22.shp"))
 
 # get the average entropy score for each forest
@@ -174,6 +173,115 @@ ggsave(here::here(paste0("outputs/plots/ent_all_nf_", Sys.Date(), ".png")),
        ent_all_nf_map, height = 5, width = 7, dpi = 300)
 
 
+### Maps of "exceptional" forests
+nf0118_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0118")
+nf0621_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0621")
+nf0903_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0903")
+nf0909_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0909")
+
+nf0118_ent <- ent_sf %>%
+  filter(FORESTORGC == "0118")
+nf0621_ent <- ent_sf %>%
+  filter(FORESTORGC == "0621")
+nf0903_ent <- ent_sf %>%
+  filter(FORESTORGC == "0903")
+nf0909_ent <- ent_sf %>%
+  filter(FORESTORGC == "0909")
+
+crs(ent_all) <- crs(nf0118_shp)
+crs(ent_eco_k6) <- crs(nf0118_shp)
+crs(ent_soc_k6) <- crs(nf0118_shp)
+
+nf0118_ent_rst <- crop(ent_soc_k6, nf0118_shp, mask = TRUE)
+nf0118_ent_rst_df <- nf0118_ent_rst$all_ent_conus %>% as.data.frame(xy = TRUE)
+
+nf0118_ent_all_map <- ggplot() +
+  geom_raster(aes(x = nf0118_ent_rst_df$x, y = nf0118_ent_rst_df$y, fill = nf0118_ent_rst_df$all_ent_conus)) +
+  geom_sf(data = nf0118_ent, fill = NA, color = "black") +
+  labs(title = "Dakota Grasslands Entropy",
+       fill = "Entropy") +
+  scale_fill_viridis(limits = c(0, 1)) +
+  theme_bw() + 
+  theme(text = element_text(size = 20),
+        legend.position = "right",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
+nf0118_ent_all_map
+
+
+nf0621_ent_rst <- crop(ent_soc_k6, nf0621_shp, mask = TRUE)
+nf0621_ent_rst_df <- nf0621_ent_rst$all_ent_conus %>% as.data.frame(xy = TRUE)
+
+nf0621_ent_all_map <- ggplot() +
+  geom_raster(aes(x = nf0621_ent_rst_df$x, y = nf0621_ent_rst_df$y, fill = nf0621_ent_rst_df$all_ent_conus)) +
+  geom_sf(data = nf0621_ent, fill = NA, color = "black") +
+  labs(title = "Colville NF Entropy",
+       fill = "Entropy") +
+  scale_fill_viridis(limits = c(0, 1)) +
+  theme_bw() + 
+  theme(text = element_text(size = 20),
+        legend.position = "right",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
+nf0621_ent_all_map
+
+nf0903_ent_rst <- crop(ent_soc_k6, nf0903_shp, mask = TRUE)
+nf0903_ent_rst_df <- nf0903_ent_rst$all_ent_conus %>% as.data.frame(xy = TRUE)
+
+nf0903_ent_all_map <- ggplot() +
+  geom_raster(aes(x = nf0903_ent_rst_df$x, y = nf0903_ent_rst_df$y, fill = nf0903_ent_rst_df$all_ent_conus)) +
+  geom_sf(data = nf0903_ent, fill = NA, color = "black") +
+  labs(title = "Chippewa NF Entropy",
+       fill = "Entropy") +
+  scale_fill_viridis(limits = c(0, 1)) +
+  theme_bw() + 
+  theme(text = element_text(size = 20),
+        legend.position = "right",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
+nf0903_ent_all_map
+
+nf0909_ent_rst <- crop(ent_soc_k6, nf0909_shp, mask = TRUE)
+nf0909_ent_rst_df <- nf0909_ent_rst$all_ent_conus %>% as.data.frame(xy = TRUE)
+
+nf0909_ent_all_map <- ggplot() +
+  geom_raster(aes(x = nf0909_ent_rst_df$x, y = nf0909_ent_rst_df$y, fill = nf0909_ent_rst_df$all_ent_conus)) +
+  geom_sf(data = nf0909_ent, fill = NA, color = "black") +
+  labs(title = "Superior NF Entropy",
+       fill = "Entropy") +
+  scale_fill_viridis(limits = c(0, 1)) +
+  theme_bw() + 
+  theme(text = element_text(size = 20),
+        legend.position = "right",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
+nf0909_ent_all_map
+
+nf0612_ent_rst <- crop(ent_soc_k6, nf0612_shp, mask = TRUE)
+nf0612_ent_rst_df <- nf0612_ent_rst$all_ent_conus %>% as.data.frame(xy = TRUE)
+
+nf0612_ent_all_map <- ggplot() +
+  geom_raster(aes(x = nf0612_ent_rst_df$x, y = nf0612_ent_rst_df$y, fill = nf0612_ent_rst_df$all_ent_conus)) +
+  geom_sf(data = nf0612_ent, fill = NA, color = "black") +
+  labs(title = "Siuslaw NF Entropy",
+       fill = "Entropy") +
+  scale_fill_viridis(limits = c(0, 1)) +
+  theme_bw() + 
+  theme(text = element_text(size = 20),
+        legend.position = "right",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
+nf0612_ent_all_map
+
 # Create maps or scatter plots of Fuzzy ELSA values
 
 ## Entropy All
@@ -222,6 +330,8 @@ nf0903_shp <- nf_buffers %>%
   filter(FORESTORGC == "0903")
 nf0909_shp <- nf_buffers %>%
   filter(FORESTORGC == "0909")
+nf0612_shp <- nf_buffers %>%
+  filter(FORESTORGC == "0612")
 
 nf0118_ent <- ent_sf %>%
   filter(FORESTORGC == "0118")
@@ -231,6 +341,8 @@ nf0903_ent <- ent_sf %>%
   filter(FORESTORGC == "0903")
 nf0909_ent <- ent_sf %>%
   filter(FORESTORGC == "0909")
+nf0612_ent <- ent_sf %>%
+  filter(FORESTORGC == "0612")
 
 
 mean_ent_all_nf0118 <- ggplot() +
@@ -321,7 +433,9 @@ ggsave(here::here(paste0("outputs/plots/ent_soc_k6_nf_mean_", Sys.Date(), ".png"
 # scatter plot
 # add a region column to the fesla_sf shapefile
 ent_sf <- ent_sf %>%
-  mutate(region = substr(FORESTORGC, 1, 2))
+  mutate(region = substr(FORESTORGC, 1, 2),
+         ent_eco_sc = scale(ent_k6_eco),
+         ent_soc_sc = scale(ent_k6_soc))
 
 test_scatter_k3 <- ent_sf %>%
   ggplot(aes(x=ent_k3_eco, y=ent_k3_soc, group=region, color=region)) +
@@ -346,6 +460,12 @@ test_scatter_k6 <- ent_sf %>%
 test_scatter_k6
 ggsave(here::here(paste0("outputs/plots/test_ent_k6_scatter_", Sys.Date(), ".png")), test_scatter_k6, 
        width = 4, height = 4, dpi = 300)
+
+test_scatter_sc <- ent_sf %>%
+  ggplot(aes(x=ent_soc_sc, y=ent_eco_sc, group=region, color=region)) +
+           geom_point()
+test_scatter_sc
+
 
 test_scatter <- ent_sf %>%
   ggplot(aes(x=ent_k6_soc, y=ent_all, group=region, color=region)) +

@@ -32,7 +32,7 @@ names(dataset) <- names(sgfcm_all_attri_sc)
 # FCM seed = 1234, Silhouette index = 0.48, k = 6, m = 1.9, window =  7x7 (w2), alpha = 0.6, beta = 0.4
 # FCM seed = 1234, Silhouette index = 0.45, k = 8, m = 1.9, window =  3x3 (w1), alpha = 0.5, beta = 0.4
 
-w1 <- matrix(1, nrow = 3, ncol = 3)
+w2 <- matrix(1, nrow = 7, ncol = 7)
 
 SGFCM_all_result_k6 <- SGFCMeans(dataset, k = 6, m = 1.9, standardize = FALSE,
                                  lag_method = "mean",
@@ -165,7 +165,7 @@ ggsave(here::here(paste0("outputs/plots/usfs_nf_undecided_thresholds_", Sys.Date
 
 #----from the undecided threshold plot, find the "outliers"------
 undecided_plot <- ggplot(data = undecided_df %>%
-                           filter(forest == "0805"), mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided), color = forest)) + 
+                           filter(forest == "0601" | forest == "0621"), mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided), color = forest)) + 
   geom_line() + 
   facet_wrap(~region, ncol = 4) + 
   theme(legend.position = "right")

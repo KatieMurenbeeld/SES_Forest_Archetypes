@@ -87,18 +87,57 @@ dom_arch <- left_join(ent_nf, dom_arch, by = c("FORESTORGC" = "FORESTO"))
 
 dom_arch_df <- dom_arch %>%
   dplyr::select(FORESTNA, FORESTORGC, REGION, value, max_pct, shan_dv, shn_dv_, ent_all, ent_k6_eco, ent_k6_soc) %>%
-  st_drop_geometry() 
+  st_drop_geometry() %>%
+  mutate(ent_eco_sc = scale(ent_k6_eco)[1:109]) %>% 
+  mutate(ent_soc_sc = scale(ent_k6_soc)[1:109]) %>%
+  mutate(eco_to_soc = case_when(ent_eco_sc < 0 & ent_soc_sc < 0 ~ "low_eco_low_soc",
+                                ent_eco_sc < 0 & ent_soc_sc > 0 ~ "low_eco_high_soc",
+                                ent_eco_sc > 0 & ent_soc_sc < 0 ~ "high_eco_low_soc",
+                                ent_eco_sc > 0 & ent_soc_sc > 0 ~ "high_eco_high_soc"))
   #%>% filter(value != 0)
+names(dom_arch_df) <- c("forest_name", "forest_num", "region", "dom_archetype", "pct_area_dom_arch", "shan_diverse", "shan_diverse_norm", "entropy_all", "entropy_eco", "entropy_soc", "ent_eco_sc", "ent_soc_sc", "eco_to_soc")
+
+write_csv(dom_arch_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_", Sys.Date(), ".csv")))
 
 test_scatter <- dom_arch_df %>%
-  ggplot(aes(x=scale(ent_k6_soc), y=scale(ent_k6_eco), group=as.factor(value), color=as.factor(value))) +
+  ggplot(aes(x=ent_soc_sc, y=ent_eco_sc, group=as.factor(value), color=as.factor(value))) +
   geom_point() + 
   geom_hline(yintercept = 0) + 
   geom_vline(xintercept = 0) +
-  xlim(-2.5, 2.5) +
-  ylim(-2.5, 2.5) +
+  xlim(-4, 4) +
+  ylim(-4, 4) +
+  scale_color_brewer(palette = "Set2") + 
   theme_bw() +
   theme(legend.position="bottom")
 test_scatter
+
+test_scatter <- dom_arch_df %>%
+  ggplot(aes(x=scale(ent_k6_soc), y=scale(ent_k6_eco), group=REGION, color=max_pct >= 59.5)) +
+  geom_point() + 
+  geom_hline(yintercept = 0) + 
+  geom_vline(xintercept = 0) +
+  xlim(-4, 4) +
+  ylim(-4, 4) +
+  scale_colour_manual(name = 'Dom arch > 60%', values = setNames(c('red','green'),c(T, F))) +
+#  scale_color_brewer(palette = "Set2") + 
+  theme_bw() +
+  theme(legend.position="bottom")
+test_scatter
+
+soc_eco_ent_sc <- dom_arch_df %>%
+  ggplot(aes(x=ent_soc_sc, y=ent_eco_sc, color=as.factor(value), size = max_pct, alpha = 0.25)) +
+  geom_point() + 
+  geom_hline(yintercept = 0) + 
+  geom_vline(xintercept = 0) +
+  xlim(-3.75, 3.75) +
+  ylim(-3.75, 3.75) +
+  scale_color_brewer(palette = "Set2") + 
+  theme_bw() +
+  guides(size = "none") +
+  guides(alpha = "none") +
+  theme(legend.position="bottom")
+soc_eco_ent_sc
+ggsave(here::here(paste0("outputs/plots/soc_eco_ent_sc_scatter_", Sys.Date(), ".png")),
+       soc_eco_ent_sc, height = 4, width = 4, dpi = 300)
 
                                                                                                

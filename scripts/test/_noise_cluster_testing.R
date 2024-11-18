@@ -72,3 +72,6 @@ sgfcm_n1_ent_conus <- calcUncertaintyIndex(as.matrix(as.data.frame(sgfcm_n1_belo
 sgfcm_n1_ent_conus <- cbind(sgfcm_n1_belong_df, sgfcm_n1_ent_conus)
 sgfcm_n1_ent_rst_conus <- rast(sgfcm_n1_ent_conus)
 plot(sgfcm_n1_ent_rst_conus$sgfcm_n1_ent_conus)
+
+# slightly different cluster distribution with noise cluster
+# still getting high (>0.9) entropy values

@@ -80,6 +80,55 @@ plot(arch_rst_crop$Groups)
 arch_rst_belong <- subset(arch_rst_crop, 1:6)
 plot(arch_rst_belong)
 
+arch_df <- as.data.frame(arch_rst, xy = FALSE)
+
+## calculate the average belongings for each archetype and plot histograms
+ave_belong_df <- arch_df %>%
+  group_by(Groups) %>%
+  summarise_all(mean)
+
+
+arch1 <- arch_df %>%
+  filter(Groups == 1) %>%
+  select(group1)
+arch2 <- arch_df %>%
+  filter(Groups == 2) %>%
+  select(group2)
+arch3 <- arch_df %>%
+  filter(Groups == 3) %>%
+  select(group3)
+arch4 <- arch_df %>%
+  filter(Groups == 4) %>%
+  select(group4)
+arch5 <- arch_df %>%
+  filter(Groups == 5) %>%
+  select(group5)
+arch6 <- arch_df %>%
+  filter(Groups == 6) %>%
+  select(group6)
+
+arch_df %>%
+  filter(Groups == 6) %>%
+  ggplot(., aes(x = group6)) + 
+  geom_histogram(fill = "steelblue") +
+  xlim(0, 1) +
+  labs(title = "Multiple Histograms", x = "Value", y = "Frequency") +
+  theme_minimal()
+
+hist(arch1$group1, main = "Histogram 1", xlab = "Value", ylab = "Frequency",
+     col = "powderblue")
+# Create the second histogram
+hist(arch2$group2, main = "Histogram 2", xlab = "Value", ylab = "Frequency",
+     col = "pink", add = TRUE)
+hist(arch3$group3, main = "Histogram 2", xlab = "Value", ylab = "Frequency",
+     col = "yellow", add = TRUE)
+hist(arch4$group4, main = "Histogram 2", xlab = "Value", ylab = "Frequency",
+     col = "orange", add = TRUE)
+hist(arch5$group5, main = "Histogram 2", xlab = "Value", ylab = "Frequency",
+     col = "purple3", add = TRUE)
+hist(arch6$group6, main = "Histogram 2", xlab = "Value", ylab = "Frequency",
+     col = "salmon", add = TRUE)
+
 #----create a map of the NF + buffers with final archetype groups and regional boundaries-----
 sgfcm.k6.all.df <- arch_rst_crop$Groups %>% as.data.frame(xy = TRUE)
 

@@ -172,8 +172,35 @@ undecided_plot <- ggplot(data = undecided_df %>%
 undecided_plot
 
 
+#----determine the average maximum belonging for each forest----
+ave_belong_df <- data.frame(
+  region = as.character(),
+  forest = as.character(),
+  ave_max = as.numeric(),
+  med_max = as.numeric()
+)
 
-
+for (nf in nf_buffers$FORESTORGC) {
+  region <- nf_buffers$REGION[nf_buffers$FORESTORGC == nf]
+  forest <- nf
+  tmp_shp <- nf_buffers %>%
+    filter(FORESTORGC == nf)
+  tmp_rast <- crop(arch_rst_belong, tmp_shp, mask = TRUE)
+  tmp_df <- as.data.frame(tmp_rast, xy = FALSE)
+  tmp_df <- tmp_df %>%
+    mutate(max_belong = pmax(group1, group2, group3, group4, group5, group6),
+           max_belong_arch = names(.)[max.col(., 'first')], 
+           forestorgc = nf)
+  ave_max <- mean(tmp_df$max_belong)
+  med_max <- median(tmp_df$max_belong)
+  ave_belong_df[nrow(ave_belong_df) + 1, ] <- as.list(c(region,
+                                                      forest, 
+                                                      ave_max,
+                                                      med_max))
+}  
+  
+#----save the data frame as a csv----
+write_csv(ave_belong_df, here::here(paste0("outputs/tables/usfs_nf_max_belongings_", Sys.Date(), ".csv")))
 
 #----determine the forests with a "dominant" archetype-------
 v <- nf_buffers %>% st_cast("MULTIPOLYGON")

@@ -156,15 +156,20 @@ all_bootvalues <- boot_group_validation_test(SGFCM_all_result_k6, nsim = 10, max
                                         tol = 0.0001, verbose = FALSE)
 saveRDS(all_bootvalues, here::here("data/processed/all_k6_bootvalues.RDS"))
 
-all_melted_df <- reshape2::melt(all_bootvalues$group_consistency)
+#all_melted_df <- reshape2::melt(all_bootvalues$group_consistency)
 #write_csv(all_melted_df, here::here(paste0("data/outputs/all_k6_bootstrap_", Sys.Date(), ".csv")))
 
+# read in values - run on Borah
+all_melted_df <- read_csv(here::here("outputs/tables/all_k6_bootvalues_df_2024-11-25.csv"))
 all_melted_df$variable <- as.factor(all_melted_df$variable)
 
-ggplot() +
+boot_valid <- ggplot() +
   geom_histogram(mapping = aes(x = value), data = all_melted_df, bins = 30) +
-  labs(title = "all attributes: stability of clusters", subtitle = "for 100 iterations",
+  labs(title = "all attributes: stability of clusters", subtitle = "for 1000 iterations",
        x = "Jaccard index") +
   facet_wrap(vars(variable), ncol=3)
+boot_valid
 
+ggsave(here::here(paste0("outputs/plots/cluster_stability_boot_valid_1000_", Sys.Date(), ".png")), 
+       plot = boot_valid, width = 6, height = 4, dpi = 300) 
 

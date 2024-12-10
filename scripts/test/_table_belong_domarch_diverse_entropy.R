@@ -19,7 +19,7 @@ dom_arch_diverse_ent_belong_df <- dom_arch_df %>%
 
 #----save the data frame as a csv----
 write_csv(dom_arch_diverse_ent_belong_df, here::here(paste0("outputs/tables/usfs_nf_dom_arch_diverse_ent_belong_", Sys.Date(), ".csv")))
-
+dom_arch_diverse_ent_belong_df <- read_csv(here::here("outputs/tables/usfs_nf_dom_arch_diverse_ent_belong_2024-12-02.csv"))
 # quickly check the mean_max to the ent_all
 
 test_scatter <- dom_arch_diverse_ent_belong_df %>%

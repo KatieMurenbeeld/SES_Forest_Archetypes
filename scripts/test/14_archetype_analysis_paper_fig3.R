@@ -11,6 +11,7 @@ library(distributional)
 library(ggdist)
 library(ggsci)
 library(tigris)
+library(MetBrewer)
 
 # Load the data
 fs_nf <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeForest.shp")
@@ -46,7 +47,8 @@ all_k6_rg_nf_map <- ggplot() +
   geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 1.1) +
   #geom_sf_text(data = reg_cent, aes(label = REGION), fontface = "bold") +
   geom_sf_label(data = reg_cent, aes(label = REGION), nudge_x = 0.5, nudge_y = 0.5, alpha = 0.5, fontface = "bold") +
-  scale_fill_brewer(palette = "Set2") +
+  #scale_fill_brewer(palette = "Set2") +
+  scale_fill_met_d("Hokusai3") +
   labs(#title = "All Attributes:",
        #subtitle = "k=6, m=1.9, alpha = 0.6, beta = 0.4, window = 7x7", 
        fill = "Archetypes") +

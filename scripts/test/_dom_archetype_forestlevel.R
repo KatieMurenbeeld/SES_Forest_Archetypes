@@ -12,6 +12,7 @@ library(ggdist)
 library(ggsci)
 library(tigris)
 library(exactextractr)
+library(MetBrewer)
 
 # Load the data
 sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
@@ -97,10 +98,20 @@ dom_arch_df <- dom_arch %>%
   #%>% filter(value != 0)
 names(dom_arch_df) <- c("forest_name", "forest_num", "region", "dom_archetype", "pct_area_dom_arch", "shan_diverse", "shan_diverse_norm", "entropy_all", "entropy_eco", "entropy_soc", "ent_eco_sc", "ent_soc_sc", "eco_to_soc")
 
+#write_csv(dom_arch_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_", Sys.Date(), ".csv")))
+dom_arch_df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_2024-11-14.csv"))
+
+dom_arch_df <- dom_arch_df %>%
+  mutate(ent_all_sc = scale(entropy_all)[1:109],
+         shan_div_sc = scale(shan_diverse)[1:109]) %>%
+  mutate(div_to_ent = case_when(ent_all_sc < 0 & shan_div_sc < 0 ~ "low_ent_low_div",
+                                ent_all_sc < 0 & shan_div_sc > 0 ~ "low_ent_high_div",
+                                ent_all_sc > 0 & shan_div_sc < 0 ~ "high_ent_low_div",
+                                ent_all_sc > 0 & shan_div_sc > 0 ~ "high_ent_high_div"))
 write_csv(dom_arch_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_", Sys.Date(), ".csv")))
 
 test_scatter <- dom_arch_df %>%
-  ggplot(aes(x=ent_soc_sc, y=ent_eco_sc, group=as.factor(value), color=as.factor(value))) +
+  ggplot(aes(x=ent_soc_sc, y=ent_eco_sc, group=as.factor(dom_archetype), color=as.factor(dom_archetype))) +
   geom_point() + 
   geom_hline(yintercept = 0) + 
   geom_vline(xintercept = 0) +
@@ -112,7 +123,7 @@ test_scatter <- dom_arch_df %>%
 test_scatter
 
 test_scatter <- dom_arch_df %>%
-  ggplot(aes(x=scale(ent_k6_soc), y=scale(ent_k6_eco), group=REGION, color=max_pct >= 59.5)) +
+  ggplot(aes(x=scale(entropy_soc), y=scale(ent_eco_sc), group=region, color=pct_area_dom_arch >= 59.5)) +
   geom_point() + 
   geom_hline(yintercept = 0) + 
   geom_vline(xintercept = 0) +
@@ -125,19 +136,61 @@ test_scatter <- dom_arch_df %>%
 test_scatter
 
 soc_eco_ent_sc <- dom_arch_df %>%
-  ggplot(aes(x=ent_soc_sc, y=ent_eco_sc, color=as.factor(value), size = max_pct, alpha = 0.25)) +
+  ggplot(aes(x=ent_soc_sc, y=ent_eco_sc, color=as.factor(dom_archetype), size = pct_area_dom_arch, alpha = 0.25)) +
   geom_point() + 
   geom_hline(yintercept = 0) + 
   geom_vline(xintercept = 0) +
   xlim(-3.75, 3.75) +
   ylim(-3.75, 3.75) +
-  scale_color_brewer(palette = "Set2") + 
+  #scale_color_brewer(palette = "Set2") + 
+  scale_color_met_d("Hokusai3") +
   theme_bw() +
   guides(size = "none") +
   guides(alpha = "none") +
-  theme(legend.position="bottom")
+  annotate("text", x = 2, y = 2, label= "high-high") + 
+  annotate("text", x = -2, y = -3, label = "low-low") +
+  annotate("text", x = -1.27, y = 2, label= "high-low") + 
+  annotate("text", x = 2, y = -3, label = "low-high") +
+  theme(legend.position = "inside",
+        legend.position.inside = c(0.11, 0.787)) +
+  labs(x = "Social Entropy (scaled)",
+       y = "Ecological Entropy (scaled)",
+       color = "Archetype",
+       size = "% Area Dom. Archetype")
 soc_eco_ent_sc
 ggsave(here::here(paste0("outputs/plots/soc_eco_ent_sc_scatter_", Sys.Date(), ".png")),
        soc_eco_ent_sc, height = 4, width = 4, dpi = 300)
 
-                                                                                               
+axLabels <- c("", "Low","", "", "","High", "")
+div_ent <- dom_arch_df %>%
+  ggplot() +
+  geom_point(aes(x=scale(entropy_all), y=scale(shan_diverse), 
+                 color=as.factor(dom_archetype), size = pct_area_dom_arch, 
+                 alpha = 0.25), show.legend = TRUE) + 
+  geom_hline(yintercept = 0) + 
+  geom_vline(xintercept = 0) +
+  #scale_color_brewer(palette = "Set2") + 
+  scale_color_met_d("Hokusai3") +
+  #scale_x_continuous(breaks = c(-3,-2,-1,0,1,2,3), labels = axLabels) +
+  #scale_y_continuous(breaks = c(-3,-2,-1,0,1,2,3), labels = axLabels) +
+  xlim(-3, 3) +
+  ylim(-3, 3) +
+  scale_size_continuous(name = "% Area Dom. Archetype") + 
+  theme_bw() +
+  guides(alpha = "none") +
+  guides(size = "none") +
+  annotate("text", x = 2, y = 2, label= "high-high") + 
+  annotate("text", x = -2, y = -3, label = "low-low") +
+  annotate("text", x = -1.25, y = 2, label= "high-low") + 
+  annotate("text", x = 2, y = -3, label = "low-high") +
+  theme(legend.position = "inside",
+        legend.position.inside = c(0.11, 0.787)) +
+  labs(x = "Entropy (scaled)",
+       y = "Diveristy (scaled)",
+       color = "Archetype",
+       size = "% Area Dom. Archetype")
+div_ent
+
+ggsave(here::here(paste0("outputs/plots/diverse_entropy_sc_scatter_", Sys.Date(), ".png")),
+       div_ent, height = 4, width = 4, dpi = 300)
+       

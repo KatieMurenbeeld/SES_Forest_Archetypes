@@ -201,16 +201,47 @@ for (nf in nf_buffers$FORESTORGC) {
 undecided_df <- read_csv(here::here("outputs/tables/usfs_nf_undecided_thresholds_2024-10-24.csv"))
 
 #----plot the results as regional panels with a line for each forest in the region----
+#my_colors <- list(rep("darkgrey", 109))
+region_names <- list(
+  '01'="Region 01",
+  '02'="Region 02",
+  '03'="Region 03",
+  '04'="Region 04",
+  '05'="Region 05",
+  '06'="Region 06",
+  '08'="Region 08",
+  '09'="Region 09"
+)
+
+region_labeller <- function(variable,value){
+  return(region_names[value])
+}
+
 undecided_plot <- ggplot(data = undecided_df, mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided), color = forest)) + 
   geom_line() + 
-  facet_wrap(~region, ncol = 4) + 
-  theme(legend.position = "none")
+#  scale_colour_manual(name = "forest", values = my_colors, limits = force) +
+  facet_wrap(~region, ncol = 4, labeller = region_labeller) + 
+  theme_bw() +
+  theme(legend.position = "none") + 
+  labs(x = "Belongings", 
+       y = "Area Forest of Undecided Pixels (%)")
 undecided_plot
 
 # save the plot
 ggsave(here::here(paste0("outputs/plots/usfs_nf_undecided_thresholds_", Sys.Date(), ".png")), 
        undecided_plot, width = 8, height = 5, dpi = 300)
 
+
+test_plot <- undecided_df %>%
+  group_by(forest) %>%
+  ggplot(data = undecided_df, mapping = aes(x = as.numeric(threshold), y = as.numeric(pct_undecided))) + 
+  geom_line() + 
+  facet_wrap(~region, ncol = 4) + 
+  theme_bw() +
+  theme(legend.position = "none") + 
+  labs(x = "Belongings", 
+       y = "Area Forest of Undecided Pixels (%)")
+test_plot
 
 #----from the undecided threshold plot, find the "outliers"------
 undecided_plot <- ggplot(data = undecided_df %>%

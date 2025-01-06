@@ -1,0 +1,268 @@
+library(tidyverse)
+library(terra)
+library(sf)
+library(ggplot2)
+library(exactextractr)
+library(tigris)
+library(MetBrewer)
+
+# Load the data
+sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
+sgfcm_all_attri_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
+sgfcm_all_k6_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k6_2024-10-15.tif")
+
+# Load the USFS boundaries
+fs_nf <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeForest.shp")
+fs_reg <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeRegion.shp")
+
+projection <- "epsg: 5070"
+
+fs_nf.proj <- fs_nf %>% 
+  filter(REGION != "10") %>%
+  st_transform(., crs=projection)
+fs_nf.crop <- st_crop(fs_nf.proj, ext(sgfcm_all_attri_sc))
+fs_reg.proj <- fs_reg %>% 
+  filter(REGION != "10") %>%
+  st_transform(., crs=projection)
+fs_reg.crop <- st_crop(fs_reg.proj, ext(sgfcm_all_attri_sc))
+
+# read in the 50km buffer shape
+
+nf_buffers <- read_sf(here::here("data/processed/nf_buffers_50k_2024-10-22.shp"))
+
+# crop the buffers to the outline of conus
+reg_test <- fs_reg.crop %>%
+  filter(REGION == "06")
+
+nf_buff_test <- nf_buffers %>%
+  filter(FORESTORGC == "0612")
+
+test_int <- st_intersection(nf_buff_test, reg_test)
+plot(test_int$geometry)
+
+nf_buffers_int <- st_intersection(nf_buffers, fs_reg.crop)
+
+
+# read in the national forest level shannon diversity shapefile and entropy shapefile 
+shan_nf <- read_sf(here::here("data/processed/shan_h_nf_2024-11-05.shp"))
+ent_nf <- read_sf(here::here("data/processed/ent_nf_2024-11-01.shp"))
+
+# calculate the archetype areas assuming crisp archetypes for each forest 
+buff <- nf_buffers_int
+
+v <- buff %>% st_cast("MULTIPOLYGON")
+z <- crop(sgfcm_all_k6_result, buff, mask = TRUE)
+
+x <- exact_extract(z, v, coverage_area = TRUE)
+names(x) <- v$FORESTORGC
+
+areas <- bind_rows(x, .id = "FORESTORGC") %>%
+  group_by(FORESTORGC, value) %>%
+  summarize(total_arch_area = sum(coverage_area)) %>%
+  group_by(FORESTORGC) %>%
+  mutate(proportion_pct = round((total_arch_area/sum(total_arch_area))*100, 2)) %>%
+  mutate(proportion = (total_arch_area/sum(total_arch_area)))
+
+areas <- areas %>% 
+  replace_na(list(value = 0))
+
+areas <- areas %>%
+  group_by(FORESTORGC) %>%
+  mutate(max_pct = max(proportion_pct)) %>%
+  ungroup()
+
+
+#----Archetype Validation with Common Project Types----
+
+# load pals data
+
+pals_df <- read_delim("~/Analysis/NEPA_Efficiency/data/original/pals_ongoing_projects_11-2022.csv", delim = ";")
+
+# Filter for date and select Forest Number and Purposes
+pals_df_2009 <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  dplyr::select(FOREST_ID, `FC Facility management – purpose`, 
+                `FR Research – purpose`, `HF Fuels management – purpose`, `HR Heritage resource management – purpose`,
+                `LM Land ownership management – purpose`, `LW Land acquisition – purpose`,
+                `MG Minerals and geology – purpose`, `PN Land management planning – purpose`,
+                `RD Road management – purpose`, `RG Grazing management – purpose`, `RO Regulations, directives, orders – purpose`,
+                `RU Special area management – purpose`, `RW Recreation management – purpose`,
+                `SU Special use management – purpose`, `TM Forest products – purpose`, 
+                `VM Vegetation management (non-forest products) – purpose`,
+                `WF Wildlife, fish, rare plants – purpose`, `WM Water management – purpose`) %>%
+  group_by(FOREST_ID) %>%
+  summarise(p_facilities = sum(`FC Facility management – purpose`), 
+            p_research = sum(`FR Research – purpose`),
+            p_haz_fuels = sum(`HF Fuels management – purpose`),
+            p_heritage = sum(`HR Heritage resource management – purpose`),
+            p_land_own = sum(`LM Land ownership management – purpose`), 
+            p_land_acqui = sum(`LW Land acquisition – purpose`), 
+            p_min_geo = sum(`MG Minerals and geology – purpose`), 
+            p_land_mngt_plan = sum(`PN Land management planning – purpose`),
+            p_road = sum(`RD Road management – purpose`), 
+            p_grazing = sum(`RG Grazing management – purpose`),
+            p_regulations = sum(`RO Regulations, directives, orders – purpose`),
+            p_spec_area = sum(`RU Special area management – purpose`), 
+            p_recreation = sum(`RW Recreation management – purpose`), 
+            p_spec_use = sum(`SU Special use management – purpose`),
+            p_forest_prod = sum(`TM Forest products – purpose`),
+            p_veg_mngt = sum(`VM Vegetation management (non-forest products) – purpose`), 
+            p_wildlife = sum(`WF Wildlife, fish, rare plants – purpose`), 
+            p_water = sum(`WM Water management – purpose`))
+
+areas_wide <- areas %>%
+  dplyr::select(-total_arch_area) %>%
+  pivot_wider(names_from = value, values_from = proportion_pct)
+
+pals_purpose_arch_pct_area <- left_join(pals_df_2009, areas_wide, by = join_by(FOREST_ID == FORESTORGC)) %>%
+  mutate_if(is.numeric, coalesce, 0)
+
+# could filter by forests with >70% in any specific archetype
+
+# try with archetypes 1 and 4 first
+dom_pct <- 50
+
+arche1 <-  pals_purpose_arch_pct_area %>%
+  filter(`1` >= dom_pct) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "one", 
+         pct_purpose = values/sum(values) * 100)
+
+arche2 <- pals_purpose_arch_pct_area %>%
+  filter(`2` >= dom_pct) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "two", 
+         pct_purpose = values/sum(values) * 100)
+
+arche3 <- pals_purpose_arch_pct_area %>%
+  filter(`3` >= dom_pct) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "three", 
+         pct_purpose = values/sum(values) * 100)
+
+arche4 <- pals_purpose_arch_pct_area %>%
+  filter(`4` >= dom_pct) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "four", 
+         pct_purpose = values/sum(values) * 100)
+
+arche5 <- pals_purpose_arch_pct_area %>%
+  filter(`5` >= dom_pct) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "five", 
+         pct_purpose = values/sum(values) * 100)
+
+arche6 <- pals_purpose_arch_pct_area %>%
+  filter(`6` >= dom_pct) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "six", 
+         pct_purpose = values/sum(values) * 100)
+
+arche_no_dom <- pals_purpose_arch_pct_area %>%
+  filter(`1` < dom_pct & `2` < dom_pct & `3` < dom_pct & `4` < dom_pct & `5` < dom_pct & `6` < dom_pct) %>%
+  filter(FOREST_ID != "0000" | FOREST_ID != "1004" | FOREST_ID != "1005" | FOREST_ID != "2400" | FOREST_ID != "2403" | FOREST_ID != "2408") %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "no dominant archetype (>50%)",
+         pct_purpose = values/sum(values) * 100)
+
+#arche1.4 <- left_join(arche1, arche4)
+arche_purposes <- rbind(arche1, arche2, arche3, arche4, arche5, arche6, arche_no_dom)
+
+arche_purposes$archetype <- factor(arche_purposes$archetype,
+                                   levels = c("one", "two", "three",
+                                              "four", "five", "six",
+                                              "no dominant archetype (>50%)"))
+
+ggplot(arche_no_dom, aes(x=purpose, y = pct_purpose)) +
+  geom_bar(stat="identity", width = 0.7, fill = "steelblue") +
+  theme_minimal()
+
+arch_all_purpose <- ggplot(arche_purposes, aes(x=purpose, y = pct_purpose, fill = archetype)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  scale_fill_discrete(limits=c("one", "two", "three", 
+                               "four", "five", "six",
+                               "no dominant archetype (>50%)")) + 
+  scale_fill_met_d("Hokusai3") +
+  theme_minimal() + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+arch_all_purpose
+ggsave(filename = here::here(paste0("outputs/plots/archetype_validation_test_", Sys.Date(), ".png")), 
+       plot = arch_all_purpose, 
+       width = 12, 
+       height = 4, dpi = 300)
+
+
+#----What does this mean for NEPA assessment times?----
+# selected forests from PMRC draft
+pals_df_sel <- pals_df %>%
+  filter(FOREST_ID %in% c("0511", "0909", "0402", "0801")) %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  group_by(FOREST_ID, `DECISION TYPE`) %>%
+  summarise(ave_days = mean(`ELAPSED DAYS`, na.rm = TRUE),
+            count = n())
+
+pals_count <- pals_df %>% 
+  select(FOREST_ID, `DECISION TYPE`) %>%
+  filter(FOREST_ID %in% c("0511", "0909", "0402", "0801")) %>%
+  group_by(FOREST_ID, `DECISION TYPE`) %>% 
+  summarise(count = n())
+
+pals_df_edays <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  group_by(FOREST_ID, `DECISION TYPE`) %>%
+  summarise(ave_days = mean(`ELAPSED DAYS`, na.rm = TRUE),
+            count = n())
+shan_df <- shan_h %>%
+  select(FORESTORGC, shan_div)
+
+pals_edays_shanh <- left_join(pals_df_edays, shan_df, by = c("FOREST_ID" = "FORESTORGC"))
+
+edays_shanh_plot <- ggplot(pals_edays_shanh, aes(shan_div, ave_days)) +
+  geom_point(aes(color = factor(`DECISION TYPE`)))
+edays_shanh_plot
+
+hist(pals_edays_shanh$ave_days)
+hist(pals_edays_shanh$shan_div)
+
+test_hist <- ggplot(pals_edays_shanh) +
+  geom_histogram(aes(mapping = shan_div, color = factor(`DECISION TYPE`)))
+test_hist
+
+test_shandiv <- pals_edays_shanh %>%
+  ggplot( aes(x=shan_div, fill=factor(`DECISION TYPE`))) +
+  geom_histogram( color="#e9ecef", alpha=0.5, position = 'identity') +
+  scale_fill_manual(values=c("#69b3a2", "#404080", "#404")) +
+  facet_wrap(~factor(`DECISION TYPE`)) +
+  theme_bw() +
+  labs(fill="")
+test_shandiv
+
+test_days <- pals_edays_shanh %>%
+  ggplot( aes(x=ave_days, fill=factor(`DECISION TYPE`))) +
+  geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+  scale_fill_manual(values=c("#69b3a2", "#404080", "#404")) +
+  theme_bw() +
+  labs(fill="")
+test_days

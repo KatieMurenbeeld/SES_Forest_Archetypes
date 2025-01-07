@@ -10,6 +10,7 @@ library(MetBrewer)
 sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 sgfcm_all_attri_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
 sgfcm_all_k6_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k6_2024-10-15.tif")
+nf_summ_df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_2024-12-11.csv")) 
 
 # Load the USFS boundaries
 fs_nf <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeForest.shp")
@@ -116,6 +117,27 @@ areas_wide <- areas %>%
 
 pals_purpose_arch_pct_area <- left_join(pals_df_2009, areas_wide, by = join_by(FOREST_ID == FORESTORGC)) %>%
   mutate_if(is.numeric, coalesce, 0)
+
+# Filter for date and summarise the elapsed days and NEPA type counts
+pals_df_2009_nepa_time <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  group_by(FOREST_ID) %>%
+  summarise(mean_nepa_time = mean(`ELAPSED DAYS`, na.rm = TRUE))
+
+pals_df_2009_nepa_type <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  group_by(FOREST_ID) %>%
+  count(`DECISION TYPE`) %>%
+  pivot_wider(names_from = `DECISION TYPE`, values_from = n, values_fill = 0) %>%
+  mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100)
+
+# combine with the nf archetype summary df
+nf_arch_summ_df <- left_join(pals_df_2009_nepa_time, pals_df_2009_nepa_type)
+nf_arch_summ_df <- right_join(nf_arch_summ_df, nf_summ_df, by = c("FOREST_ID" = "forest_num"))
+
+# save the csv file
+write_csv(nf_arch_summ_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_", Sys.Date(), ".csv")))
+
 
 # could filter by forests with >70% in any specific archetype
 

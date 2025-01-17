@@ -111,6 +111,41 @@ pals_df_2009 <- pals_df %>%
             p_wildlife = sum(`WF Wildlife, fish, rare plants – purpose`), 
             p_water = sum(`WM Water management – purpose`))
 
+pals_df_test <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
+  dplyr::select(`SIGNED FY`, FOREST_ID, REGION_ID, `ELAPSED DAYS`,
+                `FC Facility management – purpose`, 
+                `FR Research – purpose`, `HF Fuels management – purpose`, `HR Heritage resource management – purpose`,
+                `LM Land ownership management – purpose`, `LW Land acquisition – purpose`,
+                `MG Minerals and geology – purpose`, `PN Land management planning – purpose`,
+                `RD Road management – purpose`, `RG Grazing management – purpose`, `RO Regulations, directives, orders – purpose`,
+                `RU Special area management – purpose`, `RW Recreation management – purpose`,
+                `SU Special use management – purpose`, `TM Forest products – purpose`, 
+                `VM Vegetation management (non-forest products) – purpose`,
+                `WF Wildlife, fish, rare plants – purpose`, `WM Water management – purpose`) %>%
+  group_by(`SIGNED FY`, FOREST_ID) %>%
+  summarise(REGION = mean(as.numeric(REGION_ID)),
+            mean_assess_time = mean(`ELAPSED DAYS`), 
+            p_facilities = sum(`FC Facility management – purpose`), 
+            p_research = sum(`FR Research – purpose`),
+            p_haz_fuels = sum(`HF Fuels management – purpose`),
+            p_heritage = sum(`HR Heritage resource management – purpose`),
+            p_land_own = sum(`LM Land ownership management – purpose`), 
+            p_land_acqui = sum(`LW Land acquisition – purpose`), 
+            p_min_geo = sum(`MG Minerals and geology – purpose`), 
+            p_land_mngt_plan = sum(`PN Land management planning – purpose`),
+            p_road = sum(`RD Road management – purpose`), 
+            p_grazing = sum(`RG Grazing management – purpose`),
+            p_regulations = sum(`RO Regulations, directives, orders – purpose`),
+            p_spec_area = sum(`RU Special area management – purpose`), 
+            p_recreation = sum(`RW Recreation management – purpose`), 
+            p_spec_use = sum(`SU Special use management – purpose`),
+            p_forest_prod = sum(`TM Forest products – purpose`),
+            p_veg_mngt = sum(`VM Vegetation management (non-forest products) – purpose`), 
+            p_wildlife = sum(`WF Wildlife, fish, rare plants – purpose`), 
+            p_water = sum(`WM Water management – purpose`))
+
 areas_wide <- areas %>%
   dplyr::select(-total_arch_area) %>%
   pivot_wider(names_from = value, values_from = proportion_pct)
@@ -124,12 +159,28 @@ pals_df_2009_nepa_time <- pals_df %>%
   group_by(FOREST_ID) %>%
   summarise(mean_nepa_time = mean(`ELAPSED DAYS`, na.rm = TRUE))
 
+pals_df_2009_nepa_time_year <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
+  group_by(`SIGNED FY`, FOREST_ID) %>%
+  summarise(REGION = mean(as.numeric(REGION_ID)),
+            mean_nepa_time = mean(`ELAPSED DAYS`, na.rm = TRUE))
+
 pals_df_2009_nepa_type <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
   group_by(FOREST_ID) %>%
   count(`DECISION TYPE`) %>%
   pivot_wider(names_from = `DECISION TYPE`, values_from = n, values_fill = 0) %>%
   mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100)
+
+pals_df_2009_nepa_type_year <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
+  group_by(`SIGNED FY`, FOREST_ID) %>%
+  count(`DECISION TYPE`) %>%
+  pivot_wider(names_from = `DECISION TYPE`, values_from = n, values_fill = 0) %>%
+  mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100,
+         total_projs = ROD + DN + DM)
 
 # combine with the nf archetype summary df
 nf_arch_summ_df <- left_join(pals_df_2009_nepa_time, pals_df_2009_nepa_type)
@@ -138,6 +189,31 @@ nf_arch_summ_df <- right_join(nf_arch_summ_df, nf_summ_df, by = c("FOREST_ID" = 
 # save the csv file
 write_csv(nf_arch_summ_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_", Sys.Date(), ".csv")))
 
+# look at region 4 
+pals_arch_reg4 <- pals_purpose_arch_pct_area %>%
+  filter(FOREST_ID %in% c("0401", "0402", "0403", "0407", "0408", "0410", "0412", "0413", "0414", "0415", "0417", "0419"))
+
+pals_arch_reg4$FOREST_ID <- as.character(pals_arch_reg4$FOREST_ID)
+reg4 <- pals_arch_reg4 %>% 
+  group_by(FOREST_ID) %>%
+  summarise(across(is.numeric, mean, na.rm = TRUE))
+
+reg_4 <- pals_arch_reg4 %>% 
+  group_by(FOREST_ID) %>%
+  summarise(across(is.numeric, mean, na.rm = TRUE)) %>%
+  dplyr::select(1:19) %>%
+  pivot_longer(!FOREST_ID, names_to = "purpose", values_to = "count")
+
+reg4_projects <- ggplot(reg_4, aes(x=purpose, y = count)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  facet_wrap(~FOREST_ID) +
+  theme_minimal() + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+reg4_projects
+ggsave(here::here(paste0("outputs/plots/reg4_proj_purpose_by_forest_",
+                                        Sys.Date(), ".png")),
+       reg4_projects, width = 12, height = 10, dpi = 300)
 
 # could filter by forests with >70% in any specific archetype
 
@@ -288,3 +364,21 @@ test_days <- pals_edays_shanh %>%
   theme_bw() +
   labs(fill="")
 test_days
+
+
+## using pals_df_test create a time series plot facet wrap by region and each line a forest
+
+ggplot(pals_df_test, aes(x = `SIGNED FY`, y = mean_assess_time, color = FOREST_ID)) +
+  geom_line() +
+  theme(legend.position = "blank") +
+  facet_wrap(~REGION)
+
+# join pals_df_test to pals_df_2009_nepa_type_year and pals_df_2009_nepa_time_year?
+
+ggplot(pals_df_2009_nepa_type_year, aes(x = `SIGNED FY`, y = total_projs, color = FOREST_ID)) +
+  geom_line() +
+  theme(legend.position = "blank")
+  #facet_wrap(~REGION)
+
+
+

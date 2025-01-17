@@ -64,14 +64,14 @@ z <- crop(sgfcm_all_k6_result, buff, mask = TRUE)
 x <- exact_extract(z, v, coverage_area = TRUE)
 names(x) <- v$FORESTORGC
 
-areas <- bind_rows(x, .id = "FORESTORGC") %>%
+areas_nf <- bind_rows(x, .id = "FORESTORGC") %>%
   group_by(FORESTORGC, value) %>%
   summarize(total_arch_area = sum(coverage_area)) %>%
   group_by(FORESTORGC) %>%
   mutate(proportion_pct = round((total_arch_area/sum(total_arch_area))*100, 2)) %>%
   mutate(proportion = (total_arch_area/sum(total_arch_area)))
 
-areas <- areas %>% 
+areas_nf <- areas_nf %>% 
   replace_na(list(value = 0))
 
 areas <- areas %>%

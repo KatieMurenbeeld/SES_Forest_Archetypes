@@ -215,6 +215,58 @@ ggsave(here::here(paste0("outputs/plots/reg4_proj_purpose_by_forest_",
                                         Sys.Date(), ".png")),
        reg4_projects, width = 12, height = 10, dpi = 300)
 
+# look at region 5 
+pals_arch_reg5 <- pals_purpose_arch_pct_area %>%
+  filter(FOREST_ID %in% c("0501", "0502", "0503", "0504", "0505", "0506", "0507", "0508", "0509", "0510", "0511", "0512", "0513", "0514", "0515", "0516", "0517", "0519"))
+
+pals_arch_reg5$FOREST_ID <- as.character(pals_arch_reg5$FOREST_ID)
+reg5 <- pals_arch_reg5 %>% 
+  group_by(FOREST_ID) %>%
+  summarise(across(is.numeric, mean, na.rm = TRUE))
+
+reg_5 <- pals_arch_reg5 %>% 
+  group_by(FOREST_ID) %>%
+  summarise(across(is.numeric, mean, na.rm = TRUE)) %>%
+  dplyr::select(1:19) %>%
+  pivot_longer(!FOREST_ID, names_to = "purpose", values_to = "count")
+
+reg5_projects <- ggplot(reg_5, aes(x=purpose, y = count)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  facet_wrap(~FOREST_ID) +
+  theme_minimal() + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+reg5_projects
+ggsave(here::here(paste0("outputs/plots/reg5_proj_purpose_by_forest_",
+                         Sys.Date(), ".png")),
+       reg5_projects, width = 12, height = 10, dpi = 300)
+
+# look at region 8 
+pals_arch_reg8 <- pals_purpose_arch_pct_area %>%
+  filter(FOREST_ID %in% c("0801", "0802", "0803", "0804", "0805", "0806", "0807", "0808", "0809", "0810", "0811", "0812", "0813", "0860"))
+
+pals_arch_reg8$FOREST_ID <- as.character(pals_arch_reg8$FOREST_ID)
+reg8 <- pals_arch_reg8 %>% 
+  group_by(FOREST_ID) %>%
+  summarise(across(is.numeric, mean, na.rm = TRUE))
+
+reg_8 <- pals_arch_reg8 %>% 
+  group_by(FOREST_ID) %>%
+  summarise(across(is.numeric, mean, na.rm = TRUE)) %>%
+  dplyr::select(1:19) %>%
+  pivot_longer(!FOREST_ID, names_to = "purpose", values_to = "count")
+
+reg8_projects <- ggplot(reg_8, aes(x=purpose, y = count)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  facet_wrap(~FOREST_ID, ncol = 3) +
+  theme_minimal() + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+reg8_projects
+ggsave(here::here(paste0("outputs/plots/reg8_proj_purpose_by_forest_",
+                         Sys.Date(), ".png")),
+       reg8_projects, width = 12, height = 10, dpi = 300)
+
 # could filter by forests with >70% in any specific archetype
 
 # try with archetypes 1 and 4 first

@@ -157,37 +157,44 @@ pals_purpose_arch_pct_area <- left_join(pals_df_2009, areas_wide, by = join_by(F
 pals_df_2009_nepa_time <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
   group_by(FOREST_ID) %>%
-  summarise(mean_nepa_time = mean(`ELAPSED DAYS`, na.rm = TRUE))
+  summarise(mean_nepa_time = mean(`ELAPSED DAYS`, na.rm = TRUE),
+            med_nepa_time = median(`ELAPSED DAYS`, na.rm = TRUE))
 
 pals_df_2009_nepa_time_year <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
   filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
   group_by(`SIGNED FY`, FOREST_ID) %>%
   summarise(REGION = mean(as.numeric(REGION_ID)),
-            mean_nepa_time = mean(`ELAPSED DAYS`, na.rm = TRUE))
+            mean_nepa_time = mean(`ELAPSED DAYS`, na.rm = TRUE),
+            med_nepa_time = median(`ELAPSED DAYS`, na.rm = TRUE))
 
 pals_df_2009_nepa_type <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
   group_by(FOREST_ID) %>%
   count(`DECISION TYPE`) %>%
-  pivot_wider(names_from = `DECISION TYPE`, values_from = n, values_fill = 0) %>%
-  mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100)
+  pivot_wider(names_from = `DECISION TYPE`, values_from = n, values_fill = 0) 
+  #mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100)
 
 pals_df_2009_nepa_type_year <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
   filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
   group_by(`SIGNED FY`, FOREST_ID) %>%
   count(`DECISION TYPE`) %>%
-  pivot_wider(names_from = `DECISION TYPE`, values_from = n, values_fill = 0) %>%
-  mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100,
-         total_projs = ROD + DN + DM)
+  pivot_wider(names_from = `DECISION TYPE`, values_from = n, values_fill = 0) 
+  #mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100,
+  #       total_projs = ROD + DN + DM)
 
 # combine with the nf archetype summary df
 nf_arch_summ_df <- left_join(pals_df_2009_nepa_time, pals_df_2009_nepa_type)
 nf_arch_summ_df <- right_join(nf_arch_summ_df, nf_summ_df, by = c("FOREST_ID" = "forest_num"))
 
+# combine the data by year
+nf_arch_year_df <- left_join(pals_df_2009_nepa_time_year, pals_df_2009_nepa_type_year)
+nf_arch_year_df_test <- right_join(nf_arch_year_df, nf_summ_df, by = c("FOREST_ID" = "forest_num"))
+
 # save the csv file
 write_csv(nf_arch_summ_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_", Sys.Date(), ".csv")))
+write_csv(nf_arch_year_df_test, here::here(paste0("outputs/tables/nf_level_pals_year_arch_summs_", Sys.Date(), ".csv")))
 
 # look at region 4 
 pals_arch_reg4 <- pals_purpose_arch_pct_area %>%
@@ -267,10 +274,47 @@ ggsave(here::here(paste0("outputs/plots/reg8_proj_purpose_by_forest_",
                          Sys.Date(), ".png")),
        reg8_projects, width = 12, height = 10, dpi = 300)
 
+
+
+
+# look at projects by region
+reg_test <- pals_df_test %>% 
+  group_by(REGION) %>%
+  summarise(across(is.numeric, sum, na.rm = TRUE)) %>% 
+  dplyr::select(-`SIGNED FY`) %>%
+  dplyr::select(-mean_assess_time) %>%
+  pivot_longer(!REGION, names_to = "purpose", values_to = "count")
+
+region_names <- list(
+  '1' = "R1 - Northern",
+  '2' = "R2 - Rocky Mnt",
+  '3' = "R3 - Southwestern",
+  '4' = "R4 - Intermountain", 
+  '5' = "R5 - Pacific SW",
+  '6' = "R6 - Pacific NW", 
+  '8' = "Southern",
+  '9' = "Eastern"
+)
+
+region_labeller <- function(variable,value){
+  return(region_names[value])
+}
+
+reg_projects <- ggplot(reg_test, aes(x=purpose, y = count)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  facet_wrap(~as.factor(REGION), ncol = 4, labeller = region_labeller) +
+  theme_minimal() + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+reg_projects
+ggsave(here::here(paste0("outputs/plots/regs_proj_purpose_by_forest_",
+                         Sys.Date(), ".png")),
+       reg_projects, width = 12, height = 10, dpi = 300)
+
 # could filter by forests with >70% in any specific archetype
 
 # try with archetypes 1 and 4 first
-dom_pct <- 50
+dom_pct <- 70
 
 arche1 <-  pals_purpose_arch_pct_area %>%
   filter(`1` >= dom_pct) %>%
@@ -333,7 +377,7 @@ arche_no_dom <- pals_purpose_arch_pct_area %>%
                names_to = "purpose") %>%
   group_by(purpose) %>%
   summarise(values = sum(value)) %>%
-  mutate(archetype = "no dominant archetype (>50%)",
+  mutate(archetype = "no dominant archetype (>70%)",
          pct_purpose = values/sum(values) * 100)
 
 #arche1.4 <- left_join(arche1, arche4)
@@ -342,7 +386,7 @@ arche_purposes <- rbind(arche1, arche2, arche3, arche4, arche5, arche6, arche_no
 arche_purposes$archetype <- factor(arche_purposes$archetype,
                                    levels = c("one", "two", "three",
                                               "four", "five", "six",
-                                              "no dominant archetype (>50%)"))
+                                              "no dominant archetype (>70%)"))
 
 ggplot(arche_no_dom, aes(x=purpose, y = pct_purpose)) +
   geom_bar(stat="identity", width = 0.7, fill = "steelblue") +
@@ -352,13 +396,13 @@ arch_all_purpose <- ggplot(arche_purposes, aes(x=purpose, y = pct_purpose, fill 
   geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
   scale_fill_discrete(limits=c("one", "two", "three", 
                                "four", "five", "six",
-                               "no dominant archetype (>50%)")) + 
+                               "no dominant archetype (>70%)")) + 
   scale_fill_met_d("Hokusai3") +
   theme_minimal() + 
   theme_bw() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 arch_all_purpose
-ggsave(filename = here::here(paste0("outputs/plots/archetype_validation_test_", Sys.Date(), ".png")), 
+ggsave(filename = here::here(paste0("outputs/plots/archetype_validation_test_70_", Sys.Date(), ".png")), 
        plot = arch_all_purpose, 
        width = 12, 
        height = 4, dpi = 300)

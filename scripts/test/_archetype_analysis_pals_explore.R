@@ -42,21 +42,34 @@ df_year %>%
   geom_line(aes(linewidth = shan_diverse_norm, alpha = 0.5)) + 
   facet_wrap(~REGION) 
 
-df_year %>%
+draft_pct_eaeis <- df_year %>%
   ggplot(aes(x = `SIGNED FY`, y = pct_EA_EIS, fill = FOREST_ID, color = as.factor(dom_archetype))) +
   geom_line() + 
   facet_wrap(~REGION)
+draft_pct_eaeis
+ggsave(here::here(paste0("outputs/plots/draft_pcteaeis_for_arch_",
+                         Sys.Date(), ".png")),
+       draft_pct_eaeis, width = 12, height = 9, dpi = 300)
 
 df_year %>%
   ggplot(aes(x = `SIGNED FY`, y = pctEAEIS_med_time, fill = FOREST_ID, color = as.factor(dom_archetype))) +
   geom_line() + 
   facet_wrap(~REGION)
 
-df_year %>%
-  ggplot(aes(x = `SIGNED FY`, y = pctEAEIS_mean_time, fill = FOREST_ID, color = as.factor(dom_archetype))) +
+draft_eaeis_medtime <- df_year %>%
+  ggplot(aes(x = `SIGNED FY`, y = EA_EIS_med_time, fill = FOREST_ID, color = as.factor(dom_archetype))) +
   geom_line() + 
   facet_wrap(~REGION)
+draft_eaeis_medtime
+ggsave(here::here(paste0("outputs/plots/draft_eaeis_medtime_for_arch_",
+                         Sys.Date(), ".png")),
+       draft_eaeis_medtime, width = 12, height = 9, dpi = 300)
 
+df %>%
+  group_by(region) %>%
+  ggplot() %>%
+  geom_histogram(med_nepa_time) %>%
+  facet_wrap(~region)
 
 # for forests of interest 
 # boise = 0402, payette = 0412 , fishlake = 0408, dixie = 0407, manti-la sal = 0410
@@ -65,14 +78,28 @@ df_filt <- df %>%
   filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
 
 df_year_filt <- df_year %>%
-  filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
+  filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410")) %>%
+  mutate(forest_fct = factor(FOREST_ID, levels = c("0402", "0412", "0407", "0408", "0410"))) %>%
+  mutate(forname_fct = factor(forest_name, levels = c("Boise National Forest", 
+                                                    "Payette National Forest",
+                                                    "Dixie National Forest", 
+                                                    "Fishlake National Forest",
+                                                    "Manti-La Sal National Forest")))
 
-df_year_filt %>%
+draft_for_proj_year <- df_year_filt %>%
   ggplot() +
-  geom_line(aes(x = `SIGNED FY`, y = ROD), color = "blue4") +
-  geom_line(aes(x = `SIGNED FY`, y = DN), color = "goldenrod") + 
-  geom_line(aes(x = `SIGNED FY`, y = DM), color = "forestgreen") + 
-  facet_wrap(~FOREST_ID)
+  geom_line(aes(x = `SIGNED FY`, y = ROD, color = "ROD")) +
+  geom_line(aes(x = `SIGNED FY`, y = total_proj, color = "total_proj")) +
+  geom_line(aes(x = `SIGNED FY`, y = DN, color = "DN")) + 
+  geom_line(aes(x = `SIGNED FY`, y = DM, color = "DM")) + 
+  facet_wrap(~forname_fct, ncol = 2) + 
+  ylab("Number of NEPA Projects") + 
+  xlab("Year") +
+  theme(legend.position = "right")
+draft_for_proj_year
+ggsave(here::here(paste0("outputs/plots/draft_forests_proj_year_",
+                         Sys.Date(), ".png")),
+       draft_for_proj_year, width = 9, height = 12, dpi = 300)
 
 # censored data from forests of interest
 pals_filt %>%

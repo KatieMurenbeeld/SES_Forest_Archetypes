@@ -101,6 +101,46 @@ ggsave(here::here(paste0("outputs/plots/draft_forests_proj_year_",
                          Sys.Date(), ".png")),
        draft_for_proj_year, width = 9, height = 12, dpi = 300)
 
+draft_for_proj_metric_year <- df_year_filt %>%
+  ggplot() +
+  geom_line(aes(x = `SIGNED FY`, y = EA_EIS_med_time, color = "EA_EIS_med_time")) +
+  geom_line(aes(x = `SIGNED FY`, y = EA_EIS_mean_time, color = "EA_EIS_mean_time")) +
+  facet_wrap(~forname_fct, ncol = 2) + 
+  ylab("Number of EA and EIS divided by NEPA times") + 
+  xlab("Year") +
+  theme(legend.position = "right")
+draft_for_proj_metric_year
+ggsave(here::here(paste0("outputs/plots/draft_forests_proj_metric_year_",
+                         Sys.Date(), ".png")),
+       draft_for_proj_metric_year, width = 9, height = 12, dpi = 300)
+
+draft_for_pctproj_metric_year <- df_year_filt %>%
+  ggplot() +
+  geom_line(aes(x = `SIGNED FY`, y = pctEAEIS_med_time, color = "pctEAEIS_med_time")) +
+  geom_line(aes(x = `SIGNED FY`, y = pctEAEIS_mean_time, color = "pctEAEIS_mean_time")) +
+  facet_wrap(~forname_fct, ncol = 2) + 
+  ylab("% Projects that are EA and EIS divided by NEPA times") + 
+  xlab("Year") +
+  theme(legend.position = "right")
+draft_for_pctproj_metric_year
+ggsave(here::here(paste0("outputs/plots/draft_forests_pctproj_metric_year_",
+                         Sys.Date(), ".png")),
+       draft_for_pctproj_metric_year, width = 9, height = 12, dpi = 300)
+
+draft_for_pctproj_year <- df_year_filt %>%
+  ggplot() +
+  geom_line(aes(x = `SIGNED FY`, y = pct_EA_EIS, color = forname_fct)) +
+  ylab("% EA and EIS Projects") + 
+  xlab("Year") +
+  theme(legend.position = "right")
+draft_for_pctproj_year
+ggsave(here::here(paste0("outputs/plots/draft_forests_pctproj_year_",
+                         Sys.Date(), ".png")),
+       draft_for_pctproj_year, width = 10, height = 6, dpi = 300)
+
+
+
+
 # censored data from forests of interest
 pals_filt %>%
   group_by(FOREST_ID) %>%

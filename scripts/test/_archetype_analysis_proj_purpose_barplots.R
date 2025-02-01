@@ -16,7 +16,7 @@ pals_df_2009 <- pals_df %>%
 pals_df_test <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
   filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
-  dplyr::select(`SIGNED FY`, FOREST_ID, REGION_ID, `ELAPSED DAYS`,
+  dplyr::select(`SIGNED FY`, FOREST_ID, REGION_ID, `ELAPSED DAYS`, `DECISION TYPE`, 
                 `FC Facility management – purpose`, 
                 `FR Research – purpose`, `HF Fuels management – purpose`, `HR Heritage resource management – purpose`,
                 `LM Land ownership management – purpose`, `LW Land acquisition – purpose`,
@@ -26,9 +26,10 @@ pals_df_test <- pals_df %>%
                 `SU Special use management – purpose`, `TM Forest products – purpose`, 
                 `VM Vegetation management (non-forest products) – purpose`,
                 `WF Wildlife, fish, rare plants – purpose`, `WM Water management – purpose`) %>%
-  group_by(`SIGNED FY`, FOREST_ID) %>%
+  group_by(`SIGNED FY`, FOREST_ID, `DECISION TYPE`) %>%
   summarise(REGION = mean(as.numeric(REGION_ID)),
-            mean_assess_time = mean(`ELAPSED DAYS`), 
+            mean_assess_time = mean(`ELAPSED DAYS`),
+            med_assess_time = median(`ELAPSED DAYS`),
             p_facilities = sum(`FC Facility management – purpose`), 
             p_research = sum(`FR Research – purpose`),
             p_haz_fuels = sum(`HF Fuels management – purpose`),
@@ -47,6 +48,10 @@ pals_df_test <- pals_df %>%
             p_veg_mngt = sum(`VM Vegetation management (non-forest products) – purpose`), 
             p_wildlife = sum(`WF Wildlife, fish, rare plants – purpose`), 
             p_water = sum(`WM Water management – purpose`))
+
+pals_df_test_filt <- pals_df_test %>%
+  filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
+
 
 nf_pals_df <- left_join(df, pals_df_test, by = "FOREST_ID")
 

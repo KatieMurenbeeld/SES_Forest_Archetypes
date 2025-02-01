@@ -169,6 +169,31 @@ pals_df_2009_nepa_time_year <- pals_df %>%
   filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
   group_by(`SIGNED FY`, FOREST_ID) %>%
   summarise(REGION = mean(as.numeric(REGION_ID)),
+            mean_nepa_time_all_types = mean(`ELAPSED DAYS`, na.rm = TRUE),
+            med_nepa_time_all_types = median(`ELAPSED DAYS`, na.rm = TRUE),
+            total_nepa_time_all_types = sum(`ELAPSED DAYS`, na.rm = TRUE))
+
+pals_df_2009_nepa_time_year_filt <- pals_df_2009_nepa_time_year %>%
+  filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
+
+pals_df_2009_nepa_time_year_no_ce <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
+  filter(`DECISION TYPE` != "DM") %>%
+  group_by(`SIGNED FY`, FOREST_ID) %>%
+  summarise(REGION = mean(as.numeric(REGION_ID)),
+            mean_nepa_time_no_ce = mean(`ELAPSED DAYS`, na.rm = TRUE),
+            med_nepa_time_no_ce = median(`ELAPSED DAYS`, na.rm = TRUE),
+            total_neap_time_no_ce = sum(`ELAPSED DAYS`, na.rm = TRUE))
+
+pals_df_2009_nepa_time_year_no_ce_filt <- pals_df_2009_nepa_time_year_no_ce %>%
+  filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
+
+pals_df_2009_nepa_time_year_type <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
+  group_by(`SIGNED FY`, FOREST_ID, `DECISION TYPE`) %>%
+  summarise(REGION = mean(as.numeric(REGION_ID)),
             mean_nepa_time = mean(`ELAPSED DAYS`, na.rm = TRUE),
             med_nepa_time = median(`ELAPSED DAYS`, na.rm = TRUE))
 
@@ -185,9 +210,12 @@ pals_df_2009_nepa_type_year <- pals_df %>%
   filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
   group_by(`SIGNED FY`, FOREST_ID) %>%
   count(`DECISION TYPE`) %>%
-  pivot_wider(names_from = `DECISION TYPE`, values_from = n, values_fill = 0) 
-  #mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100,
-  #       total_projs = ROD + DN + DM)
+  pivot_wider(names_from = `DECISION TYPE`, values_from = n, values_fill = 0) %>% 
+  mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100,
+         total_projs = ROD + DN + DM)
+
+pals_df_2009_nepa_type_year_filt <- pals_df_2009_nepa_type_year %>%
+  filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
 
 # combine with the nf archetype summary df
 nf_arch_summ_df <- left_join(pals_df_2009_nepa_time, pals_df_2009_nepa_type)
@@ -196,6 +224,12 @@ nf_arch_summ_df <- right_join(nf_arch_summ_df, nf_summ_df, by = c("FOREST_ID" = 
 # combine the data by year
 nf_arch_year_df <- left_join(pals_df_2009_nepa_time_year, pals_df_2009_nepa_type_year)
 nf_arch_year_df_test <- right_join(nf_arch_year_df, nf_summ_df, by = c("FOREST_ID" = "forest_num"))
+
+# combine for select forests from Region 4
+
+reg_4_df <- left_join(pals_df_2009_nepa_time_year_no_ce_filt, pals_df_2009_nepa_type_year_filt)
+reg_4_df <- left_join(reg_4_df, pals_df_2009_nepa_time_year_filt)
+write_csv(reg_4_df, here::here(paste0("outputs/tables/region4_forests_nepa_types_time_", Sys.Date(), ".csv")))
 
 # save the csv file
 #write_csv(nf_arch_summ_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_", Sys.Date(), ".csv")))

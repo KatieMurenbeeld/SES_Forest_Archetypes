@@ -176,6 +176,10 @@ pals_df_2009_nepa_time_year <- pals_df %>%
 pals_df_2009_nepa_time_year_filt <- pals_df_2009_nepa_time_year %>%
   filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
 
+pals_df_2009_nepa_time_year_reg4 <- pals_df_2009_nepa_time_year %>%
+  filter(REGION == 4)
+
+
 pals_df_2009_nepa_time_year_no_ce <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
   filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
@@ -188,6 +192,9 @@ pals_df_2009_nepa_time_year_no_ce <- pals_df %>%
 
 pals_df_2009_nepa_time_year_no_ce_filt <- pals_df_2009_nepa_time_year_no_ce %>%
   filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
+
+pals_df_2009_nepa_time_year_no_ce_reg4 <- pals_df_2009_nepa_time_year_no_ce %>%
+  filter(REGION == 4)
 
 pals_df_2009_nepa_time_year_type <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
@@ -217,6 +224,10 @@ pals_df_2009_nepa_type_year <- pals_df %>%
 pals_df_2009_nepa_type_year_filt <- pals_df_2009_nepa_type_year %>%
   filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
 
+pals_df_2009_nepa_type_year_reg4 <- pals_df_2009_nepa_type_year %>%
+  filter(FOREST_ID %in% c("0401", "0402", "0403", "0407", "0408", "0410",
+                          "0412", "0413", "0414", "0415", "0417", "0419"))
+
 # combine with the nf archetype summary df
 nf_arch_summ_df <- left_join(pals_df_2009_nepa_time, pals_df_2009_nepa_type)
 nf_arch_summ_df <- right_join(nf_arch_summ_df, nf_summ_df, by = c("FOREST_ID" = "forest_num"))
@@ -230,6 +241,10 @@ nf_arch_year_df_test <- right_join(nf_arch_year_df, nf_summ_df, by = c("FOREST_I
 reg_4_df <- left_join(pals_df_2009_nepa_time_year_no_ce_filt, pals_df_2009_nepa_type_year_filt)
 reg_4_df <- left_join(reg_4_df, pals_df_2009_nepa_time_year_filt)
 write_csv(reg_4_df, here::here(paste0("outputs/tables/region4_forests_nepa_types_time_", Sys.Date(), ".csv")))
+
+reg_4_all_df <- left_join(pals_df_2009_nepa_time_year_no_ce_reg4, pals_df_2009_nepa_type_year_reg4)
+reg_4_all_df <- left_join(reg_4_all_df, pals_df_2009_nepa_time_year_reg4)
+write_csv(reg_4_all_df, here::here(paste0("outputs/tables/region4_allforests_nepa_types_time_", Sys.Date(), ".csv")))
 
 # save the csv file
 #write_csv(nf_arch_summ_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_", Sys.Date(), ".csv")))

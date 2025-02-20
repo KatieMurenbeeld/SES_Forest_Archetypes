@@ -236,6 +236,72 @@ nf_arch_summ_df <- right_join(nf_arch_summ_df, nf_summ_df, by = c("FOREST_ID" = 
 nf_arch_year_df <- left_join(pals_df_2009_nepa_time_year, pals_df_2009_nepa_type_year)
 nf_arch_year_df_test <- right_join(nf_arch_year_df, nf_summ_df, by = c("FOREST_ID" = "forest_num"))
 
+# group by year to get total and annual # of projects per forest
+nf_year_summ <- nf_arch_year_df %>%
+  group_by(FOREST_ID) %>%
+  summarise(yearly_projs = mean(total_projs),
+            total_projs = sum(total_projs),
+            yearly_EIS = mean(ROD),
+            total_EIS = sum(ROD), 
+            yearly_EA = mean(DN),
+            total_EA = sum(DN),
+            yearly_CE = mean(DM),
+            total_CE = sum(DM),
+            yearly_pct_EA_EIS = (yearly_EIS + yearly_EA)/(yearly_EIS + yearly_EA + yearly_CE) * 100,
+            total_pct_EA_EIS = (total_EIS + total_EA)/(total_EIS + total_EA + total_CE) * 100)
+
+nf_year_summ_arch <- left_join(nf_summ_df, nf_year_summ, by = c("forest_num" = "FOREST_ID"))
+write_csv(nf_year_summ_arch, here::here(paste0("outputs/tables/nf_nepa_projs_arch_summ_", 
+                                               Sys.Date(), ".csv")))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = total_projs)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_projs)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = total_pct_EA_EIS)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_pct_EA_EIS)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = total_EIS)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = total_EA)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = total_CE)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_CE)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
 # combine for select forests from Region 4
 
 reg_4_df <- left_join(pals_df_2009_nepa_time_year_no_ce_filt, pals_df_2009_nepa_type_year_filt)
@@ -613,6 +679,95 @@ ggsave(filename = here::here(paste0("outputs/plots/archetype_validation_test_not
        plot = test_dom_hh_plot, 
        width = 12, 
        height = 4, dpi = 300)
+
+
+# figure with no dominant, and then with only high-high
+
+high_high_purpose_plot <- ggplot(highhigh, aes(x=purpose, y = pct_purpose, fill = ent_div)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black", fill = "white") +
+  #scale_fill_discrete(limits=c("low-low", "low-high", "high-low", "high-high")) + 
+  #scale_fill_met_d("Hokusai3") +
+  theme_minimal() + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+high_high_purpose_plot
+
+a1 <-  nf_pals_df %>%
+  filter(dom_archetype == 1) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "A", 
+         pct_purpose = values/sum(values) * 100)
+
+a2 <-  nf_pals_df %>%
+  filter(dom_archetype == 2) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value, na.rm = TRUE)) %>%
+  mutate(archetype = "B", 
+         pct_purpose = values/sum(values) * 100)
+
+a3 <-  nf_pals_df %>%
+  filter(dom_archetype == 3) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "C", 
+         pct_purpose = values/sum(values) * 100)
+
+a4 <-  nf_pals_df %>%
+  filter(dom_archetype == 4) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "D", 
+         pct_purpose = values/sum(values) * 100)
+
+a5 <-  nf_pals_df %>%
+  filter(dom_archetype == 5) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "E", 
+         pct_purpose = values/sum(values) * 100)
+
+a6 <-  nf_pals_df %>%
+  filter(dom_archetype == 6) %>%
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(archetype = "F", 
+         pct_purpose = values/sum(values) * 100)
+
+archs <- rbind(a1, a2, a3, a4, a5, a6)
+
+archs_purpose_plot <- ggplot(archs, aes(x=purpose, y = pct_purpose, fill = archetype)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  scale_fill_discrete(limits=c("A", "B", "C", "D", "E", "F")) + 
+  scale_fill_met_d("Hokusai3") +
+  theme_minimal() + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+archs_purpose_plot
+
+library(cowplot)
+
+arch_highhigh_purpose_plot <-
+  ggdraw() +
+  draw_plot(archs_purpose_plot) +
+  draw_plot(high_high_purpose_plot, x = 0.07, y = .7, width = .3, height = .3)
+arch_highhigh_purpose_plot
+
+ggsave(here::here(paste0("outputs/plots/test_arch_purpose_with_highhigh_inset_",
+                         Sys.Date(), ".png")),
+       width = 12, height = 6, dpi = 300)
 
 
 # I still want to figure something out with the regions and archetypes? 

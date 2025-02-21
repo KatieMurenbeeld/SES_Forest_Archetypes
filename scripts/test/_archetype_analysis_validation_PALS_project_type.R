@@ -239,15 +239,20 @@ nf_arch_year_df_test <- right_join(nf_arch_year_df, nf_summ_df, by = c("FOREST_I
 # group by year to get total and annual # of projects per forest
 nf_year_summ <- nf_arch_year_df %>%
   group_by(FOREST_ID) %>%
-  summarise(yearly_projs = mean(total_projs),
+  summarise(yearly_mean_projs = mean(total_projs),
+            yearly_med_projs = median(total_projs),
             total_projs = sum(total_projs),
-            yearly_EIS = mean(ROD),
+            yearly_mean_EIS = mean(ROD),
+            yearly_med_EIS = median(ROD),
             total_EIS = sum(ROD), 
-            yearly_EA = mean(DN),
+            yearly_mean_EA = mean(DN),
+            yearly_med_EA = median(DN),
             total_EA = sum(DN),
-            yearly_CE = mean(DM),
+            yearly_mean_CE = mean(DM),
+            yearly_med_CE = median(DM),
             total_CE = sum(DM),
-            yearly_pct_EA_EIS = (yearly_EIS + yearly_EA)/(yearly_EIS + yearly_EA + yearly_CE) * 100,
+            yearly_pct_mean_EA_EIS = (yearly_mean_EIS + yearly_mean_EA)/(yearly_mean_EIS + yearly_mean_EA + yearly_mean_CE) * 100,
+            yearly_pct_med_EA_EIS = (yearly_med_EIS + yearly_med_EA)/(yearly_med_EIS + yearly_med_EA + yearly_med_CE) * 100,
             total_pct_EA_EIS = (total_EIS + total_EA)/(total_EIS + total_EA + total_CE) * 100)
 
 nf_year_summ_arch <- left_join(nf_summ_df, nf_year_summ, by = c("forest_num" = "FOREST_ID"))
@@ -261,8 +266,47 @@ nf_year_summ_arch %>%
   geom_density(aes(fill = div_to_ent, alpha = 0.6))
 
 nf_year_summ_arch %>%
+  #filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = total_projs)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(color = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  #filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_pct_med_EA_EIS)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(color = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
   filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
-  ggplot(aes(x = yearly_projs)) +
+  filter(dom_archetype == 5) %>%
+  ggplot(aes(x = total_projs)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_pct_med_EA_EIS)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6)) + 
+  facet_wrap(~region)
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_pct_med_EA_EIS)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6)) + 
+  facet_wrap(~as.factor(dom_archetype))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_mean_projs)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_med_projs)) +
   geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
   geom_density(aes(fill = div_to_ent, alpha = 0.6))
 
@@ -274,7 +318,13 @@ nf_year_summ_arch %>%
 
 nf_year_summ_arch %>%
   filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
-  ggplot(aes(x = yearly_pct_EA_EIS)) +
+  ggplot(aes(x = yearly_pct_mean_EA_EIS)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_pct_med_EA_EIS)) +
   geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
   geom_density(aes(fill = div_to_ent, alpha = 0.6))
 
@@ -298,9 +348,76 @@ nf_year_summ_arch %>%
 
 nf_year_summ_arch %>%
   filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
-  ggplot(aes(x = yearly_CE)) +
+  ggplot(aes(x = yearly_med_EIS)) +
   geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
   geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_med_EA)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_med_CE)) +
+  geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
+  geom_density(aes(fill = div_to_ent, alpha = 0.6))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_med_projs, y = shan_div_sc)) + 
+  geom_point(aes(color = div_to_ent))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x = yearly_med_projs, y = ent_all_sc)) + 
+  geom_point(aes(color = div_to_ent))
+
+# grouped boxplot
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=region, y=yearly_med_projs, fill=div_to_ent)) + 
+  geom_boxplot()
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=region, y=yearly_pct_med_EA_EIS, fill=div_to_ent)) + 
+  geom_boxplot()
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=as.factor(dom_archetype), y=yearly_pct_med_EA_EIS, fill=div_to_ent)) + 
+  geom_boxplot()
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=div_to_ent, y=yearly_pct_med_EA_EIS, fill=div_to_ent)) + 
+  geom_boxplot()
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=div_to_ent, y=total_EIS + total_EA, fill=div_to_ent)) + 
+  geom_boxplot()
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=div_to_ent, y=total_pct_EA_EIS, fill=div_to_ent)) + 
+  geom_boxplot()
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=div_to_ent, y=yearly_pct_med_EA_EIS, fill=div_to_ent)) + 
+  geom_boxplot()
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=div_to_ent, y=total_EIS, fill=div_to_ent)) + 
+  geom_boxplot()
+
+nf_arch_summ_df %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=region, y=med_nepa_time, fill=div_to_ent)) + 
+  geom_boxplot()
+
 
 # combine for select forests from Region 4
 

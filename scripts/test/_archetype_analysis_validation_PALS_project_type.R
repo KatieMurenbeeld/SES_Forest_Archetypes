@@ -272,7 +272,7 @@ nf_year_summ_arch %>%
   geom_density(aes(color = div_to_ent, alpha = 0.6))
 
 nf_year_summ_arch %>%
-  #filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
   ggplot(aes(x = yearly_pct_med_EA_EIS)) +
   geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +
   geom_density(aes(color = div_to_ent, alpha = 0.6))
@@ -418,6 +418,22 @@ nf_arch_summ_df %>%
   ggplot(aes(x=region, y=med_nepa_time, fill=div_to_ent)) + 
   geom_boxplot()
 
+nf_arch_summ_df %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=region, y=med_nepa_time, fill = div_to_ent)) + 
+  geom_boxplot() #+ 
+  #facet_wrap(~region, ncol = 2)
+
+nf_arch_summ_df %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=region, y=ROD+DN+DM, fill = div_to_ent)) + 
+  geom_boxplot() #+ 
+  #facet_wrap(~region, ncol = 2)
+
+nf_arch_summ_df %>%
+  filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
+  ggplot(aes(x=region, y=(ROD+DN)/(ROD+DN+DM)*100, fill = div_to_ent)) + 
+  geom_boxplot() 
 
 # combine for select forests from Region 4
 

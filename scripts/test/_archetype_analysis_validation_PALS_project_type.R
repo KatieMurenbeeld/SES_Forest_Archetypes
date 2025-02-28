@@ -260,6 +260,27 @@ nf_year_summ_arch <- left_join(nf_summ_df, nf_year_summ, by = c("forest_num" = "
 #                                               Sys.Date(), ".csv")))
 
 nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div") %>%
+  #group_by(region) %>%
+  summarise(mean = mean(yearly_pct_med_EA_EIS))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "high_ent_high_div") %>%
+  #group_by(region) %>%
+  summarise(med = median(yearly_pct_med_EA_EIS))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "low_ent_low_div") %>%
+  #group_by(region) %>%
+  summarise(mean = mean(yearly_pct_med_EA_EIS, na.rm = TRUE))
+
+nf_year_summ_arch %>%
+  filter(div_to_ent == "low_ent_low_div") %>%
+  #group_by(region) %>%
+  summarise(med = median(yearly_pct_med_EA_EIS, na.rm = TRUE))
+
+
+nf_year_summ_arch %>%
   filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%
   ggplot(aes(x = total_projs)) +
   geom_histogram(aes(y = ..density.., fill = div_to_ent, alpha = 0.6)) +

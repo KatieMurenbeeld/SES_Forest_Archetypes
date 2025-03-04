@@ -47,9 +47,43 @@ draft_pct_eaeis <- df_year %>%
   geom_line() + 
   facet_wrap(~REGION)
 draft_pct_eaeis
-ggsave(here::here(paste0("outputs/plots/draft_pcteaeis_for_arch_",
-                         Sys.Date(), ".png")),
-       draft_pct_eaeis, width = 12, height = 9, dpi = 300)
+#ggsave(here::here(paste0("outputs/plots/draft_pcteaeis_for_arch_",
+#                         Sys.Date(), ".png")),
+#       draft_pct_eaeis, width = 12, height = 9, dpi = 300)
+
+draft_pct_eaeis_divent <- df_year %>%
+  ggplot(aes(x = `SIGNED FY`, y = pct_EA_EIS, fill = FOREST_ID, color = as.factor(div_to_ent))) +
+  geom_line() + 
+  facet_wrap(~REGION)
+draft_pct_eaeis_divent
+
+df_year %>%
+  ggplot(aes(x = `SIGNED FY`, y = pct_EA_EIS, fill = FOREST_ID, color = as.factor(div_to_ent))) +
+  geom_line()
+
+df_year %>%
+  ggplot(aes(x = `SIGNED FY`, y = pct_EA_EIS, fill = FOREST_ID, color = as.factor(div_to_ent))) +
+  geom_point()
+
+df %>%
+  ggplot(aes(x = entropy_all, y = pct_EA_EIS, color = as.factor(dom_archetype))) +
+  geom_point()
+
+df %>%
+  ggplot(aes(x = shan_diverse, y = ROD, color = as.factor(dom_archetype))) +
+  geom_point()
+
+df %>%
+  ggplot(aes(x = (df$ent_all_sc + df$shan_div_sc), y = pct_EA_EIS, color = as.factor(div_to_ent))) +
+  geom_point()
+
+cor(x = df$shan_diverse, y = df$pct_EA_EIS, use = "complete.obs")
+cor(x = df$entropy_all, y = df$DN, use = "complete.obs")
+cor(x = (df$ent_all_sc + df$shan_div_sc), y = df$DM, use = "complete.obs")
+
+df_year %>%
+  ggplot(aes(x = div_to_ent, y = pct_EA_EIS)) +
+  geom_boxplot()
 
 df_year %>%
   ggplot(aes(x = `SIGNED FY`, y = pctEAEIS_med_time, fill = FOREST_ID, color = as.factor(dom_archetype))) +

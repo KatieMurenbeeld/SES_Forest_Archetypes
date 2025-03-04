@@ -532,11 +532,11 @@ nf_arch_summ_df %>%
 
 reg_4_df <- left_join(pals_df_2009_nepa_time_year_no_ce_filt, pals_df_2009_nepa_type_year_filt)
 reg_4_df <- left_join(reg_4_df, pals_df_2009_nepa_time_year_filt)
-write_csv(reg_4_df, here::here(paste0("outputs/tables/region4_forests_nepa_types_time_", Sys.Date(), ".csv")))
+#write_csv(reg_4_df, here::here(paste0("outputs/tables/region4_forests_nepa_types_time_", Sys.Date(), ".csv")))
 
 reg_4_all_df <- left_join(pals_df_2009_nepa_time_year_no_ce_reg4, pals_df_2009_nepa_type_year_reg4)
 reg_4_all_df <- left_join(reg_4_all_df, pals_df_2009_nepa_time_year_reg4)
-write_csv(reg_4_all_df, here::here(paste0("outputs/tables/region4_allforests_nepa_types_time_", Sys.Date(), ".csv")))
+#write_csv(reg_4_all_df, here::here(paste0("outputs/tables/region4_allforests_nepa_types_time_", Sys.Date(), ".csv")))
 
 # save the csv file
 #write_csv(nf_arch_summ_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_", Sys.Date(), ".csv")))
@@ -564,9 +564,9 @@ reg4_projects <- ggplot(reg_4, aes(x=purpose, y = count)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 reg4_projects
-ggsave(here::here(paste0("outputs/plots/reg4_proj_purpose_by_forest_",
-                                        Sys.Date(), ".png")),
-       reg4_projects, width = 12, height = 10, dpi = 300)
+#ggsave(here::here(paste0("outputs/plots/reg4_proj_purpose_by_forest_",
+#                                        Sys.Date(), ".png")),
+#       reg4_projects, width = 12, height = 10, dpi = 300)
 
 # look at region 5 
 pals_arch_reg5 <- pals_purpose_arch_pct_area %>%

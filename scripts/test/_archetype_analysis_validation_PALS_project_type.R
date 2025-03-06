@@ -262,23 +262,17 @@ nf_year_summ_arch <- left_join(nf_summ_df, nf_year_summ, by = c("forest_num" = "
 nf_year_summ_arch %>%
   filter(div_to_ent == "high_ent_high_div") %>%
   #group_by(region) %>%
-  summarise(mean = mean(yearly_pct_med_EA_EIS))
-
-nf_year_summ_arch %>%
-  filter(div_to_ent == "high_ent_high_div") %>%
-  #group_by(region) %>%
-  summarise(med = median(yearly_pct_med_EA_EIS))
-
-nf_year_summ_arch %>%
-  filter(div_to_ent == "low_ent_low_div") %>%
-  #group_by(region) %>%
-  summarise(mean = mean(yearly_pct_med_EA_EIS, na.rm = TRUE))
+  summarise(mean = mean(total_projs), 
+            med = median(total_projs),
+            sd = sd(total_projs)) 
+ #           q95 = quantile(total_projs, probs = 0.95))
 
 nf_year_summ_arch %>%
   filter(div_to_ent == "low_ent_low_div") %>%
   #group_by(region) %>%
-  summarise(med = median(yearly_pct_med_EA_EIS, na.rm = TRUE))
-
+  summarise(mean = mean(replace_na(total_projs, 0), na.rm = TRUE),
+            med = median(replace_na(total_projs, 0), na.rm = TRUE),
+            sd = sd(replace_na(total_projs, 0), na.rm = TRUE))
 
 nf_year_summ_arch %>%
   filter(div_to_ent == "high_ent_high_div" | div_to_ent == "low_ent_low_div") %>%

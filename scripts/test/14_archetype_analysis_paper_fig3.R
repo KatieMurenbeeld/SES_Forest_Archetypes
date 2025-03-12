@@ -75,7 +75,6 @@ all_k6_rg_nf_map
 #       plot = all_k6_rg_nf_map, width = 8, height = 8, dpi = 300)
 
 # Variable interp plot
-#data <- as.data.frame(sgfcm_all_attri_sc)
 data <- as.data.frame(scale(sgfcm_all_attri)) # use non scaled data for IQR overlap
 data$groups_k6 <- sgfcm_all_result_k6_mod$Groups
 

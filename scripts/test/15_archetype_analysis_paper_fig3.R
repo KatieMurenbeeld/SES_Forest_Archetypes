@@ -7,24 +7,28 @@ library(ggpattern)
 library(MetBrewer)
 
 
-dom_arch_df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_2024-11-14.csv"))
 
-dom_arch_df <- dom_arch_df %>%
-  mutate(ent_all_sc = scale(entropy_all)[1:109],
-         shan_div_sc = scale(shan_diverse)[1:109]) %>%
-  mutate(div_to_ent = case_when(ent_all_sc < 0 & shan_div_sc < 0 ~ "low_ent_low_div",
-                                ent_all_sc < 0 & shan_div_sc > 0 ~ "low_ent_high_div",
-                                ent_all_sc > 0 & shan_div_sc < 0 ~ "high_ent_low_div",
-                                ent_all_sc > 0 & shan_div_sc > 0 ~ "high_ent_high_div"))
-#write_csv(dom_arch_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_", Sys.Date(), ".csv")))
+
+# Load the data
 dom_arch_df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_2024-12-11.csv"))
 
-
+# Set axis labels
 axLabels <- c("", "Low","", "", "","High", "")
+
+# Rename the archetypes from numbers to letters
+dom_arch_df <- dom_arch_df %>%
+  mutate(dom_arch_alpha = case_when(dom_archetype == 1 ~ "A", 
+                                 dom_archetype == 2 ~ "B",
+                                 dom_archetype == 3 ~ "C",
+                                 dom_archetype == 4 ~ "D",
+                                 dom_archetype == 5 ~ "E", 
+                                 dom_archetype == 6 ~ "F"))
+
+# Scatter plot of forests by high and low entropy and diversity scores
 div_ent <- dom_arch_df %>%
   ggplot() +
   geom_point(aes(x=scale(entropy_all), y=scale(shan_diverse), 
-                 color=as.factor(dom_archetype), size = pct_area_dom_arch, 
+                 color=as.factor(dom_arch_alpha), size = pct_area_dom_arch, 
                  alpha = 0.25), show.legend = TRUE) + 
   geom_hline(yintercept = 0) + 
   geom_vline(xintercept = 0) +

@@ -18,6 +18,7 @@ fs_nf <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/origin
 fs_reg <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeRegion.shp")
 sgfcm_all_k6_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k6_2024-10-15.tif")
 sgfcm_all_attri_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
+sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 sgfcm_all_result_k6_mod <- readRDS(here::here("outputs/SGFCM_all_attr_k6_2024-10-15.rds"))
 
 ## Reproject the forest service shapes to NAD83
@@ -41,8 +42,17 @@ reg_cent <- st_centroid(fs_reg.crop)
 # for k = 6
 sgfcm.k6.all.df <- sgfcm_all_k6_result$Groups %>% as.data.frame(xy = TRUE)
 
+# Rename group (archetypes) to letters
+sgfcm.k6.all.df <- sgfcm.k6.all.df %>%
+  mutate(group_alpha = case_when(Groups == 1 ~ "A", 
+                                 Groups == 2 ~ "B",
+                                 Groups == 3 ~ "C",
+                                 Groups == 4 ~ "D",
+                                 Groups == 5 ~ "E", 
+                                 Groups == 6 ~ "F"))
+
 all_k6_rg_nf_map <- ggplot() +
-  geom_raster(aes(x = sgfcm.k6.all.df$x, y = sgfcm.k6.all.df$y, fill = as.factor(sgfcm.k6.all.df$Groups))) +
+  geom_raster(aes(x = sgfcm.k6.all.df$x, y = sgfcm.k6.all.df$y, fill = sgfcm.k6.all.df$group_alpha)) +
   geom_sf(data = fs_nf.crop, fill = NA, color = "black") +
   geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 1.1) +
   #geom_sf_text(data = reg_cent, aes(label = REGION), fontface = "bold") +
@@ -60,9 +70,9 @@ all_k6_rg_nf_map <- ggplot() +
         axis.title.y = element_blank(),
         axis.text = element_text(size = 10),
         plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
-#all_k6_rg_nf_map
-ggsave(here::here(paste0("outputs/plots/fig3_map_testing_", Sys.Date(), ".png")), 
-       plot = all_k6_rg_nf_map, width = 8, height = 8, dpi = 300)
+all_k6_rg_nf_map
+#ggsave(here::here(paste0("outputs/plots/fig2_map_testing_", Sys.Date(), ".png")), 
+#       plot = all_k6_rg_nf_map, width = 8, height = 8, dpi = 300)
 
 # Variable interp plot
 #data <- as.data.frame(sgfcm_all_attri_sc)
@@ -144,21 +154,6 @@ k6_long_join <- k6_long_df %>%
   left_join(overlap) %>% 
   filter(overlap == FALSE)
 
-# reorder the variables
-#k6_long_overlap_reorder <- k6_long_join %>% 
-#  mutate(var_name = fct_relevel(var_name, 
-#                                "treecov", "forprod", "tempseas", 
-#                                "precseas", "rough", "whp", 
-#                                "forgain", 
-                                #"distcrit", 
-#                                "distwild",
-#                                "pm25", "fedrich", 
-#                                "treeage", "pct_forpay", "pct_delmill",
-#                               "netmig", "comm_cap", "aip",
-#                                "travtime", "hsbrd", "engbrd"
-#                                #"lesshs"
-#  ))
-
 k6_long_overlap_reorder <- k6_long_join %>% # need to remove dist to critical habitat and less hs
   mutate(ostrom = case_when(var_name == "treecov" | var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "whp" ~ "resource system",
                             var_name == "distwild" | var_name == "forgain" ~ "resource unit",
@@ -182,7 +177,7 @@ k6_long_overlap_reorder_newnames <- k6_long_overlap_reorder %>%
                                   var_name == "pct_delmill" ~ "change in mill capacity",
                                   var_name == "netmig" ~ "net migration", 
                                   var_name == "comm_cap" ~ "community capital",
-                                  var_name == "aip" ~ "policy preference",
+                                  var_name == "aip" ~ "conservatism",
                                   var_name == "travtime" ~ "time to cities",
                                   var_name == "hsbrd" ~ "housing burden",
                                   var_name == "engbrd" ~ "energy burden",
@@ -213,11 +208,20 @@ k6_long_overlap_reorder_newnames <- k6_long_overlap_reorder_newnames %>%
                                 "energy burden"
                                 #"less highschool ed."
                                 ))
+# Rename the variables for the facet headers
+k6_long_overlap_reorder_newnames <- k6_long_overlap_reorder_newnames %>%
+  mutate(groups_k6_alpha = case_when(groups_k6 == "A1" ~ "Arch. A", 
+                                     groups_k6 == "A2" ~ "Arch. B",
+                                     groups_k6 == "A3" ~ "Arch. C",
+                                     groups_k6 == "A4" ~ "Arch. D",
+                                     groups_k6 == "A5" ~ "Arch. E", 
+                                     groups_k6 == "A6" ~ "Arch. F"))
 
 k6_iqr_no_overlap <- ggplot(data=k6_long_overlap_reorder_newnames, mapping = aes(x=new_var_name, y=value, fill=ostrom)) +
   geom_boxplot(outliers = FALSE, coef=0) +
   geom_hline(yintercept = 0, linetype=2) +
-  #scale_fill_manual(values=c15)+
+  scale_fill_met_d("Java") +
+  #scale_fill_met_d("Isfahan2") +
   coord_flip() +
   theme_bw() +
   theme(#text = element_text(size = 20),
@@ -228,18 +232,12 @@ k6_iqr_no_overlap <- ggplot(data=k6_long_overlap_reorder_newnames, mapping = aes
     axis.title.y = element_blank(),
     axis.text = element_text(size = 8),
     plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm")) +
-  facet_wrap(vars(groups_k6))
+    facet_wrap(vars(groups_k6_alpha))
 
 k6_iqr_no_overlap
 
-panel_test <- all_k6_rg_nf_map 
-#panel_test <- k6_iqr_no_overlap / all_k6_rg_nf_map
-
-ggsave(here::here(paste0("outputs/plots/fig3_testing_", Sys.Date(), ".png")), 
-       plot = panel_test, width = 8, height = 8, dpi = 300)
-
-p_test <- all_k6_rg_nf_map / k6_iqr_no_overlap +
+panel <- all_k6_rg_nf_map / k6_iqr_no_overlap +
   plot_layout(heights = unit(c(10, 1), c('cm', 'null')))
 
-ggsave(here::here(paste0("outputs/plots/fig3_testing_2", Sys.Date(), "_2.png")), 
-       plot = p_test, width = 8, height = 8, dpi = 300)
+ggsave(here::here(paste0("outputs/plots/fig2_testing_2_", Sys.Date(), "_2.png")), 
+       plot = panel, width = 8, height = 8, dpi = 300)

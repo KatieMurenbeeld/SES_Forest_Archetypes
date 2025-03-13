@@ -259,6 +259,9 @@ nf_year_summ_arch <- left_join(nf_summ_df, nf_year_summ, by = c("forest_num" = "
 #write_csv(nf_year_summ_arch, here::here(paste0("outputs/tables/nf_nepa_projs_arch_summ_", 
 #                                               Sys.Date(), ".csv")))
 
+# need to write a script that saves this csv
+nf_year_summ_arch <- read_csv(here::here("outputs/tables/nf_nepa_projs_arch_summ_2025-02-21.csv"))
+
 nf_year_summ_arch %>%
   filter(div_to_ent == "high_ent_high_div") %>%
   #group_by(region) %>%

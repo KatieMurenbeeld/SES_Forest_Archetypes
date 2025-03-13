@@ -52,5 +52,5 @@ div_ent <- dom_arch_df %>%
        size = "% Area Dom. Archetype")
 div_ent
 
-ggsave(here::here(paste0("outputs/plots/diverse_entropy_sc_scatter_", Sys.Date(), ".png")),
+ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig3_testing_", Sys.Date(), ".png")),
        div_ent, height = 6, width = 6, dpi = 300)

@@ -2,9 +2,12 @@ library(tidyverse)
 library(ggplot2)
 library(MetBrewer)
 library(data.table)
+
 # load the data
 
+# need to write the script that saves the nf_level_dominant_archetypes_uncertainty_nepa_2025-01-30.csv
 df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_2025-01-30.csv")) 
+# need to write the script that saves the nf_level_pals_year_arch_summs_2025-01-30.csv
 df_year <- read_csv(here::here("outputs/tables/nf_level_pals_year_arch_summs_2025-01-30.csv"))
 pals_df <- read_delim("~/Analysis/NEPA_Efficiency/data/original/pals_ongoing_projects_11-2022.csv", delim = ";")
 
@@ -166,5 +169,5 @@ archs_purpose_plot <- ggplot(archs_filt, aes(x=purpose_newname, y = pct_purpose,
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 archs_purpose_plot
 
-ggsave(here::here(paste0("outputs/plots/arch_project_purpose_", Sys.Date(), ".png")),
+ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig5_testing_", Sys.Date(), ".png")),
        archs_purpose_plot, height = 6, width = 12, dpi = 300)

@@ -70,7 +70,7 @@ all_k6_rg_nf_map <- ggplot() +
         axis.title.y = element_blank(),
         axis.text = element_text(size = 10),
         plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
-all_k6_rg_nf_map
+#all_k6_rg_nf_map
 #ggsave(here::here(paste0("outputs/plots/fig2_map_testing_", Sys.Date(), ".png")), 
 #       plot = all_k6_rg_nf_map, width = 8, height = 8, dpi = 300)
 
@@ -132,7 +132,7 @@ k6_var_interp <- ggplot(k6_long_reorder, aes(x = var_name, y = mean, fill = ostr
         legend.position = "right", 
         axis.title.y = element_blank()) 
 
-k6_var_interp
+#k6_var_interp
 
 # Create bar plots of the variables where IQR != 0
 check_iqr_overlap <- function(x) {
@@ -233,10 +233,10 @@ k6_iqr_no_overlap <- ggplot(data=k6_long_overlap_reorder_newnames, mapping = aes
     plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm")) +
     facet_wrap(vars(groups_k6_alpha))
 
-k6_iqr_no_overlap
+#k6_iqr_no_overlap
 
 panel <- all_k6_rg_nf_map / k6_iqr_no_overlap +
   plot_layout(heights = unit(c(10, 1), c('cm', 'null')))
 
-ggsave(here::here(paste0("outputs/plots/fig2_testing_2_", Sys.Date(), "_2.png")), 
+ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig2_testing_", Sys.Date(), ".png")), 
        plot = panel, width = 8, height = 8, dpi = 300)

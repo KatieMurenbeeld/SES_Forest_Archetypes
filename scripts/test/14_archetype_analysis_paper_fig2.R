@@ -68,8 +68,9 @@ all_k6_rg_nf_map <- ggplot() +
         legend.text = element_text(size = 10),
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
-        axis.text = element_text(size = 10),
-        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
+        axis.text = element_text(size = 8),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm")) + 
+  ggtitle("A")
 #all_k6_rg_nf_map
 #ggsave(here::here(paste0("outputs/plots/fig2_map_testing_", Sys.Date(), ".png")), 
 #       plot = all_k6_rg_nf_map, width = 8, height = 8, dpi = 300)
@@ -231,12 +232,17 @@ k6_iqr_no_overlap <- ggplot(data=k6_long_overlap_reorder_newnames, mapping = aes
     axis.title.y = element_blank(),
     axis.text = element_text(size = 8),
     plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm")) +
-    facet_wrap(vars(groups_k6_alpha))
+    facet_wrap(vars(groups_k6_alpha)) + 
+  ggtitle("B")
 
 #k6_iqr_no_overlap
 
 panel <- all_k6_rg_nf_map / k6_iqr_no_overlap +
-  plot_layout(heights = unit(c(10, 1), c('cm', 'null')))
+  plot_layout(heights = unit(c(8, 6), c('cm', 'null')))
 
 ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig2_testing_", Sys.Date(), ".png")), 
        plot = panel, width = 8, height = 8, dpi = 300)
+
+ggsave(here::here(paste0("outputs/plots/archetype_analysis_figure_2_testing_", Sys.Date(), ".jpeg")), 
+       plot = panel, width = 190, height = 190, dpi = 300, units = "mm", device = "jpeg")
+

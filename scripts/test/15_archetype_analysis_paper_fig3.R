@@ -48,6 +48,7 @@ div_ent <- dom_arch_df %>%
         legend.position = "inside",
         legend.position.inside = c(0.11, 0.787),
         plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"),
+        axis.text = element_text(size = 8)
         ) +
   labs(x = "Entropy (scaled)",
        y = "Diveristy (scaled)",
@@ -56,4 +57,4 @@ div_ent <- dom_arch_df %>%
 div_ent
 
 ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig3_testing_", Sys.Date(), ".jpeg")),
-       div_ent, height = 90, width = 90, dpi = 300, units = "mm", device = "jpeg")
+       div_ent, height = 105, width = 85, dpi = 300, units = "mm", device = "jpeg")

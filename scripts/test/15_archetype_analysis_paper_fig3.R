@@ -40,17 +40,20 @@ div_ent <- dom_arch_df %>%
   guides(alpha = "none") +
   guides(size = "none") +
   guides(fill = "none") +
-  annotate("text", x = 2, y = 2, label= "high-high") + 
-  annotate("text", x = -2, y = -3, label = "low-low") +
-  annotate("text", x = -1.25, y = 2, label= "high-low") + 
-  annotate("text", x = 2, y = -3, label = "low-high") +
-  theme(legend.position = "inside",
-        legend.position.inside = c(0.11, 0.787)) +
+  annotate("text", x = 2, y = 2, label= "high-high", size = 8/.pt) + 
+  annotate("text", x = -2, y = -3, label = "low-low", size = 8/.pt) +
+  annotate("text", x = -1.25, y = 2, label= "high-low", size = 8/.pt) + 
+  annotate("text", x = 2, y = -3, label = "low-high", size = 8/.pt) +
+  theme(text = element_text(size = 8),
+        legend.position = "inside",
+        legend.position.inside = c(0.11, 0.787),
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"),
+        ) +
   labs(x = "Entropy (scaled)",
        y = "Diveristy (scaled)",
        color = "Archetype",
        size = "% Area Dom. Archetype")
 div_ent
 
-ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig3_testing_", Sys.Date(), ".png")),
-       div_ent, height = 6, width = 6, dpi = 300)
+ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig3_testing_", Sys.Date(), ".jpeg")),
+       div_ent, height = 90, width = 90, dpi = 300, units = "mm", device = "jpeg")

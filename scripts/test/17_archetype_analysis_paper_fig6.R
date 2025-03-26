@@ -28,7 +28,10 @@ p1 <- nf_year_summ_arch %>%
          alpha = "none", 
          color = "none") +
   theme_minimal() + 
-  theme_bw()
+  theme_bw() +
+  theme(text = element_text(size = 8),
+        axis.text = element_text(size = 8)
+  )
 p1
 
 p2 <- nf_year_summ_arch %>%
@@ -44,7 +47,10 @@ p2 <- nf_year_summ_arch %>%
          alpha = "none", 
          color = "none") +
   theme_minimal() + 
-  theme_bw()
+  theme_bw() +
+  theme(text = element_text(size = 8),
+        axis.text = element_text(size = 8)
+  )
 p2
 
 panel <- p1 | p2 
@@ -52,5 +58,5 @@ panel <- p1 | p2
 panel
 
 # save
-ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig6_testing_", Sys.Date(), ".png")), 
-       plot = panel, width = 12, height = 6, dpi = 300)
+ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig6_testing_", Sys.Date(), ".jpeg")), 
+       plot = panel,  height = 100, width = 140, dpi = 300, units = "mm", device = "jpeg")

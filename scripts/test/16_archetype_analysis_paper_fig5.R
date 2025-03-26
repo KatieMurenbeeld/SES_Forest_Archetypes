@@ -166,8 +166,11 @@ archs_purpose_plot <- ggplot(archs_filt, aes(x=purpose_newname, y = pct_purpose,
   guides(fill=guide_legend(title="Archetype")) +
   theme_minimal() + 
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(text = element_text(size = 8),
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        axis.text = element_text(size = 8)
+        )
 archs_purpose_plot
 
-ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig5_testing_", Sys.Date(), ".png")),
-       archs_purpose_plot, height = 6, width = 12, dpi = 300)
+ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig5_testing_", Sys.Date(), ".jpeg")),
+       archs_purpose_plot,  height = 100, width = 140, dpi = 300, units = "mm", device = "jpeg")

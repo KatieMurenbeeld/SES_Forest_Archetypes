@@ -69,11 +69,11 @@ all_k6_rg_nf_map <- ggplot() +
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         axis.text = element_text(size = 8),
-        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm")) + 
-  ggtitle("A")
+        plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm")) #+ 
+  #ggtitle("A")
 #all_k6_rg_nf_map
-#ggsave(here::here(paste0("outputs/plots/fig2_map_testing_", Sys.Date(), ".png")), 
-#       plot = all_k6_rg_nf_map, width = 8, height = 8, dpi = 300)
+ggsave(here::here(paste0("outputs/plots/fig2_map_testing_", Sys.Date(), ".png")), 
+       plot = all_k6_rg_nf_map, width = 8, height = 8, dpi = 300)
 
 # Variable interp plot
 data <- as.data.frame(scale(sgfcm_all_attri)) # use non scaled data for IQR overlap
@@ -232,10 +232,12 @@ k6_iqr_no_overlap <- ggplot(data=k6_long_overlap_reorder_newnames, mapping = aes
     axis.title.y = element_blank(),
     axis.text = element_text(size = 8),
     plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm")) +
-    facet_wrap(vars(groups_k6_alpha)) + 
-  ggtitle("B")
+    facet_wrap(vars(groups_k6_alpha)) #+ 
+  #ggtitle("B")
 
 #k6_iqr_no_overlap
+ggsave(here::here(paste0("outputs/plots/fig2_iqr_panel_testing_", Sys.Date(), ".png")), 
+       plot = k6_iqr_no_overlap, width = 8, height = 6, dpi = 300)
 
 panel <- all_k6_rg_nf_map / k6_iqr_no_overlap +
   plot_layout(heights = unit(c(8, 6), c('cm', 'null')))

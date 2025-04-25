@@ -6,7 +6,7 @@ library(patchwork)
 
 # load the data
 
-nf_year_summ_arch <- read_csv(here::here("outputs/tables/nf_nepa_projs_arch_summ_2025-02-21.csv"))
+nf_year_summ_arch <- read_csv(here::here("outputs/tables/nf_nepa_projs_arch_summ_2025-04-24.csv"))
 
 # correlations
 cor(nf_year_summ_arch$shan_diverse, nf_year_summ_arch$yearly_pct_med_EA_EIS, use = "complete.obs")

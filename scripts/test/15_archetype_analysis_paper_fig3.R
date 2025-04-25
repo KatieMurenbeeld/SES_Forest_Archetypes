@@ -10,7 +10,7 @@ library(MetBrewer)
 
 
 # Load the data
-dom_arch_df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_2024-12-11.csv"))
+dom_arch_df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_2025-04-24.csv"))
 
 # Set axis labels
 axLabels <- c("", "Low","", "", "","High", "")

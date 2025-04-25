@@ -36,6 +36,7 @@ SGFCM_all_result_k6 <- SGFCMeans(dataset, k = 6, m = 1.9, standardize = FALSE,
 
 saveRDS(SGFCM_all_result_k6, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/outputs/SGFCM_all_attr_k6_", 
                                     Sys.Date(), ".rds"))
+
 map_SGFCM_result_k6 <- rast(SGFCM_all_result_k6$rasters)
 plot(map_SGFCM_result_k6[["Groups"]])
 writeRaster(map_SGFCM_result_k6[["Groups"]], filename = paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k6_", 

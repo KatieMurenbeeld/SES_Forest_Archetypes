@@ -10,7 +10,7 @@ library(MetBrewer)
 sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 sgfcm_all_attri_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
 sgfcm_all_k6_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/SGFCM_all_result_k6_2024-10-15.tif")
-nf_summ_df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_2024-12-11.csv")) 
+nf_summ_df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_2025-04-24.csv")) 
 
 # Load the USFS boundaries
 fs_nf <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeForest.shp")
@@ -45,8 +45,8 @@ nf_buffers_int <- st_intersection(nf_buffers, fs_reg.crop)
 
 
 # read in the national forest level shannon diversity shapefile and entropy shapefile 
-shan_nf <- read_sf(here::here("data/processed/shan_h_nf_2024-11-05.shp"))
-ent_nf <- read_sf(here::here("data/processed/ent_nf_2024-11-01.shp"))
+#shan_nf <- read_sf(here::here("data/processed/shan_h_nf_2024-11-05.shp"))
+#ent_nf <- read_sf(here::here("data/processed/ent_nf_2024-11-01.shp"))
 
 # calculate the archetype areas assuming crisp archetypes for each forest 
 buff <- nf_buffers_int
@@ -256,11 +256,11 @@ nf_year_summ <- nf_arch_year_df %>%
             total_pct_EA_EIS = (total_EIS + total_EA)/(total_EIS + total_EA + total_CE) * 100)
 
 nf_year_summ_arch <- left_join(nf_summ_df, nf_year_summ, by = c("forest_num" = "FOREST_ID"))
-#write_csv(nf_year_summ_arch, here::here(paste0("outputs/tables/nf_nepa_projs_arch_summ_", 
-#                                               Sys.Date(), ".csv")))
+write_csv(nf_year_summ_arch, here::here(paste0("outputs/tables/nf_nepa_projs_arch_summ_", 
+                                               Sys.Date(), ".csv")))
 
 # need to write a script that saves this csv
-nf_year_summ_arch <- read_csv(here::here("outputs/tables/nf_nepa_projs_arch_summ_2025-02-21.csv"))
+#nf_year_summ_arch <- read_csv(here::here("outputs/tables/nf_nepa_projs_arch_summ_2025-02-21.csv"))
 
 nf_year_summ_arch %>%
   filter(div_to_ent == "high_ent_high_div") %>%
@@ -536,8 +536,8 @@ reg_4_all_df <- left_join(reg_4_all_df, pals_df_2009_nepa_time_year_reg4)
 #write_csv(reg_4_all_df, here::here(paste0("outputs/tables/region4_allforests_nepa_types_time_", Sys.Date(), ".csv")))
 
 # save the csv file
-#write_csv(nf_arch_summ_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_", Sys.Date(), ".csv")))
-#write_csv(nf_arch_year_df_test, here::here(paste0("outputs/tables/nf_level_pals_year_arch_summs_", Sys.Date(), ".csv")))
+write_csv(nf_arch_summ_df, here::here(paste0("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_", Sys.Date(), ".csv")))
+write_csv(nf_arch_year_df_test, here::here(paste0("outputs/tables/nf_level_pals_year_arch_summs_", Sys.Date(), ".csv")))
 
 # look at region 4 
 pals_arch_reg4 <- pals_purpose_arch_pct_area %>%

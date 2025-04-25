@@ -18,10 +18,10 @@ pals_filt <- pals_df_2009 %>%
 df_year <- df_year %>%
   mutate(total_proj = (DM + DN + ROD),
          pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100,
-         EA_EIS_med_time = ((DN + ROD) / med_nepa_time),
-         EA_EIS_mean_time = ((DN + ROD) / mean_nepa_time),
-         pctEAEIS_med_time = (pct_EA_EIS / med_nepa_time),
-         pctEAEIS_mean_time = (pct_EA_EIS / mean_nepa_time))
+         EA_EIS_med_time = ((DN + ROD) / med_nepa_time_all_types),
+         EA_EIS_mean_time = ((DN + ROD) / med_nepa_time_all_types),
+         pctEAEIS_med_time = (pct_EA_EIS / med_nepa_time_all_types),
+         pctEAEIS_mean_time = (pct_EA_EIS / med_nepa_time_all_types))
 
 df <- df %>%
   mutate(pct_EA_EIS = ((ROD + DN)/(ROD + DN + DM)) * 100,
@@ -78,7 +78,8 @@ df %>%
   geom_point()
 
 cor(x = df$shan_diverse, y = df$pct_EA_EIS, use = "complete.obs")
-cor(x = df$entropy_all, y = df$DN, use = "complete.obs")
+cor(x = df$entropy_all, y = df$ROD, use = "complete.obs")
+cor(x = df$shan_diverse, y = df$ROD, use = "complete.obs")
 cor(x = (df$ent_all_sc + df$shan_div_sc), y = df$DM, use = "complete.obs")
 
 df_year %>%

@@ -83,7 +83,8 @@ cor(x = df$shan_diverse, y = df$ROD, use = "complete.obs")
 cor(x = (df$ent_all_sc + df$shan_div_sc), y = df$DM, use = "complete.obs")
 
 df_for_cor <- df %>%
-  select_if(is.numeric)
+  select_if(is.numeric) %>%
+  select(DM, DN, ROD, shan_diverse, entropy_all, pct_EA_EIS, pctEAEIS_med_time)
 
 appen_corrs_df <- as.data.frame(cor(x = df_for_cor, use = "complete.obs"))
 

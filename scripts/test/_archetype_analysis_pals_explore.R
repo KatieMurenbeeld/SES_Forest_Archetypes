@@ -82,6 +82,14 @@ cor(x = df$entropy_all, y = df$ROD, use = "complete.obs")
 cor(x = df$shan_diverse, y = df$ROD, use = "complete.obs")
 cor(x = (df$ent_all_sc + df$shan_div_sc), y = df$DM, use = "complete.obs")
 
+df_for_cor <- df %>%
+  select_if(is.numeric)
+
+appen_corrs_df <- as.data.frame(cor(x = df_for_cor, use = "complete.obs"))
+
+# save the csv
+write_csv(appen_corrs_df, here::here(paste0("outputs/tables/table_b4_", Sys.Date(), ".csv")))
+
 df_year %>%
   ggplot(aes(x = div_to_ent, y = pct_EA_EIS)) +
   geom_boxplot()

@@ -4,8 +4,8 @@ library(MetBrewer)
 
 # load the data
 
-df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_2025-01-30.csv")) 
-df_year <- read_csv(here::here("outputs/tables/nf_level_pals_year_arch_summs_2025-01-30.csv"))
+df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertainty_nepa_2025-04-24.csv")) 
+df_year <- read_csv(here::here("outputs/tables/nf_level_pals_year_arch_summs_2025-04-24.csv"))
 pals_df <- read_delim("~/Analysis/NEPA_Efficiency/data/original/pals_ongoing_projects_11-2022.csv", delim = ";")
 
 # Filter for date and select Forest Number and Purposes

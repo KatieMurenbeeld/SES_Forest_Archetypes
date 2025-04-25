@@ -46,7 +46,7 @@ div_ent <- dom_arch_df %>%
   annotate("text", x = 2, y = -3, label = "low-high", size = 8/.pt) +
   theme(text = element_text(size = 8),
         legend.position = "inside",
-        legend.position.inside = c(0.11, 0.787),
+        legend.position.inside = c(0.11, 0.75),
         plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"),
         axis.text = element_text(size = 8)
         ) +
@@ -57,4 +57,4 @@ div_ent <- dom_arch_df %>%
 div_ent
 
 ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig3_testing_", Sys.Date(), ".jpeg")),
-       div_ent, height = 100, width = 85, dpi = 300, units = "mm", device = "jpeg")
+       div_ent, height = 100, width = 90, dpi = 500, units = "mm", device = "jpeg", bg = "white")

@@ -173,4 +173,4 @@ archs_purpose_plot <- ggplot(archs_filt, aes(x=purpose_newname, y = pct_purpose,
 archs_purpose_plot
 
 ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig5_testing_", Sys.Date(), ".jpeg")),
-       archs_purpose_plot,  height = 100, width = 140, dpi = 300, units = "mm", device = "jpeg")
+       archs_purpose_plot,  height = 100, width = 140, dpi = 500, units = "mm", device = "jpeg", bg = "white")

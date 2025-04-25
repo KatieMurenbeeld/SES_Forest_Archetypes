@@ -59,4 +59,4 @@ panel
 
 # save
 ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig6_testing_", Sys.Date(), ".jpeg")), 
-       plot = panel,  height = 100, width = 140, dpi = 300, units = "mm", device = "jpeg")
+       plot = panel,  height = 100, width = 140, dpi = 500, units = "mm", device = "jpeg", bg = "white")

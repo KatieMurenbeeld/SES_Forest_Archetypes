@@ -33,6 +33,10 @@ nf_buffers <- st_intersection(nf_sf, fs_reg.crop)
 
 attri_crop <- crop(df_attri, nf_buffers, mask = TRUE)
 
+## save for the next scripts (this could be its own small script)
+writeRaster(attri_crop, filename = here::here(paste0("data/processed/nf_buffers_all_attributes_scaled_", 
+                                          Sys.Date(), ".tif")))
+
 # 3. Format for use in geocmeans
 dataset <- lapply(names(attri_crop), function(n){
   aband <- attri_crop[[n]]
@@ -339,7 +343,7 @@ ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_sgfcm_xb_k
                          Sys.Date(), ".jpeg")), 
        plot = sgfcm_xb, height = 6, width = 10, dpi = 300)
 
-# Seed = 456, Silhouette index = , k = 3, m = 1.2, beta = , alpha = , w = 7x7 (w3)
+# Seed = 456, Silhouette index = 0.78, k = 3, m = 1.2, beta = 0.6, alpha = 0.6, w = 7x7 (w3) (XB = 0.2)
 
 
 

@@ -32,6 +32,7 @@ names(dataset) <- names(sgfcm_all_attri_sc)
 # FCM seed = 1234, Silhouette index = 0.45, k = 8, m = 1.9, window =  3x3 (w1), alpha = 0.5, beta = 0.4
 
 w1 <- matrix(1, nrow = 3, ncol = 3)
+w2 <- matrix(1, nrow = 7, ncol = 7)
 
 SGFCM_all_result_k6 <- SGFCMeans(dataset, k = 6, m = 1.9, standardize = FALSE,
                                  lag_method = "mean",
@@ -77,6 +78,7 @@ sgfcm_eco_attri_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/d
 sgfcm_eco_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_eco_attributes_2024-10-08.tif")
 
 sgfcm_soc_attri_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_soc_attributes_scaled_2024-10-08.tif")
+sgfcm_soc_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_soc_attributes_2024-10-08.tif")
 
 forest_var_df <- data.frame(
   region = as.character(),
@@ -85,15 +87,17 @@ forest_var_df <- data.frame(
   soc_var = as.numeric()
 )
 
+t = 75
 for (nf in nf_buffers$FORESTORGC){
   tmp_shp <- nf_buffers %>%
     filter(FORESTORGC == nf)
   #tmp_eco_rast <- crop(sgfcm_eco_attri_sc, tmp_shp, mask = TRUE)
   #tmp_soc_rast <- crop(sgfcm_soc_attri_sc, tmp_shp, mask = TRUE)
+  tmp_rast <- crop(sgfcm_all_attri, tmp_shp, mask = TRUE)
   region <- nf_buffers$REGION[nf_buffers$FORESTORGC == nf]
   forest <- nf
-  eco_var <- sqrt(sum(exact_extract(sgfcm_eco_attri_sc, tmp_shp, fun = "stdev")))
-  soc_var <- sqrt(sum(exact_extract(sgfcm_soc_attri_sc, tmp_shp, fun = "stdev")))
+  eco_var <- sqrt(sum(exact_extract(sgfcm_eco_attri, tmp_shp, fun = "stdev")))
+  soc_var <- sqrt(sum(exact_extract(sgfcm_soc_attri, tmp_shp, fun = "stdev")))
   tmp_undecided <- any(max(tmp_rast) < t)
   tmp_df <- freq(tmp_undecided)
   forest_var_df[nrow(forest_var_df) + 1,] <- as.list(c(region,

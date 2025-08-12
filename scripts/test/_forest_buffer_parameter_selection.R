@@ -106,6 +106,41 @@ gfcm_xb
 ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_gfcm_k4_xb_", 
                          Sys.Date(), ".jpeg")), 
        plot = gfcm_xb, height = 6, width = 10, dpi = 300)
-# Seed = 6891, Silhouette index = , k = 4, m = , beta =  (XB = )
-# Seed = 6891, Silhouette index = , k = 4, m = , beta =  (XB = )
+# Seed = 6891, Silhouette index = 0.33, k = 4, m = 1.7, beta = 0.3 (XB = 24.13)
+# Seed = 6891, Silhouette index = 0.32, k = 4, m = 1.5, beta = 0.1 (XB = 12.22)
+
+#--------------------------------
+# k = 3
+GFCMvalues_k3 <- select_parameters.mc(algo = "GFCM", data = dataset, seed = 6891,
+                                      k = 3, m = seq(1.1,2,0.1), beta = seq(0.1,0.9,0.1),
+                                      spconsist = FALSE, verbose = TRUE, init = "kpp",
+                                      indices = c("XieBeni.index", "Explained.inertia",
+                                                  "Negentropy.index", "Silhouette.index"))  
+
+write_csv(GFCMvalues_k3, here::here(paste0("outputs/nfbuffers_gfcm_all_attri_param_indices_k3_",
+                                           Sys.Date(), ".csv")), append = FALSE)
+
+
+# plotting the silhouette index
+gfcm_si <- ggplot(GFCMvalues_k3) + 
+  geom_raster(aes(x = m, y = beta, fill = Silhouette.index)) + 
+  geom_text(aes(x = m, y = beta, label = round(Silhouette.index,2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=1)
+gfcm_si
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_gfcm_k3_si_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = gfcm_si, height = 6, width = 10, dpi = 300)
+# plotting the Xie Beni
+gfcm_xb <- ggplot(GFCMvalues_k3) + 
+  geom_raster(aes(x = m, y = beta, fill = XieBeni.index)) + 
+  geom_text(aes(x = m, y = beta, label = round(XieBeni.index, 2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=1)
+gfcm_xb
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_gfcm_k3_xb_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = gfcm_xb, height = 6, width = 10, dpi = 300)
+# Seed = 6891, Silhouette index = , k = 3, m = , beta =  (XB = )
+# Seed = 6891, Silhouette index = , k = 3, m = , beta =  (XB = )
 

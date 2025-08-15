@@ -8,7 +8,8 @@ library(viridis)
 # 1. Load the attribute raster stack and forest + buffer shape file
 
 ## Attribute raster stack
-df_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
+df_attri_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
+df_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 
 ## Forest with 50km buffer shape file
 nf_sf <- read_sf(here::here("data/processed/nf_buffers_50k_2024-10-22.shp"))
@@ -32,10 +33,14 @@ nf_buffers <- st_intersection(nf_sf, fs_reg.crop)
 # 2.Crop the raster to the nf_buffers
 
 attri_crop <- crop(df_attri, nf_buffers, mask = TRUE)
+attri_crop_sc <- crop(df_attri_sc, nf_buffers, mask = TRUE)
 
 ## save for the next scripts (this could be its own small script)
-writeRaster(attri_crop, filename = here::here(paste0("data/processed/nf_buffers_all_attributes_scaled_", 
+writeRaster(attri_crop, filename = here::here(paste0("data/processed/nf_buffers_all_attributes_", 
                                           Sys.Date(), ".tif")))
+
+writeRaster(attri_crop_sc, filename = here::here(paste0("data/processed/nf_buffers_all_attributes_scaled_", 
+                                                     Sys.Date(), ".tif")), overwrite = TRUE)
 
 # 3. Format for use in geocmeans
 dataset <- lapply(names(attri_crop), function(n){

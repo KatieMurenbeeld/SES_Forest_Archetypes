@@ -10,6 +10,7 @@ library(distributional)
 library(ggdist)
 library(ggsci)
 library(tigris)
+library(tidyverse)
 
 # Load the data
 fs_nf <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/S_USA.AdministrativeForest.shp")
@@ -19,6 +20,7 @@ sgfcm_all_result <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/out
 plot(sgfcm_all_result)
 ## Reproject the forest service shapes to NAD83
 projection <- "epsg: 5070"
+sf_use_s2(FALSE)
 
 fs_nf.proj <- fs_nf %>% 
   filter(REGION != "10") %>%

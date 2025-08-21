@@ -50,7 +50,7 @@ all_rg_nf_map <- ggplot() +
         axis.title.y = element_blank(),
         plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm"))
 
-#all_rg_nf_map
+all_rg_nf_map
 ggsave(paste0("~/Analysis/SES_Forest_Archetypes/outputs/plots/nfbuffers_sgfcm_all_reg_nf_map_", Sys.Date(), ".png"), 
        plot = all_rg_nf_map, width = 12, height = 12, dpi = 300)  
 

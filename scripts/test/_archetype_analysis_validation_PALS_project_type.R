@@ -91,7 +91,8 @@ pals_df_2009 <- pals_df %>%
                 `RU Special area management – purpose`, `RW Recreation management – purpose`,
                 `SU Special use management – purpose`, `TM Forest products – purpose`, 
                 `VM Vegetation management (non-forest products) – purpose`,
-                `WF Wildlife, fish, rare plants – purpose`, `WM Water management – purpose`) %>%
+                `WF Wildlife, fish, rare plants – purpose`, `WM Water management – purpose`,
+                `APPEALED OR OBJECTED?`, `LITIGATED?`) %>%
   group_by(FOREST_ID) %>%
   summarise(REGION = mean(as.numeric(REGION_ID)),
             p_facilities = sum(`FC Facility management – purpose`), 
@@ -111,7 +112,9 @@ pals_df_2009 <- pals_df %>%
             p_forest_prod = sum(`TM Forest products – purpose`),
             p_veg_mngt = sum(`VM Vegetation management (non-forest products) – purpose`), 
             p_wildlife = sum(`WF Wildlife, fish, rare plants – purpose`), 
-            p_water = sum(`WM Water management – purpose`))
+            p_water = sum(`WM Water management – purpose`),
+            total_appealed = sum(as.numeric(`APPEALED OR OBJECTED?`), na.rm = TRUE),
+            total_litigated = sum(as.numeric(`LITIGATED?`), na.rm = TRUE))
 
 pals_df_test <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
@@ -125,7 +128,8 @@ pals_df_test <- pals_df %>%
                 `RU Special area management – purpose`, `RW Recreation management – purpose`,
                 `SU Special use management – purpose`, `TM Forest products – purpose`, 
                 `VM Vegetation management (non-forest products) – purpose`,
-                `WF Wildlife, fish, rare plants – purpose`, `WM Water management – purpose`) %>%
+                `WF Wildlife, fish, rare plants – purpose`, `WM Water management – purpose`,
+                `APPEALED OR OBJECTED?`, `LITIGATED?`) %>%
   group_by(`SIGNED FY`, FOREST_ID) %>%
   summarise(REGION = mean(as.numeric(REGION_ID)),
             mean_assess_time = mean(`ELAPSED DAYS`), 
@@ -146,7 +150,9 @@ pals_df_test <- pals_df %>%
             p_forest_prod = sum(`TM Forest products – purpose`),
             p_veg_mngt = sum(`VM Vegetation management (non-forest products) – purpose`), 
             p_wildlife = sum(`WF Wildlife, fish, rare plants – purpose`), 
-            p_water = sum(`WM Water management – purpose`))
+            p_water = sum(`WM Water management – purpose`),
+            total_appealed = sum(`APPEALED OR OBJECTED?`),
+            total_litigated = sum(`LITIGATED?`))
 
 areas_wide <- areas %>%
   dplyr::select(-total_arch_area) %>%
@@ -162,7 +168,9 @@ pals_df_2009_nepa_time <- pals_df %>%
   group_by(FOREST_ID) %>%
   summarise(REGION = mean(as.numeric(REGION_ID)),
             mean_nepa_time = mean(`ELAPSED DAYS`, na.rm = TRUE),
-            med_nepa_time = median(`ELAPSED DAYS`, na.rm = TRUE))
+            med_nepa_time = median(`ELAPSED DAYS`, na.rm = TRUE),
+            tot_lit = sum(`LITIGATED?`, na.rm = TRUE),
+            tot_appeal = sum(`APPEALED OR OBJECTED?`, na.rm = TRUE))
 
 pals_df_2009_nepa_time_year <- pals_df %>%
   filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
@@ -171,7 +179,9 @@ pals_df_2009_nepa_time_year <- pals_df %>%
   summarise(REGION = mean(as.numeric(REGION_ID)),
             mean_nepa_time_all_types = mean(`ELAPSED DAYS`, na.rm = TRUE),
             med_nepa_time_all_types = median(`ELAPSED DAYS`, na.rm = TRUE),
-            total_nepa_time_all_types = sum(`ELAPSED DAYS`, na.rm = TRUE))
+            total_nepa_time_all_types = sum(`ELAPSED DAYS`, na.rm = TRUE),
+            tot_lit_time = sum(`LITIGATED?`, na.rm = TRUE),
+            tot_appeal_time = sum(`APPEALED OR OBJECTED?`, na.rm = TRUE))
 
 pals_df_2009_nepa_time_year_filt <- pals_df_2009_nepa_time_year %>%
   filter(FOREST_ID %in% c("0402", "0412", "0407", "0408", "0410"))
@@ -253,7 +263,9 @@ nf_year_summ <- nf_arch_year_df %>%
             total_CE = sum(DM),
             yearly_pct_mean_EA_EIS = (yearly_mean_EIS + yearly_mean_EA)/(yearly_mean_EIS + yearly_mean_EA + yearly_mean_CE) * 100,
             yearly_pct_med_EA_EIS = (yearly_med_EIS + yearly_med_EA)/(yearly_med_EIS + yearly_med_EA + yearly_med_CE) * 100,
-            total_pct_EA_EIS = (total_EIS + total_EA)/(total_EIS + total_EA + total_CE) * 100)
+            total_pct_EA_EIS = (total_EIS + total_EA)/(total_EIS + total_EA + total_CE) * 100,
+            tot_lit = sum(tot_lit_time, na.rm = TRUE),
+            tot_appeal = sum(tot_appeal_time, na.rm = TRUE))
 
 nf_year_summ_arch <- left_join(nf_summ_df, nf_year_summ, by = c("forest_num" = "FOREST_ID"))
 write_csv(nf_year_summ_arch, here::here(paste0("outputs/tables/nf_nepa_projs_arch_summ_", 

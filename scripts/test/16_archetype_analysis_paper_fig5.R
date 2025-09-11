@@ -2,6 +2,9 @@ library(tidyverse)
 library(ggplot2)
 library(MetBrewer)
 library(data.table)
+library(forcats)
+library(gghighlight)
+library(ggcharts)
 
 # load the data
 
@@ -50,6 +53,35 @@ pals_df_test <- pals_df %>%
 
 
 nf_pals_df <- left_join(df, pals_df_test, by = "FOREST_ID")
+
+homog <- nf_pals_df %>%
+  filter(pct_area_dom_arch >= 70) %>% 
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(class = "Homog", 
+         pct_purpose = values/sum(values) * 100)
+
+hetero <- nf_pals_df %>%
+  filter(pct_area_dom_arch <= 40) %>% 
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value)) %>%
+  mutate(class = "Hetero", 
+         pct_purpose = values/sum(values) * 100)
+
+mid_div <- nf_pals_df %>%
+  filter(between(pct_area_dom_arch, 40, 70)) %>% 
+  pivot_longer(cols = starts_with("p_"), 
+               names_to = "purpose") %>%
+  group_by(purpose) %>%
+  summarise(values = sum(value, na.rm = TRUE)) %>%
+  mutate(class = "Moderate", 
+         pct_purpose = values/sum(values) * 100)
+
+hetero_df <- rbind(homog, hetero, mid_div)
 
 a1 <-  nf_pals_df %>%
   filter(dom_archetype == 1) %>%
@@ -172,5 +204,234 @@ archs_purpose_plot <- ggplot(archs_filt, aes(x=purpose_newname, y = pct_purpose,
         )
 archs_purpose_plot
 
-ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig5_testing_", Sys.Date(), ".jpeg")),
-       archs_purpose_plot,  height = 100, width = 140, dpi = 500, units = "mm", device = "jpeg", bg = "white")
+#ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig5_testing_", Sys.Date(), ".jpeg")),
+#       archs_purpose_plot,  height = 100, width = 140, dpi = 500, units = "mm", device = "jpeg", bg = "white")
+
+## Trying to create a horizontal bar chart
+#----------------------------
+archs_filt <- archs_filt %>%
+  mutate(pct_purpose = round(pct_purpose, 2),
+         hghlght = case_when(pct_purpose >= 10 ~ TRUE,
+                               pct_purpose < 10 ~ FALSE))
+
+test_archs_purpose_plot <- ggplot(archs_highlight_10, 
+                                  aes(x = archetype, 
+                                      y = pct_purpose, 
+                                      color = purpose_newname,
+                                      fill = highlight
+                                      )
+                                  ) +
+  geom_bar(stat = "identity", width = 1, position = position_dodge()) +
+  geom_text(aes(label = purpose_newname, vjust = "up")) +
+  coord_flip() +
+  #scale_fill_discrete(limits=c("A", "B", "C", "D", "E", "F")) + 
+  #scale_fill_met_d("Hokusai3") +
+  #gghighlight(pct_purpose >= 10.0, keep_scales = TRUE) +
+  scale_fill_manual(values = c("grey", "blue4")) +
+  ylim(0, 40) +
+  xlab("Archetype") + 
+  ylab("% Projects with Purpose") +
+  guides(fill=guide_legend(title=">10%", reverse = TRUE)) +
+  guides(color = guide_legend(reverse = TRUE)) +
+  theme_minimal() + 
+ # theme_bw() +
+  theme(text = element_text(size = 8),
+        axis.text.x = element_text(),
+        axis.text = element_text(size = 8),
+        strip.text.x = element_blank(),     # Removes top (column) facet labels
+        strip.background.x = element_blank(),
+  ) +
+  facet_wrap(~archetype, scales = "free_y", ncol = 1)
+test_archs_purpose_plot
+
+archs_highlight_10 <- archs_filt %>%
+  mutate(highlight = case_when(pct_purpose >= 10 ~ TRUE, 
+                               pct_purpose < 10 ~ FALSE))
+
+
+# I need to reorder by archetype?
+sorted_archs_df <- archs_filt %>% 
+  group_by(archetype) %>%
+  arrange(desc(pct_purpose), .by_group = TRUE) %>%
+  mutate(archetype_num = case_when(archetype == "A" ~ 1,
+                                   archetype == "B" ~ 2,
+                                   archetype == "C" ~ 3,
+                                   archetype == "D" ~ 4,
+                                   archetype == "E" ~ 5,
+                                   archetype == "F" ~ 6),
+                                   
+         reord = as.numeric(pct_purpose),
+         purpose_newname = fct_reorder(purpose_newname, reord, .desc = FALSE))
+# keep looking at this https://stackoverflow.com/questions/72411477/how-to-reorder-bars-by-multiple-variables
+
+
+sorted_archs_purpose_plot <- ggplot(sorted_archs_df, 
+                                    aes(x = archetype, 
+                                        y = pct_purpose, 
+                                        fill = purpose_newname)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  coord_flip() +
+  #scale_fill_discrete(limits=c("A", "B", "C", "D", "E", "F")) + 
+  #scale_fill_met_d("Hokusai3") +
+  ylim(0, 40) +
+  xlab("Archetype") + 
+  ylab("% Projects with Purpose") +
+  guides(fill=guide_legend(title="Purpose")) +
+  theme_minimal() + 
+  theme_bw() +
+  theme(text = element_text(size = 8),
+        axis.text.x = element_text(),
+        axis.text = element_text(size = 8)
+  )
+sorted_archs_purpose_plot
+
+sorted_archs_df %>%
+  filter(archetype == "A") %>%
+  ggplot(aes(x = archetype, y = pct_purpose, fill = purpose_newname)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  #geom_col() +
+  coord_flip() +
+  #scale_fill_discrete(limits=c("A", "B", "C", "D", "E", "F")) + 
+  #scale_fill_met_d("Hokusai3") +
+  ylim(0, 40) +
+  #xlab("Archetype") + 
+  ylab("% Projects with Purpose") +
+  guides(fill=guide_legend(title="Purpose")) +
+  theme_minimal() + 
+  theme_bw() +
+  theme(text = element_text(size = 8),
+        axis.text.x = element_text(),
+        axis.text = element_text(size = 8)
+  )
+#sorted_archs_purpose_plot
+
+
+
+ggplot(sorted_archs_df, aes(x = purpose_newname, y = pct_purpose, color = archetype)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  coord_flip() +
+  #scale_fill_discrete(limits=c("A", "B", "C", "D", "E", "F")) + 
+  #scale_fill_met_d("Hokusai3") +
+  ylim(0, 40) +
+  xlab("Archetype") + 
+  ylab("% Projects with Purpose") +
+  guides(fill=guide_legend(title="Purpose")) +
+  theme_minimal() + 
+  theme_bw() +
+  theme(text = element_text(size = 8),
+        axis.text.x = element_text(),
+        axis.text = element_text(size = 8)
+  )
+
+## try with ggcharts
+#----------------------------------------
+
+chart <- archs_filt %>%
+  bar_chart(purpose_newname, pct_purpose, facet = archetype, 
+            top_n = 5, label = pct_purpose) +
+  geom_text(aes(label = pct_purpose, hjust = 1.2), color = "white", size = 3.25) + 
+  labs(
+    x = NULL,
+    y = "Projects with Purpose (%)"
+    #title = "Top 5 Project Purposes for Each Archetype"
+  ) +
+  theme_classic(base_size = 12) + 
+  # theme_bw() +
+  theme(#text = element_text(size = 12),
+        panel.grid = element_blank(),
+        axis.text.x = element_text(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        #axis.text = element_text(size = 12),
+        #strip.text.x = element_blank(),     # Removes top (column) facet labels
+        strip.background.x = element_blank(),
+  )
+chart
+ggsave(here::here("outputs/plots/_test_redo_archetype_projects.png"), 
+       width = 12, height = 4, dpi = 300)
+
+
+chart2 <- archs_filt %>%
+  bar_chart(purpose_newname, pct_purpose, facet = archetype, 
+            label = pct_purpose, highlight = pct_purpose > 10) +
+  geom_text(aes(label = pct_purpose, hjust = 1.2), color = "white") + 
+  labs(
+    x = NULL,
+    y = "Projects with Purpose (%)",
+    title = "Top 5 Project Purposes"
+  ) +
+  theme_minimal(base_size = 14) + 
+  # theme_bw() +
+  theme(#text = element_text(size = 12),
+    axis.text.x = element_text(),
+    #axis.text = element_text(size = 12),
+    #strip.text.x = element_blank(),     # Removes top (column) facet labels
+    strip.background.x = element_blank(),
+  )
+chart2
+
+# Test with the diversity class (hetero, homog, mid)
+#-----------------------------------------------------
+
+hetero_df <- hetero_df %>%
+  mutate(purpose_newname = case_when(purpose == "p_facilities" ~ "Facilities", 
+                                     purpose == "p_forest_prod" ~ "Forest Products",
+                                     purpose == "p_grazing" ~ "Grazing",
+                                     purpose == "p_haz_fuels" ~ "Hazardous. Fuels",
+                                     purpose == "p_min_geo" ~ "Mining & Geology", 
+                                     purpose == "p_recreation" ~ "Recreation",
+                                     purpose == "p_road" ~ "Roads",
+                                     purpose == "p_spec_use" ~ "Special Use Permits",
+                                     purpose == "p_veg_mngt" ~ "Vegetation Management",
+                                     purpose == "p_water" ~ "Water",
+                                     purpose == "p_wildlife" ~ "Wildlife"))
+
+hetero_df <- hetero_df %>%
+  mutate(pct_purpose = round(pct_purpose, 2))
+
+# plot
+hetero_purpose_plot <- ggplot(hetero_df, aes(x=purpose_newname, y = pct_purpose, fill = class)) +
+  geom_bar(stat = "identity", width = 0.7, position = position_dodge(), color = "black") +
+  #scale_fill_discrete(limits=c("A", "B", "C", "D", "E", "F")) + 
+  #scale_fill_met_d("Hokusai3") +
+  ylim(0, 40) +
+  xlab("Purpose") + 
+  ylab("% Projects with Purpose") +
+  guides(fill=guide_legend(title="Diversity Class")) +
+  theme_minimal() + 
+  theme_bw() +
+  theme(text = element_text(size = 8),
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        axis.text = element_text(size = 8)
+  )
+hetero_purpose_plot
+
+chart3 <- hetero_df %>%
+  bar_chart(purpose_newname, pct_purpose, facet = class, 
+            top_n = 5, label = pct_purpose) +
+  geom_text(aes(label = pct_purpose, hjust = 1.2), color = "white", size = 3.25) + 
+  labs(
+    x = NULL,
+    y = "Projects with Purpose (%)"
+    #title = "Top 5 Project Purposes for Each Archetype"
+  ) +
+  theme_classic(base_size = 12) + 
+  # theme_bw() +
+  theme(#text = element_text(size = 12),
+    panel.grid = element_blank(),
+    axis.text.x = element_text(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank(),
+    #axis.text = element_text(size = 12),
+    #strip.text.x = element_blank(),     # Removes top (column) facet labels
+    strip.background.x = element_blank(),
+  )
+chart3
+
+# Look into SUP
+#-----------------------------------
+
+pals_df_sup <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  filter(REGION_ID != "10" & REGION_ID != "13" & REGION_ID != "24" & REGION_ID != "00") %>%
+  filter(`SU Special use management – purpose` == 1)

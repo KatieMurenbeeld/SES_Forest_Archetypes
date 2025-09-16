@@ -1,4 +1,5 @@
-# This is an important script to include on github. This is a table for 
+# This is an important script to include on github. 
+##This is a table that will be used for creating figure 5(3) see 16_arch....R
 library(tidyverse)
 library(terra)
 library(sf)

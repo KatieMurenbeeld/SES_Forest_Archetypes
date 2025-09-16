@@ -51,9 +51,13 @@ all_ent_rst_conus <- rast(all_ent_conus)
 plot(all_ent_rst_conus)
 plot(all_ent_rst_conus$all_ent_conus)
 
-writeRaster(all_ent_rst_conus, here::here(paste0("outputs/nfbuffers_SGFCM_all_k3_entropy_", Sys.Date(), ".tif")))
+#writeRaster(all_ent_rst_conus, here::here(paste0("outputs/nfbuffers_SGFCM_all_k3_entropy_", Sys.Date(), ".tif")))
 
 #----Map the Entropy---------
+
+# load the entropy raster
+
+ent_rast <- rast(here::here("outputs/nfbuffers_SGFCM_all_k3_entropy_2025-08-15.tif"))
 
 # read in the 50km buffer shape
 nf_buffers_test #need to bring in the code or save the updated nf_buffers shape
@@ -72,8 +76,8 @@ nf_calc_ent <- function(area_to_calc, ent_rast){
   return(ent_means)
 } 
 
-ent_all <- all_ent_rst_conus$all_ent_conus
-ent_mean_all <- nf_calc_ent(nf_buffers, ent_all) 
+ent_all <- ent_rast$all_ent_conus
+ent_mean_all <- nf_calc_ent(nf_buffers_test, ent_all) 
 ent_mean_all <- rename(ent_mean_all, c(FORESTORGC = ID,
                                        ent_all = all_ent_conus))
 
@@ -85,8 +89,8 @@ ent_sf <- st_as_sf(ent_sf)
 ent_df <- as.data.frame(st_drop_geometry(ent_sf))
 
 #write_csv(ent_df, here::here(paste0("outputs/nf_entropy_", Sys.Date(), ".csv")))
-#write_sf(ent_sf, here::here(paste0("data/processed/ent_nf_", 
-#                                     Sys.Date(), ".shp")), overwrite = TRUE)
+write_sf(ent_sf, here::here(paste0("data/processed/nfbuffers_ent_nf_", 
+                                     Sys.Date(), ".shp")), overwrite = TRUE)
 
 ## Make Maps
 ent_all_df <- ent_all$all_ent_conus %>% as.data.frame(xy = TRUE)
@@ -125,13 +129,13 @@ ent_all_nf_map
 
 ## Mean entropy for national forests
 mean_ent_all_nf <- ggplot() +
-  geom_sf(data = fs_nf.crop, fill = NA, color = "black", linewidth = 0.75) +
-  geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 1) +
+#  geom_sf(data = fs_nf.crop, fill = NA, color = "black", linewidth = 0.75) +
+#  geom_sf(data = fs_reg.crop, fill = NA, color = "black", linewidth = 1) +
   geom_sf(data = ent_sf, aes(fill = ent_all, color = NULL)) +
   labs(title = "Entropy of Forest Archetypes: k = 3",
        subtitle = "Calculated from 50km buffer around National Forests", 
        fill = "Entropy") +
-  scale_fill_viridis(limits = c(0, 1)) +
+  scale_fill_viridis(limits = c(0, 1), alpha = 0.5) +
   theme_bw() + 
   theme(text = element_text(size = 16),
         axis.title.x = element_blank(), 

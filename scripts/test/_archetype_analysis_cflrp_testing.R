@@ -5,6 +5,9 @@ library(ggplot2)
 library(exactextractr)
 library(tigris)
 library(MetBrewer)
+library(dgof)
+library(emmeans)
+
 
 # Load the CFLRP data
 cflrp <- st_read(here::here("data/original/Actv_CFLRP_PL/S_USA.Actv_CFLRP_PL.shp"))
@@ -144,3 +147,135 @@ cflrp_2009 <- cflrp %>%
 
 ggplot(cflrp_2009, aes(NBR_UNITS1)) + 
   geom_histogram(bins = 200)
+
+
+
+
+# Simple CFLRP yes/no EDA
+#------------------------------------------------
+
+# in test_join add a column with a 1 or 0 for whether a forest has a cflrp or not
+
+test_join <- test_join %>%
+  mutate(clfrp_ = case_when(total_cflrp_acres == 0 ~ 0, 
+                            total_cflrp_acres > 0 ~ 1))
+
+
+ggplot(test_join, aes(x = clfrp_, y = tot_appeal)) + 
+  geom_point()
+
+ggplot(test_join, aes(x = clfrp_, y = tot_lit)) + 
+  geom_point()
+
+ggplot(test_join, aes(x = clfrp_, y = pct_area_dom_arch)) + 
+  geom_point()
+
+ggplot(test_join, aes(x = clfrp_, y = shan_diverse_norm)) + 
+  geom_point()
+
+ggplot(test_join, aes(x = clfrp_, y = entropy_all)) + 
+  geom_point()
+
+ggplot(test_join, aes(x = clfrp_, y = entropy_eco)) + 
+  geom_point()
+
+ggplot(test_join, aes(x = clfrp_, y = entropy_soc)) + 
+  geom_point()
+
+ggplot(test_join, aes(x = clfrp_, y = yearly_pct_med_EA_EIS)) + 
+  geom_point() + 
+  facet_wrap(~region)
+
+ggplot(test_join, aes(x = clfrp_, y = yearly_mean_projs)) + 
+  geom_point() 
+
+ggplot(test_join, aes(x = clfrp_, y = yearly_med_projs)) + 
+  geom_point() + 
+  facet_wrap(~region)
+
+ggplot(test_join, aes(x = clfrp_, y = yearly_med_CE)) + 
+  geom_point() + 
+  facet_wrap(~region)
+
+# regression
+#---------------------------
+
+m1 <- glm( cbind(clfrp_, 1-clfrp_) ~ tot_appeal, data = test_join, 
+           family = binomial)
+summary(m1)
+
+yhat.df <- emmeans(m1, ~ pct_area_dom_arch, at = list(pct_area_dom_arch = seq(0,5,by=.01)), type='response') %>%
+  as.data.frame()
+
+ggplot(test_join, aes(x = pct_area_dom_arch)) +
+  geom_ribbon(data=yhat.df, aes(ymin = asymp.LCL, ymax = asymp.UCL), fill='salmon', alpha=.4) +
+  geom_line(data = yhat.df, aes(y=prob), color='red') +
+  geom_point(aes(y = clfrp_)) +
+  labs(y='Probability of CFLRP', x = '% Area Dominant Arch.', title = 'Heterogeneity and CFLRP')
+
+# compare distributions
+#------------------------------
+
+ggplot(test_join, aes(x = shan_diverse_norm, fill = as.factor(clfrp_))) +
+  geom_histogram(alpha=0.6, position = 'identity', bins = 30) +
+  scale_fill_manual(values=c("#69b3a2", "#404080")) +
+  theme_bw() +
+  labs(fill="")
+
+ggplot(test_join, aes(x = entropy_all, fill = as.factor(clfrp_))) +
+  geom_histogram(alpha=0.6, position = 'identity', bins = 30) +
+  scale_fill_manual(values=c("#69b3a2", "#404080")) +
+  theme_bw() +
+  labs(fill="")
+
+ggplot(test_join, aes(x = entropy_eco, fill = as.factor(clfrp_))) +
+  geom_histogram(alpha=0.6, position = 'identity', bins = 30) +
+  scale_fill_manual(values=c("#69b3a2", "#404080")) +
+  theme_bw() +
+  labs(fill="")
+
+ggplot(test_join, aes(x = entropy_soc, fill = as.factor(clfrp_))) +
+  geom_histogram(alpha=0.6, position = 'identity', bins = 30) +
+  scale_fill_manual(values=c("#69b3a2", "#404080")) +
+  theme_bw() +
+  labs(fill="")
+
+ggplot(test_join, aes(x = pct_area_dom_arch, fill = as.factor(clfrp_))) +
+  geom_histogram(alpha=0.6, position = 'identity', bins = 30) +
+  scale_fill_manual(values=c("#69b3a2", "#404080")) +
+  theme_bw() +
+  labs(fill="")
+
+# simple 2-sided K-S test - nope
+
+yes_cflrp <- test_join %>%
+  filter(total_cflrp_acres > 0) %>%
+  dplyr::select(shan_diverse_norm, entropy_all, pct_area_dom_arch)
+no_cflrp <- test_join %>%
+  filter(total_cflrp_acres == 0)  %>%
+  dplyr::select(shan_diverse_norm, entropy_all, pct_area_dom_arch)
+
+ks.test(yes_cflrp$entropy_all, yes_cflrp$entropy_all)
+
+# simple ANOVA
+
+shan_div_aov <- aov(test_join$shan_diverse_norm ~ factor(test_join$clfrp_))
+summary(shan_div_aov)
+
+shan_div_aov2 <- aov(test_join$shan_diverse_norm ~ factor(test_join$clfrp_) * factor(test_join$dom_archetype))
+summary(shan_div_aov2)
+
+ent_all_aov <- aov(test_join$entropy_all ~ factor(test_join$clfrp_))
+summary(ent_all_aov)
+
+pct_dom_arch_aov <-  aov(test_join$pct_area_dom_arch ~ factor(test_join$clfrp_))
+summary(pct_dom_arch_aov)
+
+pct_dom_arch_aov2 <-  aov(test_join$pct_area_dom_arch ~ factor(test_join$dom_archetype))
+summary(pct_dom_arch_aov2)
+
+ent_all_aov2 <- aov(test_join$entropy_all ~ factor(test_join$dom_archetype))
+summary(ent_all_aov2)
+
+shan_div_aov3 <- aov(test_join$shan_diverse_norm ~ factor(test_join$dom_archetype))
+summary(shan_div_aov3)

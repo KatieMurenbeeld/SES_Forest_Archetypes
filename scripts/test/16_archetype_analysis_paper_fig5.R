@@ -210,7 +210,7 @@ archs_purpose_plot
 ## Trying to create a horizontal bar chart
 #----------------------------
 archs_filt <- archs_filt %>%
-  mutate(pct_purpose = round(pct_purpose, 2),
+  mutate(pct_purpose = round(pct_purpose, 1),
          hghlght = case_when(pct_purpose >= 10 ~ TRUE,
                                pct_purpose < 10 ~ FALSE))
 
@@ -350,8 +350,33 @@ chart
 ggsave(here::here("outputs/plots/_test_redo_archetype_projects.png"), 
        width = 12, height = 4, dpi = 300)
 
-
 chart2 <- archs_filt %>%
+  filter(!purpose == "p_spec_use") %>%
+  bar_chart(purpose_newname, pct_purpose, facet = archetype, 
+            top_n = 5, label = pct_purpose) +
+  geom_text(aes(label = pct_purpose, hjust = 1.2), color = "white", size = 3.25) + 
+  labs(
+    x = NULL,
+    y = "Projects with Purpose (%)"
+    #title = "Top 5 Project Purposes for Each Archetype"
+  ) +
+  theme_classic(base_size = 12) + 
+  # theme_bw() +
+  theme(#text = element_text(size = 12),
+    panel.grid = element_blank(),
+    axis.text.x = element_text(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank(),
+    #axis.text = element_text(size = 12),
+    #strip.text.x = element_blank(),     # Removes top (column) facet labels
+    strip.background.x = element_blank(),
+  )
+chart2
+ggsave(here::here("outputs/plots/_test_redo_archetype_projects_no_spec_use.png"), 
+       width = 14, height = 4, dpi = 300)
+
+
+chart3 <- archs_filt %>%
   bar_chart(purpose_newname, pct_purpose, facet = archetype, 
             label = pct_purpose, highlight = pct_purpose > 10) +
   geom_text(aes(label = pct_purpose, hjust = 1.2), color = "white") + 
@@ -368,7 +393,7 @@ chart2 <- archs_filt %>%
     #strip.text.x = element_blank(),     # Removes top (column) facet labels
     strip.background.x = element_blank(),
   )
-chart2
+chart3
 
 # Test with the diversity class (hetero, homog, mid)
 #-----------------------------------------------------

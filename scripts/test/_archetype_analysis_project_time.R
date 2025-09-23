@@ -15,6 +15,7 @@ pals_df <- read_delim("~/Analysis/NEPA_Efficiency/data/original/pals_ongoing_pro
 
 # simple histograms of diversity metrics
 plot(hist(nepa_summ_df$pct_area_dom_arch))
+plot(hist(nepa_summ_df$shan_diverse))
 plot(hist(nepa_summ_df$shan_diverse_norm))
 plot(hist(nepa_summ_df$entropy_all))
 
@@ -66,11 +67,17 @@ test_pct_year <- pals_df_test %>%
             tot_for_prod = sum(p_forest_prod),
             tot_rec = sum(p_recreation),
             tot_haz_fuel = sum(p_haz_fuels),
+            tot_wlife = sum(p_wildlife),
+            tot_geo = sum(p_min_geo),
+            tot_veg_mngt = sum(p_veg_mngt),
             tot_all_proj = sum(c_across(starts_with("p_")))) %>%
   mutate(pct_spec_use = (tot_spec_use / tot_all_proj)*100,
          pct_for_prod = (tot_for_prod / tot_all_proj)*100,
          pct_rec = (tot_rec / tot_all_proj)*100, 
-         pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100) %>%
+         pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100,
+         pct_wlife = (tot_wlife / tot_all_proj)*100,
+         pct_geo = (tot_geo / tot_all_proj)*100,
+         pct_veg_mngt = (tot_veg_mngt / tot_all_proj)*100) %>%
   drop_na()
 
 test_pct_year_reg <- pals_df_test %>%
@@ -79,11 +86,17 @@ test_pct_year_reg <- pals_df_test %>%
             tot_for_prod = sum(p_forest_prod),
             tot_rec = sum(p_recreation),
             tot_haz_fuel = sum(p_haz_fuels),
+            tot_wlife = sum(p_wildlife),
+            tot_geo = sum(p_min_geo),
+            tot_veg_mngt = sum(p_veg_mngt),
             tot_all_proj = sum(c_across(starts_with("p_")))) %>%
   mutate(pct_spec_use = (tot_spec_use / tot_all_proj)*100,
          pct_for_prod = (tot_for_prod / tot_all_proj)*100,
          pct_rec = (tot_rec / tot_all_proj)*100, 
-         pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100) %>%
+         pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100,
+         pct_wlife = (tot_wlife / tot_all_proj)*100,
+         pct_geo = (tot_geo / tot_all_proj)*100,
+         pct_veg_mngt = (tot_veg_mngt / tot_all_proj)*100) %>%
   drop_na()
 
 test_pct_year_nf <- pals_df_test %>%
@@ -92,63 +105,99 @@ test_pct_year_nf <- pals_df_test %>%
             tot_for_prod = sum(p_forest_prod),
             tot_rec = sum(p_recreation),
             tot_haz_fuel = sum(p_haz_fuels),
+            tot_wlife = sum(p_wildlife),
+            tot_geo = sum(p_min_geo),
+            tot_veg_mngt = sum(p_veg_mngt),
             tot_all_proj = sum(c_across(starts_with("p_")))) %>%
   mutate(pct_spec_use = (tot_spec_use / tot_all_proj)*100,
          pct_for_prod = (tot_for_prod / tot_all_proj)*100,
          pct_rec = (tot_rec / tot_all_proj)*100, 
-         pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100) %>%
+         pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100,
+         pct_wlife = (tot_wlife / tot_all_proj)*100,
+         pct_geo = (tot_geo / tot_all_proj)*100,
+         pct_veg_mngt = (tot_veg_mngt / tot_all_proj)*100) %>%
   drop_na()
 
 # plot some line plots
 
-ggplot() + 
-  geom_line(data = test_pct_year, aes(x = `SIGNED FY`, y = pct_spec_use)) + 
-  geom_line(data = test_pct_year, aes(x = `SIGNED FY`, y = pct_for_prod), color = "green4") + 
-  geom_line(data = test_pct_year, aes(x = `SIGNED FY`, y = pct_rec), color = "blue3") + 
-  geom_line(data = test_pct_year, aes(x = `SIGNED FY`, y = pct_haz_fuel), color = "orange3")
+test_pct_year_long <- test_pct_year %>%
+  dplyr::select(`SIGNED FY`, pct_spec_use, pct_for_prod, pct_rec, 
+                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt) %>%
+  pivot_longer(!`SIGNED FY`, names_to = "projects", values_to = "values")
 
-ggplot() + 
-  geom_line(data = test_pct_year_reg, aes(x = `SIGNED FY`, y = pct_spec_use)) + 
-  geom_line(data = test_pct_year_reg, aes(x = `SIGNED FY`, y = pct_for_prod), color = "green4") + 
-  geom_line(data = test_pct_year_reg, aes(x = `SIGNED FY`, y = pct_rec), color = "blue3") + 
-  geom_line(data = test_pct_year_reg, aes(x = `SIGNED FY`, y = pct_haz_fuel), color = "orange3") + 
+ggplot(data = test_pct_year_long, aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line()
+  
+test_pct_year_reg_long <- test_pct_year_reg %>%
+  dplyr::select(`SIGNED FY`, REGION, pct_spec_use, pct_for_prod, pct_rec, 
+                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt) %>%
+  pivot_longer(!c(`SIGNED FY`,REGION), names_to = "projects", values_to = "values")
+
+ggplot(data = test_pct_year_reg_long, aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
   facet_wrap(~REGION)
 
-test_pct_year_nf %>%
+test_pct_year_nf_long <- test_pct_year_nf %>%
+  dplyr::select(`SIGNED FY`,FOREST_ID, pct_spec_use, pct_for_prod, pct_rec, 
+                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt) %>%
+  pivot_longer(!c(`SIGNED FY`, FOREST_ID), names_to = "projects", values_to = "values")
+
+test_pct_year_nf_long %>% 
   filter(str_detect(FOREST_ID, "^01")) %>%
-  ggplot() + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_spec_use)) + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_for_prod), color = "green4") + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_rec), color = "blue3") + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_haz_fuel), color = "orange3") + 
-  facet_wrap(~FOREST_ID)
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~FOREST_ID) + 
+  theme(legend.position = "None")
 
-test_pct_year_nf %>%
+test_pct_year_nf_long %>% 
   filter(str_detect(FOREST_ID, "^02")) %>%
-  ggplot() + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_spec_use)) + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_for_prod), color = "green4") + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_rec), color = "blue3") + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_haz_fuel), color = "orange3") + 
-  facet_wrap(~FOREST_ID)
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~FOREST_ID) + 
+  theme(legend.position = "None")
 
-test_pct_year_nf %>%
+test_pct_year_nf_long %>% 
+  filter(str_detect(FOREST_ID, "^03")) %>%
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~FOREST_ID) + 
+  theme(legend.position = "None")
+
+test_pct_year_nf_long %>% 
+  filter(str_detect(FOREST_ID, "^04")) %>%
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~FOREST_ID) + 
+  theme(legend.position = "None")
+
+test_pct_year_nf_long %>% 
   filter(str_detect(FOREST_ID, "^05")) %>%
-  ggplot() + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_spec_use)) + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_for_prod), color = "green4") + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_rec), color = "blue3") + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_haz_fuel), color = "orange3") + 
-  facet_wrap(~FOREST_ID)
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~FOREST_ID) + 
+  theme(legend.position = "None")
 
-test_pct_year_nf %>%
+test_pct_year_nf_long %>% 
+  filter(str_detect(FOREST_ID, "^06")) %>%
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~FOREST_ID) + 
+  theme(legend.position = "None")
+
+test_pct_year_nf_long %>% 
+  filter(str_detect(FOREST_ID, "^08")) %>%
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~FOREST_ID) + 
+  theme(legend.position = "None")
+
+test_pct_year_nf_long %>% 
   filter(str_detect(FOREST_ID, "^09")) %>%
-  ggplot() + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_spec_use)) + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_for_prod), color = "green4") + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_rec), color = "blue3") + 
-  geom_line(aes(x = `SIGNED FY`, y = pct_haz_fuel), color = "orange3") + 
-  facet_wrap(~FOREST_ID)
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~FOREST_ID) + 
+  theme(legend.position = "None")
+
 
 # I want to see how this may correlate to heterogeneity metrics
 #-------------------------------------------------------------------------------

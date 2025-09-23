@@ -200,18 +200,18 @@ ggplot(test_join, aes(x = clfrp_, y = yearly_med_CE)) +
 # regression
 #---------------------------
 
-m1 <- glm( cbind(clfrp_, 1-clfrp_) ~ tot_appeal, data = test_join, 
+m1 <- glm( cbind(clfrp_, 1-clfrp_) ~ shan_diverse_norm, data = test_join, 
            family = binomial)
 summary(m1)
 
-yhat.df <- emmeans(m1, ~ pct_area_dom_arch, at = list(pct_area_dom_arch = seq(0,5,by=.01)), type='response') %>%
+yhat.df <- emmeans(m1, ~ shan_diverse_norm, at = list(shan_diverse_norm = seq(0,5,by=.01)), type='response') %>%
   as.data.frame()
 
-ggplot(test_join, aes(x = pct_area_dom_arch)) +
+ggplot(test_join, aes(x = shan_diverse_norm)) +
   geom_ribbon(data=yhat.df, aes(ymin = asymp.LCL, ymax = asymp.UCL), fill='salmon', alpha=.4) +
   geom_line(data = yhat.df, aes(y=prob), color='red') +
   geom_point(aes(y = clfrp_)) +
-  labs(y='Probability of CFLRP', x = '% Area Dominant Arch.', title = 'Heterogeneity and CFLRP')
+  labs(y='Probability of CFLRP', x = 'Shannon Diversity Score', title = 'Heterogeneity and CFLRP')
 
 # compare distributions
 #------------------------------

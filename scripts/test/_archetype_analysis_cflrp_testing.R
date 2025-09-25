@@ -200,18 +200,15 @@ ggplot(test_join, aes(x = clfrp_, y = yearly_med_CE)) +
 # regression
 #---------------------------
 
-m1 <- glm( cbind(clfrp_, 1-clfrp_) ~ shan_diverse_norm, data = test_join, 
+m1 <- glm(clfrp_ ~ shan_diverse_norm, data = test_join, 
            family = binomial)
 summary(m1)
 
-yhat.df <- emmeans(m1, ~ shan_diverse_norm, at = list(shan_diverse_norm = seq(0,5,by=.01)), type='response') %>%
-  as.data.frame()
+x_pred <- seq(0, 1.0, 0.01)
+y_pred <- predict(m1, list(shan_diverse_norm = x_pred), type="response")
 
-ggplot(test_join, aes(x = shan_diverse_norm)) +
-  geom_ribbon(data=yhat.df, aes(ymin = asymp.LCL, ymax = asymp.UCL), fill='salmon', alpha=.4) +
-  geom_line(data = yhat.df, aes(y=prob), color='red') +
-  geom_point(aes(y = clfrp_)) +
-  labs(y='Probability of CFLRP', x = 'Shannon Diversity Score', title = 'Heterogeneity and CFLRP')
+plot(test_join$shan_diverse_norm, test_join$clfrp_, pch = 16, xlab = "Shannon Diverse", ylab = "CFLRP?")
+lines(x_pred, y_pred)
 
 # compare distributions
 #------------------------------
@@ -250,10 +247,10 @@ ggplot(test_join, aes(x = pct_area_dom_arch, fill = as.factor(clfrp_))) +
 
 yes_cflrp <- test_join %>%
   filter(total_cflrp_acres > 0) %>%
-  dplyr::select(shan_diverse_norm, entropy_all, pct_area_dom_arch)
+  dplyr::select(shan_diverse, shan_diverse_norm, entropy_all, pct_area_dom_arch)
 no_cflrp <- test_join %>%
   filter(total_cflrp_acres == 0)  %>%
-  dplyr::select(shan_diverse_norm, entropy_all, pct_area_dom_arch)
+  dplyr::select(shan_diverse, shan_diverse_norm, entropy_all, pct_area_dom_arch)
 
 ks.test(yes_cflrp$entropy_all, yes_cflrp$entropy_all)
 
@@ -279,3 +276,8 @@ summary(ent_all_aov2)
 
 shan_div_aov3 <- aov(test_join$shan_diverse_norm ~ factor(test_join$dom_archetype))
 summary(shan_div_aov3)
+
+# simple t-test
+t.test(yes_cflrp$shan_diverse, no_cflrp$shan_diverse)
+
+

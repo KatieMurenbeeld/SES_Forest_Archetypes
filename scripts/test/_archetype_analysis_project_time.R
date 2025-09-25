@@ -7,6 +7,7 @@ library(exactextractr)
 library(tigris)
 library(MetBrewer)
 library(ggtext)
+library(lubridate)
 
 # Load the previously made NEPA sums
 nepa_summ_df <- read_csv(here::here("outputs/tables/nf_nepa_projs_arch_summ_2025-09-11.csv"))
@@ -204,6 +205,39 @@ test_pct_year_nf_long %>%
 
 test_join <- right_join(test_pct_year_nf, nepa_summ_df, by = c("FOREST_ID" = "forest_num"))
 
+test_join_long <- test_join %>%
+  dplyr::select(`SIGNED FY`,FOREST_ID, pct_spec_use, pct_for_prod, pct_rec, 
+                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt, dom_archetype) %>%
+  pivot_longer(!c(`SIGNED FY`, FOREST_ID, dom_archetype), names_to = "projects", values_to = "values")
+
+test_join_long %>% 
+  group_by(`SIGNED FY`, dom_archetype, projects) %>%
+  summarize(values = mean(values)) %>%
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~dom_archetype)
+
+test_join_long %>% 
+  group_by(`SIGNED FY`, dom_archetype, projects) %>%
+  summarize(stdev = sd(values)) %>%
+  ggplot(aes(x = `SIGNED FY`, y = stdev, color = projects)) + 
+  geom_line() +
+  facet_wrap(~dom_archetype)
+
+test_join_long %>% 
+  group_by(`SIGNED FY`, dom_archetype, projects) %>%
+  summarize(med_values = median(values)) %>%
+  ggplot(aes(x = `SIGNED FY`, y = med_values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~dom_archetype)
+
+test_join_long %>% 
+  group_by(`SIGNED FY`, dom_archetype, projects) %>%
+  summarize(range_values = max(values) - min(values)) %>%
+  ggplot(aes(x = `SIGNED FY`, y = range_values, color = projects)) + 
+  geom_line() +
+  facet_wrap(~dom_archetype)
+
 dom_arch_labels <- nepa_summ_df %>%
   dplyr::select(forest_num, dom_archetype)
 pct_dom_arch_labels <- nepa_summ_df %>%
@@ -274,4 +308,36 @@ test_join %>%
 test_join %>%
   ggplot() + 
   geom_boxplot(aes(as.factor(region), pct_spec_use), notch = TRUE)
+
+# Look at special uses by region
+#----------------------------------------
+
+sup_df <- pals_df %>%
+  filter(as.Date(`INITIATION DATE`, format = "%m/%d/%Y") >= "2009-01-01") %>%
+  filter(`SU Special use management – purpose` == 1)
+
+sup_df_join <- right_join(sup_df, nepa_summ_df, by = c("FOREST_ID" = "forest_num"))
+
+sup_df_join %>%
+  dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+  filter(REGION_ID == "09") %>%
+  arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))))
+
+sup_df_join %>%
+  dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+  filter(REGION_ID == "09") %>%
+  arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))
+
+
+sup_df_join %>%
+  dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+  filter(dom_archetype == 6) %>%
+  arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))))
+
+sup_df_join %>%
+  dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+  filter(dom_archetype == 6) %>%
+  arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))
+
+
 

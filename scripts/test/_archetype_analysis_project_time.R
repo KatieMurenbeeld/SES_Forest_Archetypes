@@ -374,28 +374,3 @@ for (i in arch_list) {
 
 write_csv(arch_sup_df, file = here::here(paste0("outputs/tables/special_use_by_dom_archetype_", Sys.Date(), ".csv")))
 
-
-sup_df_join %>%
-  dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
-  filter(REGION_ID == "09") %>%
-  arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))))
-
-sup_df_join %>%
-  dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
-  filter(REGION_ID == "09") %>%
-  arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))
-
-
-sup_df_join %>%
-  dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
-  filter(dom_archetype == 6) %>%
-  arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))) %>%
-  head(., 10)
-
-sup_df_join %>%
-  dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
-  filter(dom_archetype == 6) %>%
-  arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))) %>%
-  head(., 10)
-
-

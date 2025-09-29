@@ -90,6 +90,7 @@ test_pct_year_reg <- pals_df_test %>%
             tot_wlife = sum(p_wildlife),
             tot_geo = sum(p_min_geo),
             tot_veg_mngt = sum(p_veg_mngt),
+            tot_water = sum(p_water),
             tot_all_proj = sum(c_across(starts_with("p_")))) %>%
   mutate(pct_spec_use = (tot_spec_use / tot_all_proj)*100,
          pct_for_prod = (tot_for_prod / tot_all_proj)*100,
@@ -97,6 +98,7 @@ test_pct_year_reg <- pals_df_test %>%
          pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100,
          pct_wlife = (tot_wlife / tot_all_proj)*100,
          pct_geo = (tot_geo / tot_all_proj)*100,
+         pct_water = (tot_water / tot_all_proj)*100,
          pct_veg_mngt = (tot_veg_mngt / tot_all_proj)*100) %>%
   drop_na()
 
@@ -109,6 +111,7 @@ test_pct_year_nf <- pals_df_test %>%
             tot_wlife = sum(p_wildlife),
             tot_geo = sum(p_min_geo),
             tot_veg_mngt = sum(p_veg_mngt),
+            tot_water = sum(p_water),
             tot_all_proj = sum(c_across(starts_with("p_")))) %>%
   mutate(pct_spec_use = (tot_spec_use / tot_all_proj)*100,
          pct_for_prod = (tot_for_prod / tot_all_proj)*100,
@@ -116,6 +119,7 @@ test_pct_year_nf <- pals_df_test %>%
          pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100,
          pct_wlife = (tot_wlife / tot_all_proj)*100,
          pct_geo = (tot_geo / tot_all_proj)*100,
+         pct_water = (tot_water / tot_all_proj)*100,
          pct_veg_mngt = (tot_veg_mngt / tot_all_proj)*100) %>%
   drop_na()
 
@@ -207,7 +211,7 @@ test_join <- right_join(test_pct_year_nf, nepa_summ_df, by = c("FOREST_ID" = "fo
 
 test_join_long <- test_join %>%
   dplyr::select(`SIGNED FY`,FOREST_ID, pct_spec_use, pct_for_prod, pct_rec, 
-                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt, dom_archetype) %>%
+                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt, pct_water, dom_archetype) %>%
   pivot_longer(!c(`SIGNED FY`, FOREST_ID, dom_archetype), names_to = "projects", values_to = "values")
 
 test_join_long %>% 
@@ -287,23 +291,38 @@ test_join %>%
 
 test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_spec_use), notch = TRUE)
+  geom_boxplot(aes(as.factor(dom_archetype), pct_spec_use), notch = TRUE) + 
+  ylim(0, 100)
 
 test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_for_prod), notch = TRUE)
+  geom_boxplot(aes(as.factor(dom_archetype), pct_for_prod), notch = TRUE) + 
+  ylim(0, 100)
 
 test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_rec), notch = TRUE)
+  geom_boxplot(aes(as.factor(dom_archetype), pct_rec), notch = TRUE) + 
+  ylim(0, 100)
 
 test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_haz_fuel), notch = TRUE)
+  geom_boxplot(aes(as.factor(dom_archetype), pct_haz_fuel), notch = TRUE) + 
+  ylim(0, 100)
 
 test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_wlife), notch = TRUE)
+  geom_boxplot(aes(as.factor(dom_archetype), pct_wlife), notch = TRUE) + 
+  ylim(0, 100)
+
+test_join %>%
+  ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_geo), notch = TRUE) + 
+  ylim(0, 100)
+
+test_join %>%
+  ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_water), notch = TRUE) + 
+  ylim(0, 100)
 
 test_join %>%
   ggplot() + 
@@ -329,18 +348,19 @@ arch_list <- c(1:6)
 region_sup_df <- data.frame(REGION_ID = character(), 
                             `PROJECT NAME` = character(),
                             FOREST_ID = numeric(),
+                            forest_name = character(),
                             `DECISION SIGNED` = character(),
                             dom_archetype = numeric())
 
 for (i in region_list) {
   # Generate some data in each iteration
   new_row <- sup_df_join %>%
-    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, forest_name, `DECISION SIGNED`, dom_archetype) %>%
     filter(REGION_ID == i) %>%
     arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))) %>%
     head(., 10)
   new_row2 <- sup_df_join %>%
-    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, forest_name, `DECISION SIGNED`, dom_archetype) %>%
     filter(REGION_ID == i) %>%
     arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))) %>%
     head(., 10)
@@ -348,29 +368,58 @@ for (i in region_list) {
   region_sup_df <- rbind(region_sup_df, new_row, new_row2)
 }
 
+region_sup_df <- region_sup_df %>%
+  mutate(arche = case_when(dom_archetype == 1 ~ "A",
+                           dom_archetype == 2 ~ "B",
+                           dom_archetype == 3 ~ "C",
+                           dom_archetype == 4 ~ "D",
+                           dom_archetype == 5 ~ "E",
+                           dom_archetype == 6 ~ "F")) %>%
+  mutate(arch_name = case_when(dom_archetype == 1 ~ "Private land-dominated plains",
+                               dom_archetype == 2 ~ "Productive forests near urbanized areas",
+                               dom_archetype == 3 ~ "Old forests in rural areas",
+                               dom_archetype == 4 ~ "Forest-adjacent systems",
+                               dom_archetype == 5 ~ "Urban non-forested",
+                               dom_archetype == 6 ~ "Mountain forests and shrublands"))
+
 write_csv(region_sup_df, file = here::here(paste0("outputs/tables/special_use_by_region_", Sys.Date(), ".csv")))
 
 arch_sup_df <- data.frame(REGION_ID = character(), 
                             `PROJECT NAME` = character(),
                             FOREST_ID = numeric(),
+                            forest_name = character(),
                             `DECISION SIGNED` = character(),
                             dom_archetype = numeric())
 
 for (i in arch_list) {
   # Generate some data in each iteration
   new_row <- sup_df_join %>%
-    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, forest_name, `DECISION SIGNED`, dom_archetype) %>%
     filter(dom_archetype == i) %>%
     arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))) %>%
     head(., 10)
   new_row2 <- sup_df_join %>%
-    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, forest_name, `DECISION SIGNED`, dom_archetype) %>%
     filter(dom_archetype == i) %>%
     arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))) %>%
     head(., 10)
   # Append the new row using rbind()
   arch_sup_df <- rbind(arch_sup_df, new_row, new_row2)
 }
+
+arch_sup_df <- arch_sup_df %>%
+  mutate(arch = case_when(dom_archetype == 1 ~ "A",
+                           dom_archetype == 2 ~ "B",
+                           dom_archetype == 3 ~ "C",
+                           dom_archetype == 4 ~ "D",
+                           dom_archetype == 5 ~ "E",
+                           dom_archetype == 6 ~ "F")) %>%
+  mutate(arch_name = case_when(dom_archetype == 1 ~ "Private land-dominated plains",
+                           dom_archetype == 2 ~ "Productive forests near urbanized areas",
+                           dom_archetype == 3 ~ "Old forests in rural areas",
+                           dom_archetype == 4 ~ "Forest-adjacent systems",
+                           dom_archetype == 5 ~ "Urban non-forested",
+                           dom_archetype == 6 ~ "Mountain forests and shrublands"))
 
 write_csv(arch_sup_df, file = here::here(paste0("outputs/tables/special_use_by_dom_archetype_", Sys.Date(), ".csv")))
 

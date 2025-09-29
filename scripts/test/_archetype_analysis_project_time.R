@@ -303,6 +303,10 @@ test_join %>%
 
 test_join %>%
   ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_wlife), notch = TRUE)
+
+test_join %>%
+  ggplot() + 
   geom_boxplot(aes(as.factor(region), pct_haz_fuel), notch = TRUE)
 
 test_join %>%
@@ -318,6 +322,59 @@ sup_df <- pals_df %>%
 
 sup_df_join <- right_join(sup_df, nepa_summ_df, by = c("FOREST_ID" = "forest_num"))
 
+region_list <- c("01", "02", "03", "04", "05", "06", "08", "09")
+arch_list <- c(1:6)
+
+
+region_sup_df <- data.frame(REGION_ID = character(), 
+                            `PROJECT NAME` = character(),
+                            FOREST_ID = numeric(),
+                            `DECISION SIGNED` = character(),
+                            dom_archetype = numeric())
+
+for (i in region_list) {
+  # Generate some data in each iteration
+  new_row <- sup_df_join %>%
+    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+    filter(REGION_ID == i) %>%
+    arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))) %>%
+    head(., 10)
+  new_row2 <- sup_df_join %>%
+    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+    filter(REGION_ID == i) %>%
+    arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))) %>%
+    head(., 10)
+  # Append the new row using rbind()
+  region_sup_df <- rbind(region_sup_df, new_row, new_row2)
+}
+
+write_csv(region_sup_df, file = here::here(paste0("outputs/tables/special_use_by_region_", Sys.Date(), ".csv")))
+
+arch_sup_df <- data.frame(REGION_ID = character(), 
+                            `PROJECT NAME` = character(),
+                            FOREST_ID = numeric(),
+                            `DECISION SIGNED` = character(),
+                            dom_archetype = numeric())
+
+for (i in arch_list) {
+  # Generate some data in each iteration
+  new_row <- sup_df_join %>%
+    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+    filter(dom_archetype == i) %>%
+    arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))) %>%
+    head(., 10)
+  new_row2 <- sup_df_join %>%
+    dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
+    filter(dom_archetype == i) %>%
+    arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))) %>%
+    head(., 10)
+  # Append the new row using rbind()
+  arch_sup_df <- rbind(arch_sup_df, new_row, new_row2)
+}
+
+write_csv(arch_sup_df, file = here::here(paste0("outputs/tables/special_use_by_dom_archetype_", Sys.Date(), ".csv")))
+
+
 sup_df_join %>%
   dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
   filter(REGION_ID == "09") %>%
@@ -332,12 +389,13 @@ sup_df_join %>%
 sup_df_join %>%
   dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
   filter(dom_archetype == 6) %>%
-  arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))))
+  arrange(desc(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))) %>%
+  head(., 10)
 
 sup_df_join %>%
   dplyr::select(REGION_ID, `PROJECT NAME`, FOREST_ID, `DECISION SIGNED`, dom_archetype) %>%
   filter(dom_archetype == 6) %>%
-  arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y")))
-
+  arrange(as.Date(`DECISION SIGNED`, tryFormats = c("%m/%d/%Y"))) %>%
+  head(., 10)
 
 

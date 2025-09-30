@@ -11,6 +11,7 @@ library(distributional)
 library(ggdist)
 library(ggsci)
 library(tigris)
+library(MetBrewer)
 
 # Load the data
 sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
@@ -87,19 +88,47 @@ SGFCM_soc_result_k3 <- SGFCMeans(dataset, k = 3, m = 1.2, standardize = FALSE,
 # create the probability of belonging maps
 
 sgfcm_all_k6_maps <- mapClusters(object = SGFCM_all_result_k6, undecided = 0.167)
+sgfcm_all_k6_maps_un0.2 <- mapClusters(object = SGFCM_all_result_k6, undecided = 0.2)
+sgfcm_all_k6_maps_un0.3 <- mapClusters(object = SGFCM_all_result_k6, undecided = 0.3)
+sgfcm_all_k6_maps_un0.4 <- mapClusters(object = SGFCM_all_result_k6, undecided = 0.4)
 sgfcm_all_k8_maps <- mapClusters(object = SGFCM_all_result_k8, undecided = 0.125)
 
 sgfcm_eco_k3_maps <- mapClusters(object = SGFCM_eco_result, undecided = 0.33)
 
 sgfcm_soc_k3_maps <- mapClusters(object = SGFCM_soc_result_k3, undecided = 0.33)
 
+arch_a_belong <- SGFCM_all_result_k6$Belongings[,1]
 
-sgfcm_all_k6_maps$ProbaMaps[[1]]
-sgfcm_all_k6_maps$ProbaMaps[[2]]
-sgfcm_all_k6_maps$ProbaMaps[[3]]
-sgfcm_all_k6_maps$ProbaMaps[[4]]
-sgfcm_all_k6_maps$ProbaMaps[[5]]
-sgfcm_all_k6_maps$ProbaMaps[[6]]
+sgfcm_all_k6_maps$ProbaMaps[[1]] + 
+  scale_fill_continuous(limits = c(0, 1.0), type = "viridis")
+sgfcm_all_k6_maps$ProbaMaps[[2]] + 
+  scale_fill_continuous(limits = c(0, 1.0), type = "viridis")
+sgfcm_all_k6_maps$ProbaMaps[[3]] + 
+  scale_fill_continuous(limits = c(0, 1.0), type = "viridis")
+sgfcm_all_k6_maps$ProbaMaps[[4]] + 
+  scale_fill_continuous(limits = c(0, 1.0), type = "viridis")
+sgfcm_all_k6_maps$ProbaMaps[[5]] + 
+  scale_fill_continuous(limits = c(0, 1.0), type = "viridis")
+sgfcm_all_k6_maps$ProbaMaps[[6]] + 
+  scale_fill_continuous(limits = c(0, 1.0), type = "viridis")
+
+custom_palette <- c("#d8d97a", "#95c36e", "#74c8c3", "#5a97c1", "#295384", "#0a2e57", "grey")
+
+sgfcm_all_k6_maps$ClusterPlot +
+  #scale_fill_brewer(palette = "Set2")
+  #scale_fill_met_d("Hokusai3")
+  scale_fill_manual(values = custom_palette)
+sgfcm_all_k6_maps_un0.2$ClusterPlot +
+  #scale_fill_brewer(palette = "Set2")
+  scale_fill_manual(values = custom_palette)
+sgfcm_all_k6_maps_un0.3$ClusterPlot +
+  #scale_fill_brewer(palette = "Set2")
+  scale_fill_manual(values = custom_palette)
+sgfcm_all_k6_maps_un0.4$ClusterPlot +
+  #scale_fill_brewer(palette = "Set2")
+  scale_fill_manual(values = custom_palette)
+
+#sgfcm_all_k6_maps_un0.2$ProbaMaps[[4]]
 
 sgfcm_eco_k3_maps$ProbaMaps[[1]]
 sgfcm_eco_k3_maps$ProbaMaps[[2]]

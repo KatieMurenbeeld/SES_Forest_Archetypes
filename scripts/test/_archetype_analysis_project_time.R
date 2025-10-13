@@ -71,6 +71,7 @@ test_pct_year <- pals_df_test %>%
             tot_wlife = sum(p_wildlife),
             tot_geo = sum(p_min_geo),
             tot_veg_mngt = sum(p_veg_mngt),
+            tot_water = sum(p_water),
             tot_all_proj = sum(c_across(starts_with("p_")))) %>%
   mutate(pct_spec_use = (tot_spec_use / tot_all_proj)*100,
          pct_for_prod = (tot_for_prod / tot_all_proj)*100,
@@ -78,6 +79,7 @@ test_pct_year <- pals_df_test %>%
          pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100,
          pct_wlife = (tot_wlife / tot_all_proj)*100,
          pct_geo = (tot_geo / tot_all_proj)*100,
+         pct_water = (tot_water / tot_all_proj)*100,
          pct_veg_mngt = (tot_veg_mngt / tot_all_proj)*100) %>%
   drop_na()
 
@@ -126,16 +128,18 @@ test_pct_year_nf <- pals_df_test %>%
 # plot some line plots
 
 test_pct_year_long <- test_pct_year %>%
-  dplyr::select(`SIGNED FY`, pct_spec_use, pct_for_prod, pct_rec, 
-                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt) %>%
+  dplyr::select(`SIGNED FY`, pct_for_prod, pct_rec, 
+                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt, pct_water) %>%
   pivot_longer(!`SIGNED FY`, names_to = "projects", values_to = "values")
 
 ggplot(data = test_pct_year_long, aes(x = `SIGNED FY`, y = values, color = projects)) + 
-  geom_line()
+  geom_line() + 
+  geom_smooth(method = "lm") + 
+  theme_minimal()
   
 test_pct_year_reg_long <- test_pct_year_reg %>%
-  dplyr::select(`SIGNED FY`, REGION, pct_spec_use, pct_for_prod, pct_rec, 
-                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt) %>%
+  dplyr::select(`SIGNED FY`, REGION, pct_for_prod, pct_rec, 
+                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt, pct_water) %>%
   pivot_longer(!c(`SIGNED FY`,REGION), names_to = "projects", values_to = "values")
 
 ggplot(data = test_pct_year_reg_long, aes(x = `SIGNED FY`, y = values, color = projects)) + 
@@ -144,7 +148,7 @@ ggplot(data = test_pct_year_reg_long, aes(x = `SIGNED FY`, y = values, color = p
 
 test_pct_year_nf_long <- test_pct_year_nf %>%
   dplyr::select(`SIGNED FY`,FOREST_ID, pct_spec_use, pct_for_prod, pct_rec, 
-                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt) %>%
+                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt, pct_water) %>%
   pivot_longer(!c(`SIGNED FY`, FOREST_ID), names_to = "projects", values_to = "values")
 
 test_pct_year_nf_long %>% 
@@ -203,6 +207,23 @@ test_pct_year_nf_long %>%
   facet_wrap(~FOREST_ID) + 
   theme(legend.position = "None")
 
+# NF of North Carolina (decrease in hazardous fuels and rec, increase in 
+# veg management and water)
+test_pct_year_nf_long %>% 
+  filter(str_detect(FOREST_ID, "0811")) %>%
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  geom_smooth(method = "lm") +
+  theme_minimal()
+
+# Tonto NF (increase in geo -Resolution Copper Mine- and small increase in rec)
+test_pct_year_nf_long %>% 
+  filter(str_detect(FOREST_ID, "0312")) %>%
+  ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
+  geom_line() +
+  geom_smooth(method = "lm") +
+  theme_minimal()
+
 
 # I want to see how this may correlate to heterogeneity metrics
 #-------------------------------------------------------------------------------
@@ -210,8 +231,8 @@ test_pct_year_nf_long %>%
 test_join <- right_join(test_pct_year_nf, nepa_summ_df, by = c("FOREST_ID" = "forest_num"))
 
 test_join_long <- test_join %>%
-  dplyr::select(`SIGNED FY`,FOREST_ID, pct_spec_use, pct_for_prod, pct_rec, 
-                pct_haz_fuel, pct_wlife, pct_geo, pct_veg_mngt, pct_water, dom_archetype) %>%
+  dplyr::select(`SIGNED FY`,FOREST_ID, pct_for_prod, pct_rec, 
+                pct_haz_fuel, pct_wlife, pct_veg_mngt, pct_water, dom_archetype) %>%
   pivot_longer(!c(`SIGNED FY`, FOREST_ID, dom_archetype), names_to = "projects", values_to = "values")
 
 test_join_long %>% 
@@ -219,7 +240,9 @@ test_join_long %>%
   summarize(values = mean(values)) %>%
   ggplot(aes(x = `SIGNED FY`, y = values, color = projects)) + 
   geom_line() +
-  facet_wrap(~dom_archetype)
+  geom_smooth(method = "lm") +
+  facet_wrap(~dom_archetype) + 
+  theme_minimal()
 
 test_join_long %>% 
   group_by(`SIGNED FY`, dom_archetype, projects) %>%
@@ -233,7 +256,9 @@ test_join_long %>%
   summarize(med_values = median(values)) %>%
   ggplot(aes(x = `SIGNED FY`, y = med_values, color = projects)) + 
   geom_line() +
-  facet_wrap(~dom_archetype)
+  geom_smooth(method = "lm") +
+  facet_wrap(~dom_archetype) + 
+  theme_minimal()
 
 test_join_long %>% 
   group_by(`SIGNED FY`, dom_archetype, projects) %>%

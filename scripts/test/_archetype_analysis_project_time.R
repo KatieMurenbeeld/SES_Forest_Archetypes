@@ -8,6 +8,9 @@ library(tigris)
 library(MetBrewer)
 library(ggtext)
 library(lubridate)
+library(car)
+library(rstatix)
+library(PMCMRplus)
 
 # Load the previously made NEPA sums
 nepa_summ_df <- read_csv(here::here("outputs/tables/nf_nepa_projs_arch_summ_2025-09-11.csv"))
@@ -356,6 +359,236 @@ test_join %>%
 test_join %>%
   ggplot() + 
   geom_boxplot(aes(as.factor(region), pct_spec_use), notch = TRUE)
+
+
+# ANOVA for Cory
+#--------------------------------------------------------------
+test_join <- test_join %>%
+  filter(!FOREST_ID == "0836") %>%
+  mutate(dom_archetype = as.factor(dom_archetype))
+
+test_join_for_prod <- test_join %>%
+  filter(!dom_archetype == "1")
+
+## ANOVA for pct_for_prod
+### Have to remove Archetype A because it has 0 variance for pct_for_prod
+aov1 <-  aov(test_join_for_prod$pct_for_prod ~ factor(test_join_for_prod$dom_archetype))
+summary(aov1)
+
+ggplot(data=test_join_for_prod, aes(x=pct_for_prod, group=dom_archetype, fill= as.factor(dom_archetype))) +
+  geom_density(adjust=1.5, alpha=.7) +
+  scale_fill_manual(values = custom_palette) +
+  theme_minimal()
+
+par(mfrow = c(1, 2)) # combine plots
+
+# histogram
+hist(aov1$residuals)
+
+# QQ-plot
+qqPlot(aov1$residuals,
+       id = FALSE # id = FALSE to remove point identification
+)
+
+# Test for equal variance
+leveneTest(pct_for_prod ~ as.factor(dom_archetype),
+           data = test_join_for_prod
+)
+#tapply(test_join_for_prod$pct_, test_join_for_prod$dom_archetype, var)
+
+# unequal variance - use Welch ANOVA
+oneway.test(pct_for_prod ~ as.factor(dom_archetype), data = test_join_for_prod, var.equal = FALSE)
+
+# use Games-Howell Post-Hoc test to see about between group
+gamesHowellTest(pct_for_prod ~ dom_archetype, test_join_for_prod)
+
+## ANOVA for pct_geo
+aov2 <-  aov(test_join$pct_geo ~ factor(test_join$dom_archetype))
+summary(aov2)
+
+ggplot(data=test_join, aes(x=pct_geo, group=dom_archetype, fill= as.factor(dom_archetype))) +
+  geom_density(adjust=1.5, alpha=.7) +
+  scale_fill_manual(values = custom_palette) +
+  theme_minimal()
+
+par(mfrow = c(1, 2)) # combine plots
+
+# histogram
+hist(aov2$residuals)
+
+# QQ-plot
+qqPlot(aov2$residuals,
+       id = FALSE # id = FALSE to remove point identification
+)
+
+leveneTest(pct_geo ~ as.factor(dom_archetype),
+           data = test_join)
+oneway.test(pct_geo ~ as.factor(dom_archetype), data = test_join, var.equal = FALSE)
+
+gamesHowellTest(pct_geo ~ dom_archetype, test_join)
+
+## ANOVA for pct_water
+aov3 <-  aov(test_join$pct_water ~ factor(test_join$dom_archetype))
+summary(aov3)
+
+ggplot(data=test_join, aes(x=pct_water, group=dom_archetype, fill= as.factor(dom_archetype))) +
+  geom_density(adjust=1.5, alpha=.7) +
+  scale_fill_manual(values = custom_palette) +
+  theme_minimal()
+
+par(mfrow = c(1, 2)) # combine plots
+
+# histogram
+hist(aov3$residuals)
+
+# QQ-plot
+qqPlot(aov3$residuals,
+       id = FALSE # id = FALSE to remove point identification
+)
+
+leveneTest(pct_water ~ as.factor(dom_archetype),
+           data = test_join)
+tapply(test_join$pct_water, test_join$dom_archetype, var)
+# Fairly equal varianve
+
+oneway.test(pct_water ~ as.factor(dom_archetype), data = test_join, var.equal = TRUE)
+
+tukeyTest(pct_water ~ dom_archetype, test_join)
+
+## ANOVA for pct_haz_fuel
+aov4 <-  aov(test_join$pct_haz_fuel ~ factor(test_join$dom_archetype))
+summary(aov4)
+
+ggplot(data=test_join, aes(x=pct_haz_fuel, group=dom_archetype, fill= as.factor(dom_archetype))) +
+  geom_density(adjust=1.5, alpha=.7) +
+  scale_fill_manual(values = custom_palette) +
+  theme_minimal()
+
+par(mfrow = c(1, 2)) # combine plots
+
+# histogram
+hist(aov4$residuals)
+
+# QQ-plot
+qqPlot(aov4$residuals,
+       id = FALSE # id = FALSE to remove point identification
+)
+
+leveneTest(pct_haz_fuel ~ as.factor(dom_archetype),
+           data = test_join)
+tapply(test_join$pct_haz_fuel, test_join$dom_archetype, var)
+
+oneway.test(pct_geo ~ as.factor(dom_archetype), data = test_join, var.equal = FALSE)
+
+gamesHowellTest(pct_geo ~ dom_archetype, test_join)
+
+## ANOVA for pct_wlife
+aov5 <-  aov(test_join$pct_wlife ~ factor(test_join$dom_archetype))
+summary(aov5)
+
+ggplot(data=test_join, aes(x=pct_wlife, group=dom_archetype, fill= as.factor(dom_archetype))) +
+  geom_density(adjust=1.5, alpha=.7) +
+  scale_fill_manual(values = custom_palette) +
+  theme_minimal()
+
+par(mfrow = c(1, 2)) # combine plots
+
+# histogram
+hist(aov5$residuals)
+
+# QQ-plot
+qqPlot(aov5$residuals,
+       id = FALSE # id = FALSE to remove point identification
+)
+
+leveneTest(pct_wlife ~ as.factor(dom_archetype),
+           data = test_join)
+tapply(test_join$pct_wlife, test_join$dom_archetype, var)
+
+oneway.test(pct_wlife ~ as.factor(dom_archetype), data = test_join, var.equal = FALSE)
+
+gamesHowellTest(pct_wlife ~ dom_archetype, test_join)
+
+## ANOVA for pct_rec
+aov6 <-  aov(test_join$pct_rec ~ factor(test_join$dom_archetype))
+summary(aov6)
+
+ggplot(data=test_join, aes(x=pct_rec, group=dom_archetype, fill= as.factor(dom_archetype))) +
+  geom_density(adjust=1.5, alpha=.7) +
+  scale_fill_manual(values = custom_palette) +
+  theme_minimal()
+
+par(mfrow = c(1, 2)) # combine plots
+
+# histogram
+hist(aov6$residuals)
+
+# QQ-plot
+qqPlot(aov6$residuals,
+       id = FALSE # id = FALSE to remove point identification
+)
+
+leveneTest(pct_rec ~ as.factor(dom_archetype),
+           data = test_join)
+tapply(test_join$pct_rec, test_join$dom_archetype, var)
+
+oneway.test(pct_rec ~ as.factor(dom_archetype), data = test_join, var.equal = FALSE)
+
+gamesHowellTest(pct_rec ~ dom_archetype, test_join)
+
+## ANOVA for pct_veg_mngt
+aov7 <-  aov(test_join$pct_veg_mngt ~ factor(test_join$dom_archetype))
+summary(aov7)
+
+ggplot(data=test_join, aes(x=pct_veg_mngt, group=dom_archetype, fill= as.factor(dom_archetype))) +
+  geom_density(adjust=1.5, alpha=.7) +
+  scale_fill_manual(values = custom_palette) +
+  theme_minimal()
+
+par(mfrow = c(1, 2)) # combine plots
+
+# histogram
+hist(aov7$residuals)
+
+# QQ-plot
+qqPlot(aov7$residuals,
+       id = FALSE # id = FALSE to remove point identification
+)
+
+leveneTest(pct_veg_mngt ~ as.factor(dom_archetype),
+           data = test_join)
+tapply(test_join$pct_veg_mngt, test_join$dom_archetype, var)
+
+oneway.test(pct_veg_mngt ~ as.factor(dom_archetype), data = test_join, var.equal = FALSE)
+
+gamesHowellTest(pct_veg_mngt ~ dom_archetype, test_join)
+
+## ANOVA for pct_spec_use
+aov8 <-  aov(test_join$pct_spec_use ~ factor(test_join$dom_archetype))
+summary(aov8)
+
+ggplot(data=test_join, aes(x=pct_spec_use, group=dom_archetype, fill= as.factor(dom_archetype))) +
+  geom_density(adjust=1.5, alpha=.7) +
+  scale_fill_manual(values = custom_palette) +
+  theme_minimal()
+
+par(mfrow = c(1, 2)) # combine plots
+
+# histogram
+hist(aov8$residuals)
+
+# QQ-plot
+qqPlot(aov8$residuals,
+       id = FALSE # id = FALSE to remove point identification
+)
+
+leveneTest(pct_spec_use ~ as.factor(dom_archetype),
+           data = test_join)
+tapply(test_join$pct_spec_use, test_join$dom_archetype, var)
+
+oneway.test(pct_spec_use ~ as.factor(dom_archetype), data = test_join, var.equal = TRUE)
+
+tukeyTest(pct_spec_use ~ dom_archetype, test_join)
 
 # Look at special uses by region
 #----------------------------------------

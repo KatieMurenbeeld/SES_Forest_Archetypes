@@ -104,13 +104,13 @@ ggplot(test_join, aes(x = pct_area_dom_arch, y = total_cflrp_acres, color = regi
 ggplot(test_join, aes(x = entropy_all, y = med_cflrp_acres, color = region)) +
   geom_point()
 
-ggplot(test_join, aes(x = shan_diverse_norm, y = med_cflrp_acres, color = region)) +
+ggplot(test_join, aes(x = shan_diverse_norm, y = med_cflrp_acres, color = as.factor(dom_archetype))) +
   geom_point()
 
-ggplot(test_join, aes(x = pct_area_dom_arch, y = med_cflrp_acres, color = region)) +
+ggplot(test_join, aes(x = pct_area_dom_arch, y = med_cflrp_acres, color = as.factor(dom_archetype))) +
   geom_point()
 
-ggplot(cflrp_only, aes(x = pct_area_dom_arch, y = med_cflrp_acres, color = region)) +
+ggplot(cflrp_only, aes(x = pct_area_dom_arch, y = med_cflrp_acres, color = as.factor(dom_archetype))) +
   geom_point() + 
   geom_hline(yintercept = sd(cflrp_only$med_cflrp_acres)) +
   geom_hline(yintercept = sd(cflrp_only$med_cflrp_acres)*2, linetype = "dashed")

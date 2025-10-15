@@ -561,7 +561,9 @@ tapply(test_join$pct_veg_mngt, test_join$dom_archetype, var)
 
 oneway.test(pct_veg_mngt ~ as.factor(dom_archetype), data = test_join, var.equal = FALSE)
 
-gamesHowellTest(pct_veg_mngt ~ dom_archetype, test_join)
+gh_veg_mngt <- gamesHowellTest(pct_veg_mngt ~ dom_archetype, test_join)
+summary(gh_veg_mngt)
+summaryGroup(gh_veg_mngt)
 
 ## ANOVA for pct_spec_use
 aov8 <-  aov(test_join$pct_spec_use ~ factor(test_join$dom_archetype))
@@ -589,6 +591,119 @@ tapply(test_join$pct_spec_use, test_join$dom_archetype, var)
 oneway.test(pct_spec_use ~ as.factor(dom_archetype), data = test_join, var.equal = TRUE)
 
 tukeyTest(pct_spec_use ~ dom_archetype, test_join)
+
+# Just realized unbalanced data and mostly non normal distribution of residuals
+# Will do Kruskal-Wallis test
+#---------------------------------------------------------------------
+test_join %>%
+  group_by(dom_archetype) %>%
+  summarise(
+    count = n(),
+    mean = mean(pct_spec_use, na.rm = TRUE),
+    sd = sd(pct_spec_use, na.rm = TRUE),
+    median = median(pct_spec_use, na.rm = TRUE),
+    IQR = IQR(pct_spec_use, na.rm = TRUE)
+  )
+
+test_join %>%
+  group_by(dom_archetype) %>%
+  summarise(
+    count = n(),
+    mean = mean(pct_for_prod, na.rm = TRUE),
+    sd = sd(pct_for_prod, na.rm = TRUE),
+    median = median(pct_for_prod, na.rm = TRUE),
+    IQR = IQR(pct_for_prod, na.rm = TRUE)
+  )
+
+test_join %>%
+  group_by(dom_archetype) %>%
+  summarise(
+    count = n(),
+    mean = mean(pct_rec, na.rm = TRUE),
+    sd = sd(pct_rec, na.rm = TRUE),
+    median = median(pct_rec, na.rm = TRUE),
+    IQR = IQR(pct_rec, na.rm = TRUE)
+  )
+
+test_join %>%
+  group_by(dom_archetype) %>%
+  summarise(
+    count = n(),
+    mean = mean(pct_haz_fuel, na.rm = TRUE),
+    sd = sd(pct_haz_fuel, na.rm = TRUE),
+    median = median(pct_haz_fuel, na.rm = TRUE),
+    IQR = IQR(pct_haz_fuel, na.rm = TRUE)
+  )
+
+test_join %>%
+  group_by(dom_archetype) %>%
+  summarise(
+    count = n(),
+    mean = mean(pct_wlife, na.rm = TRUE),
+    sd = sd(pct_wlife, na.rm = TRUE),
+    median = median(pct_wlife, na.rm = TRUE),
+    IQR = IQR(pct_wlife, na.rm = TRUE)
+  )
+
+test_join %>%
+  group_by(dom_archetype) %>%
+  summarise(
+    count = n(),
+    mean = mean(pct_geo, na.rm = TRUE),
+    sd = sd(pct_geo, na.rm = TRUE),
+    median = median(pct_geo, na.rm = TRUE),
+    IQR = IQR(pct_geo, na.rm = TRUE)
+  )
+
+test_join %>%
+  group_by(dom_archetype) %>%
+  summarise(
+    count = n(),
+    mean = mean(pct_water, na.rm = TRUE),
+    sd = sd(pct_water, na.rm = TRUE),
+    median = median(pct_water, na.rm = TRUE),
+    IQR = IQR(pct_water, na.rm = TRUE)
+  )
+
+test_join %>%
+  group_by(dom_archetype) %>%
+  summarise(
+    count = n(),
+    mean = mean(pct_veg_mngt, na.rm = TRUE),
+    sd = sd(pct_veg_mngt, na.rm = TRUE),
+    median = median(pct_veg_mngt, na.rm = TRUE),
+    IQR = IQR(pct_veg_mngt, na.rm = TRUE)
+  )
+
+kruskal.test(pct_spec_use ~ dom_archetype, data = test_join)
+
+kruskal.test(pct_for_prod ~ dom_archetype, data = test_join)
+pairwise.wilcox.test(test_join$pct_for_prod, test_join$dom_archetype,
+                     p.adjust.method = "BH")
+
+kruskal.test(pct_rec ~ dom_archetype, data = test_join)
+pairwise.wilcox.test(test_join$pct_rec, test_join$dom_archetype,
+                     p.adjust.method = "BH")
+
+kruskal.test(pct_haz_fuel ~ dom_archetype, data = test_join)
+pairwise.wilcox.test(test_join$pct_haz_fuel, test_join$dom_archetype,
+                     p.adjust.method = "BH")
+
+kruskal.test(pct_wlife ~ dom_archetype, data = test_join)
+pairwise.wilcox.test(test_join$pct_wlife, test_join$dom_archetype,
+                     p.adjust.method = "BH")
+
+kruskal.test(pct_geo ~ dom_archetype, data = test_join)
+pairwise.wilcox.test(test_join$pct_geo, test_join$dom_archetype,
+                     p.adjust.method = "BH")
+
+kruskal.test(pct_water ~ dom_archetype, data = test_join)
+
+kruskal.test(pct_veg_mngt ~ dom_archetype, data = test_join)
+pairwise.wilcox.test(test_join$pct_veg_mngt, test_join$dom_archetype,
+                     p.adjust.method = "BH")
+
+
 
 # Look at special uses by region
 #----------------------------------------

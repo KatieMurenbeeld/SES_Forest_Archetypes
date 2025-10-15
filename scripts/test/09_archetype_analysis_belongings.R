@@ -13,6 +13,7 @@ library(ggsci)
 library(tigris)
 library(MetBrewer)
 
+
 # Load the data
 sgfcm_all_attri <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 sgfcm_all_attri_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
@@ -97,8 +98,6 @@ sgfcm_eco_k3_maps <- mapClusters(object = SGFCM_eco_result, undecided = 0.33)
 
 sgfcm_soc_k3_maps <- mapClusters(object = SGFCM_soc_result_k3, undecided = 0.33)
 
-arch_a_belong <- SGFCM_all_result_k6$Belongings[,1]
-
 sgfcm_all_k6_maps$ProbaMaps[[1]] + 
   scale_fill_continuous(limits = c(0, 1.0), type = "viridis")
 sgfcm_all_k6_maps$ProbaMaps[[2]] + 
@@ -138,9 +137,50 @@ sgfcm_soc_k3_maps$ProbaMaps[[1]]
 sgfcm_soc_k3_maps$ProbaMaps[[2]]
 sgfcm_soc_k3_maps$ProbaMaps[[3]]
 
+# Create histograms of belongings for each archetype?
 
+arch_a_belong <- as.data.frame(SGFCM_all_result_k6$Belongings[,1]) %>%
+  mutate(group = "A")
+colnames(arch_a_belong)[1] <- "belongings"
+arch_b_belong <- as.data.frame(SGFCM_all_result_k6$Belongings[,2]) %>%
+  mutate(group = "B")
+colnames(arch_b_belong)[1] <- "belongings"
+arch_c_belong <- as.data.frame(SGFCM_all_result_k6$Belongings[,3]) %>%
+  mutate(group = "C")
+colnames(arch_c_belong)[1] <- "belongings"
+arch_d_belong <- as.data.frame(SGFCM_all_result_k6$Belongings[,4]) %>%
+  mutate(group = "D")
+colnames(arch_d_belong)[1] <- "belongings"
+arch_e_belong <- as.data.frame(SGFCM_all_result_k6$Belongings[,5]) %>%
+  mutate(group = "E")
+colnames(arch_e_belong)[1] <- "belongings"
+arch_f_belong <- as.data.frame(SGFCM_all_result_k6$Belongings[,6]) %>%
+  mutate(group = "F")
+colnames(arch_f_belong)[1] <- "belongings"
 
+arch_belongings <- rbind(arch_a_belong, arch_b_belong, arch_c_belong, 
+                         arch_d_belong, arch_e_belong, arch_f_belong)
 
+# With transparency (right)
+p <- ggplot(data=arch_belongings, aes(x=belongings, group=group, fill=group)) +
+  geom_density(adjust=1.5, alpha=.7) +
+  scale_fill_manual(values = custom_palette) +
+  facet_wrap(~group) +
+  theme_minimal()
+p
+
+p1 <- ggplot(data=arch_belongings, aes(x=belongings, group=group, fill=group)) +
+  geom_density(adjust=1.5, alpha=.4) +
+  #scale_fill_manual(values = custom_palette) +
+  theme_minimal()
+p1
+
+plot(hist(arch_a_belong))
+plot(hist(arch_b_belong))
+plot(hist(arch_c_belong))
+plot(hist(arch_d_belong))
+plot(hist(arch_e_belong))
+plot(hist(arch_f_belong))
 
 
 

@@ -42,14 +42,15 @@ reg_cent <- st_centroid(fs_reg.crop)
 # for k = 6
 sgfcm.k6.all.df <- sgfcm_all_k6_result$Groups %>% as.data.frame(xy = TRUE)
 
-# Rename group (archetypes) to letters
+# Rename group (clusters)
+# will need to reorder
 sgfcm.k6.all.df <- sgfcm.k6.all.df %>%
-  mutate(group_alpha = case_when(Groups == 1 ~ "A", 
-                                 Groups == 2 ~ "B",
-                                 Groups == 3 ~ "C",
-                                 Groups == 4 ~ "D",
-                                 Groups == 5 ~ "E", 
-                                 Groups == 6 ~ "F"))
+  mutate(group_alpha = case_when(Groups == 1 ~ "A: Private land-dominated plains", 
+                                 Groups == 2 ~ "B: Productive forests near urbanized areas",
+                                 Groups == 3 ~ "C: Old forests in rural areas",
+                                 Groups == 4 ~ "D: Forest-adjacent systems",
+                                 Groups == 5 ~ "E: Urban non-forested areas", 
+                                 Groups == 6 ~ "F: Mountain forests and shrublands"))
 
 all_k6_rg_nf_map <- ggplot() +
   geom_raster(aes(x = sgfcm.k6.all.df$x, y = sgfcm.k6.all.df$y, fill = sgfcm.k6.all.df$group_alpha)) +
@@ -61,13 +62,21 @@ all_k6_rg_nf_map <- ggplot() +
   scale_fill_met_d("Hokusai3") +
   labs(#title = "All Attributes:",
        #subtitle = "k=6, m=1.9, alpha = 0.6, beta = 0.4, window = 7x7", 
-       fill = "Archetypes") +
-  theme_bw() + 
+       fill = "Clusters") +
+  #ggthemes::theme_map() +
+  theme_minimal() + 
   theme(#text = element_text(size = 20),
         legend.position = "right",
         legend.text = element_text(size = 10),
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_line(color = "white"),
+        #rect = element_rect(color = "white"),
         axis.text = element_text(size = 8),
         plot.margin=unit(c(0.5, 0.5, 0.5, 0.5),"mm")) #+ 
   #ggtitle("A")
@@ -105,18 +114,19 @@ k6_long <- left_join(k6_long, k6_med_long)
 # reorder the variables
 k6_long_reorder <- k6_long %>% 
   mutate(var_name = fct_relevel(var_name, 
-                                "treecov", "forprod", "tempseas", 
+                                "treecov", "forprod", "forgain",
+                                "treeage", "tempseas", 
                                 "precseas", "rough", "whp", 
-                                "forgain", "distcrit", "distwild",
-                                "pm25", "fedrich", 
-                                "treeage", "pct_forpay", "pct_delmill",
-                                "netmig", "comm_cap", "aip", 
-                                "travtime", "hsbrd", "engbrd", "lesshs"))
+                                "distcrit", "distwild",
+                                "fedrich", "lesshs", "travtime", "hsbrd", 
+                                "engbrd", "pm25", "aip", "netmig", "comm_cap",
+                                "pct_forpay", "pct_delmill"
+                                  ))
 
 k6_long_reorder <- k6_long_reorder %>%
-  mutate(ostrom = case_when(var_name == "treecov" | var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "whp" ~ "resource system",
-                            var_name == "distwild" | var_name == "distcrit" | var_name == "forgain" ~ "resource unit",
-                            var_name == "fedrich" | var_name == "pm25" | var_name == "treeage" | var_name == "pct_forpay" | var_name == "pct_delmill" | var_name == "netmig" | var_name == "comm_cap" | var_name == "aip" | var_name == "travtime" | var_name == "hsbrd" | var_name == "engbrd" | var_name == "lesshs" ~ "users"))
+  mutate(ostrom = case_when(var_name == "treecov" | var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "treeage" | var_name == "forgain" | var_name == "whp" ~ "Biophysical",
+                            var_name == "distwild" | var_name == "distcrit" | var_name == "fedrich" ~ "Rules of Use",
+                            var_name == "pm25" | var_name == "pct_forpay" | var_name == "pct_delmill" | var_name == "netmig" | var_name == "comm_cap" | var_name == "aip" | var_name == "travtime" | var_name == "hsbrd" | var_name == "engbrd" | var_name == "lesshs" ~ "Attributes of Community"))
 
 
 
@@ -133,7 +143,7 @@ k6_var_interp <- ggplot(k6_long_reorder, aes(x = var_name, y = mean, fill = ostr
         legend.position = "right", 
         axis.title.y = element_blank()) 
 
-#k6_var_interp
+k6_var_interp
 
 # Create bar plots of the variables where IQR != 0
 check_iqr_overlap <- function(x) {
@@ -155,9 +165,10 @@ k6_long_join <- k6_long_df %>%
   filter(overlap == FALSE)
 
 k6_long_overlap_reorder <- k6_long_join %>% # need to remove dist to critical habitat and less hs
-  mutate(ostrom = case_when(var_name == "treecov" | var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "whp" ~ "resource system",
-                            var_name == "distwild" | var_name == "forgain" ~ "resource unit",
-                            var_name == "fedrich" | var_name == "pm25" | var_name == "treeage" | var_name == "pct_forpay" | var_name == "pct_delmill" | var_name == "netmig" | var_name == "comm_cap" | var_name == "aip" | var_name == "travtime" | var_name == "hsbrd" | var_name == "engbrd" | var_name == "lesshs" ~ "users"))
+  mutate(ostrom = case_when(var_name == "treecov" | var_name == "forprod" | var_name == "tempseas" | var_name == "precseas" | var_name == "rough" | var_name == "treeage" | var_name == "forgain" | var_name == "whp" ~ "Biophysical",
+                            var_name == "distwild" | var_name == "distcrit" | var_name == "fedrich" ~ "Rules of Use",
+                            var_name == "pm25" | var_name == "pct_forpay" | var_name == "pct_delmill" | var_name == "netmig" | var_name == "comm_cap" | var_name == "aip" | var_name == "travtime" | var_name == "hsbrd" | var_name == "engbrd" | var_name == "lesshs" ~ "Attributes of Community"))
+
 
 # replace var_name with more easily interpreted names 
 k6_long_overlap_reorder_newnames <- k6_long_overlap_reorder %>%
@@ -168,7 +179,7 @@ k6_long_overlap_reorder_newnames <- k6_long_overlap_reorder %>%
                                   var_name == "rough" ~ "topo. roughness", 
                                   var_name == "whp" ~ "wildfire haz. potential",
                                   var_name == "distwild" ~ "dist. to wilderness area",
-                                  var_name == "distcrit" ~ "dist. to critical habitat",
+                                 # var_name == "distcrit" ~ "dist. to critical habitat",
                                   var_name == "forgain" ~ "forest gain",
                                   var_name == "fedrich" ~ "num. federal agencies", 
                                   var_name == "pm25" ~ "exposure to PM2.5",
@@ -180,49 +191,57 @@ k6_long_overlap_reorder_newnames <- k6_long_overlap_reorder %>%
                                   var_name == "aip" ~ "conservatism",
                                   var_name == "travtime" ~ "time to cities",
                                   var_name == "hsbrd" ~ "housing burden",
-                                  var_name == "engbrd" ~ "energy burden",
-                                  var_name == "lesshs" ~ "less highschool ed."))
+                                  var_name == "engbrd" ~ "energy burden"))
+                                 # var_name == "lesshs" ~ "less highschool ed."))
 
 # reorder the variables
 k6_long_overlap_reorder_newnames <- k6_long_overlap_reorder_newnames %>% 
-  mutate(new_var_name = fct_relevel(new_var_name, 
+  mutate(new_var_name = factor(new_var_name, levels = c( 
                                 "tree cover", 
                                 "forest productivity", 
+                                "forest gain", 
+                                "forest stand age", 
                                 "temp. seasonality", 
                                 "precip. seasonality", 
                                 "topo. roughness", 
                                 "wildfire haz. potential", 
-                                "forest gain", 
                                 #"dist. to critical habitat", 
                                 "dist. to wilderness area",
-                                "exposure to PM2.5", 
                                 "num. federal agencies", 
-                                "forest stand age", 
-                                "income from forestry", 
-                                "change in mill capacity",
-                                "net migration", 
-                                "community capital", 
-                                "policy preference",
+                                #"less highschool ed.",
                                 "time to cities", 
                                 "housing burden", 
-                                "energy burden"
-                                #"less highschool ed."
-                                ))
+                                "energy burden",
+                                "exposure to PM2.5", 
+                                "conservatism",
+                                "net migration", 
+                                "community capital", 
+                                "income from forestry", 
+                                "change in mill capacity"
+                                )))
 # Rename the variables for the facet headers
 k6_long_overlap_reorder_newnames <- k6_long_overlap_reorder_newnames %>%
-  mutate(groups_k6_alpha = case_when(groups_k6 == "A1" ~ "Arch. A", 
-                                     groups_k6 == "A2" ~ "Arch. B",
-                                     groups_k6 == "A3" ~ "Arch. C",
-                                     groups_k6 == "A4" ~ "Arch. D",
-                                     groups_k6 == "A5" ~ "Arch. E", 
-                                     groups_k6 == "A6" ~ "Arch. F"))
+  mutate(groups_k6_alpha = case_when(groups_k6 == "A1" ~ "A: Private land-dominated plains", 
+                                     groups_k6 == "A2" ~ "B: Productive forests near urbanized areas",
+                                     groups_k6 == "A3" ~ "C: Old forests in rural areas",
+                                     groups_k6 == "A4" ~ "D: Forest-adjacent systems",
+                                     groups_k6 == "A5" ~ "E: Urban non-forested areas", 
+                                     groups_k6 == "A6" ~ "F: Mountain forests and shrublands"))
 
-k6_iqr_no_overlap <- ggplot(data=k6_long_overlap_reorder_newnames, mapping = aes(x=new_var_name, y=value, fill=ostrom)) +
+k6_long_overlap_reorder_newnames$ostrom <- factor(k6_long_overlap_reorder_newnames$ostrom, 
+                                                  levels=c('Biophysical', 'Rules of Use',
+                                                           'Attributes of Community'))
+
+
+k6_iqr_no_overlap <- ggplot(data=k6_long_overlap_reorder_newnames, 
+                            mapping = aes(y=reorder(new_var_name, desc(new_var_name)), 
+                                          x=value, fill=ostrom)) +
   geom_boxplot(outliers = FALSE, coef=0) +
-  geom_hline(yintercept = 0, linetype=2) +
+ # geom_hline(yintercept = 0, linetype=2) +
   scale_fill_met_d("Java") +
   #scale_fill_met_d("Isfahan2") +
-  coord_flip() +
+  #coord_flip() +
+  #scale_y_reverse() +
   theme_bw() +
   theme(#text = element_text(size = 20),
     legend.position = "right",
@@ -235,7 +254,7 @@ k6_iqr_no_overlap <- ggplot(data=k6_long_overlap_reorder_newnames, mapping = aes
     facet_wrap(vars(groups_k6_alpha)) #+ 
   #ggtitle("B")
 
-#k6_iqr_no_overlap
+k6_iqr_no_overlap
 ggsave(here::here(paste0("outputs/plots/fig2_iqr_panel_testing_", Sys.Date(), ".png")), 
        plot = k6_iqr_no_overlap, width = 8, height = 6, dpi = 300)
 

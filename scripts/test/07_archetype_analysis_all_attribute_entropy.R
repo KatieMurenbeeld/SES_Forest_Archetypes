@@ -73,6 +73,7 @@ writeRaster(all_ent_rst_conus, here::here(paste0("outputs/SGFCM_all_k8_entropy_"
 
 
 
+ent_rast <- rast(here::here("outputs/SGFCM_all_k6_entropy_2024-11-01.tif"))
 
-
+summary(ent_rast$all_ent_conus)
 

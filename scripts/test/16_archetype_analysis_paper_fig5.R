@@ -347,7 +347,7 @@ chart <- archs_filt %>%
         strip.background.x = element_blank(),
   )
 chart
-ggsave(here::here("outputs/plots/_test_redo_archetype_projects.png"), 
+ggsave(here::here(paste0("outputs/plots/_test_redo_archetype_projects_", Sys.Date(), ".png")), 
        width = 12, height = 4, dpi = 300)
 
 chart2 <- archs_filt %>%
@@ -372,7 +372,8 @@ chart2 <- archs_filt %>%
     strip.background.x = element_blank(),
   )
 chart2
-ggsave(here::here("outputs/plots/_test_redo_archetype_projects_no_spec_use.png"), 
+ggsave(here::here(paste0("outputs/plots/_test_redo_archetype_projects_no_spec_use_",
+                         Sys.Date(), ".png")), 
        width = 14, height = 4, dpi = 300)
 
 

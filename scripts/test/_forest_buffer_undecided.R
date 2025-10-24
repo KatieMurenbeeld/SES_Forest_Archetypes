@@ -92,7 +92,7 @@ fs_reg.proj <- fs_reg %>%
 fs_reg.crop <- st_crop(fs_reg.proj, ext(rst_sc))
 
 ## create a new nation forest buffers shape using st_intersection
-nf_buffers <- st_intersection(nf_sf, fs_reg.crop)
+#nf_buffers <- st_intersection(nf_sf, fs_reg.crop)
 nf_buffers_test <- st_crop(nf_sf, fs_reg.crop)
 
 for (nf in nf_buffers_test$FORESTORGC) {

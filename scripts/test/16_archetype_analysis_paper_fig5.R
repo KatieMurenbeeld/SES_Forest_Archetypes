@@ -5,6 +5,7 @@ library(data.table)
 library(forcats)
 library(gghighlight)
 library(ggcharts)
+library(patchwork)
 
 # load the data
 
@@ -13,6 +14,7 @@ df <- read_csv(here::here("outputs/tables/nf_level_dominant_archetypes_uncertain
 # need to write the script that saves the nf_level_pals_year_arch_summs_2025-01-30.csv
 df_year <- read_csv(here::here("outputs/tables/nf_level_pals_year_arch_summs_2025-04-24.csv"))
 pals_df <- read_delim("~/Analysis/NEPA_Efficiency/data/original/pals_ongoing_projects_11-2022.csv", delim = ";")
+nepa_summ_df <- read_csv(here::here("outputs/tables/nf_nepa_projs_arch_summ_2025-09-11.csv"))
 
 
 pals_df_test <- pals_df %>%
@@ -325,6 +327,18 @@ ggplot(sorted_archs_df, aes(x = purpose_newname, y = pct_purpose, color = archet
 
 ## try with ggcharts
 #----------------------------------------
+archs_filt$pct_purpose <- round(archs_filt$pct_purpose, digits = 2)
+
+# rename the archetypes
+
+archs_filt <- archs_filt %>%
+  mutate(archetype = case_when(archetype == "A" ~ "A: Private land-dominated plains", 
+                               archetype == "B" ~ "B: Productive forests near urbanized areas",
+                               archetype == "C" ~ "C: Old forests in rural areas",
+                               archetype == "D" ~ "D: Forest-adjacent systems",
+                               archetype == "E" ~ "E: Urban non-forested areas", 
+                               archetype == "F" ~ "F: Mountain forests and shrublands"))
+                               
 
 chart <- archs_filt %>%
   bar_chart(purpose_newname, pct_purpose, facet = archetype, 
@@ -396,6 +410,123 @@ chart3 <- archs_filt %>%
   )
 chart3
 
+# Add boxplots underneath the bar charts
+test_pct_year_nf <- pals_df_test %>%
+  group_by(FOREST_ID, `SIGNED FY`) %>%
+  summarise(tot_spec_use = sum(p_spec_use),
+            tot_for_prod = sum(p_forest_prod),
+            tot_rec = sum(p_recreation),
+            tot_haz_fuel = sum(p_haz_fuels),
+            tot_wlife = sum(p_wildlife),
+            tot_geo = sum(p_min_geo),
+            tot_veg_mngt = sum(p_veg_mngt),
+            tot_water = sum(p_water),
+            tot_all_proj = sum(c_across(starts_with("p_")))) %>%
+  mutate(pct_spec_use = (tot_spec_use / tot_all_proj)*100,
+         pct_for_prod = (tot_for_prod / tot_all_proj)*100,
+         pct_rec = (tot_rec / tot_all_proj)*100, 
+         pct_haz_fuel = (tot_haz_fuel / tot_all_proj)*100,
+         pct_wlife = (tot_wlife / tot_all_proj)*100,
+         pct_geo = (tot_geo / tot_all_proj)*100,
+         pct_water = (tot_water / tot_all_proj)*100,
+         pct_veg_mngt = (tot_veg_mngt / tot_all_proj)*100) %>%
+  drop_na()
+
+test_join <- right_join(test_pct_year_nf, nepa_summ_df, by = c("FOREST_ID" = "forest_num"))
+test_join <- test_join %>%
+  mutate(dom_archetype = case_when(dom_archetype == 1 ~ "A",
+                                   dom_archetype == 2 ~ "B",
+                                   dom_archetype == 3 ~ "C",
+                                   dom_archetype == 4 ~ "D",
+                                   dom_archetype == 5 ~ "E",
+                                   dom_archetype == 6 ~ "F"))
+
+for_prod_box <- test_join %>%
+  ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_for_prod), notch = FALSE) + 
+  ylim(0, 100) + 
+  theme_minimal() + 
+  #theme(axis.title.x = element_blank()) + 
+  labs(subtitle = "Forest Products",
+       x = " ", 
+       y = " ")
+for_prod_box
+
+rec_box <- test_join %>%
+  ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_rec), notch = FALSE) + 
+  ylim(0, 100) + 
+  theme_minimal() + 
+  labs(subtitle = "Recreation", 
+       x = "Dominant Cluster", 
+       y = "Project Purpose (%)")
+rec_box
+
+haz_fules_box <- test_join %>%
+  ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_haz_fuel), notch = FALSE) + 
+  ylim(0, 100) + 
+  theme_minimal() + 
+  labs(subtitle = "Hazardous Fuels", 
+       x = "Dominant Cluster", 
+       y = "Project Purpose (%)")
+haz_fules_box
+
+veg_mngt_box <- test_join %>%
+  ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_veg_mngt), notch = FALSE) + 
+  ylim(0, 100) + 
+  theme_minimal() + 
+  labs(subtitle = "Veg. Management",
+       x = "Dominant Cluster", 
+       y = "Project Purpose (%)")
+veg_mngt_box
+
+wildlife_box <- test_join %>%
+  ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_wlife), notch = FALSE) + 
+  ylim(0, 100) + 
+  theme_minimal() + 
+  labs(subtitle = "Wildlife",
+       x = "Dominant Cluster",
+       y = " ")
+wildlife_box
+
+water_box <- test_join %>%
+  ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_water), notch = FALSE) + 
+  ylim(0, 100) + 
+  theme_minimal() + 
+  labs(subtitle = "Water",
+       x = "Dominant Cluster", 
+       y = "Project Purpose (%)")
+water_box
+
+mine_box <- test_join %>%
+  ggplot() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_geo), notch = FALSE) + 
+  ylim(0, 100) + 
+  theme_minimal() + 
+  labs(subtitle = "Mining or Geology",
+       x = " ", 
+       y = "Project Purpose (%)")
+mine_box
+
+(chart2) / 
+  (free(mine_box | for_prod_box, type = "label") /
+  free(veg_mngt_box | wildlife_box, type = "label")) +
+  plot_layout(heights = unit(c(6, 6), c('cm', 'null'))) +
+  plot_annotation(tag_levels = 'A')
+
+cluster_val_fig <- (chart2) / 
+  (free(mine_box | for_prod_box, type = "label") /
+     free(veg_mngt_box | wildlife_box, type = "label")) +
+  plot_layout(heights = unit(c(6, 6), c('cm', 'null'))) +
+  plot_annotation(tag_levels = 'A')
+
+ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig3_testing_", Sys.Date(), ".png")), 
+       plot = cluster_val_fig, width = 13, height = 8, dpi = 300)
+
 # Test with the diversity class (hetero, homog, mid)
 #-----------------------------------------------------
 
@@ -453,6 +584,9 @@ chart3 <- hetero_df %>%
     strip.background.x = element_blank(),
   )
 chart3
+
+
+
 
 # Look into SUP
 #-----------------------------------

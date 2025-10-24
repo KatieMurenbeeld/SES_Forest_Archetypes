@@ -34,6 +34,8 @@ map_SGFCM_result_k3 <- rast(SGFCM_all_result_k3$rasters)
 plot(map_SGFCM_result_k3[["Groups"]])
 writeRaster(map_SGFCM_result_k3[["Groups"]], filename = here::here(paste0("outputs/nfbuffers_SGFCM_all_result_k3_", 
                                                                Sys.Date(), ".tif")))
+
+
             
             
             

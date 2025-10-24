@@ -66,8 +66,9 @@ all_k6_rg_nf_map <- ggplot() +
   #ggthemes::theme_map() +
   theme_minimal() + 
   theme(#text = element_text(size = 20),
-        legend.position = "right",
+        legend.position = "top",
         legend.text = element_text(size = 10),
+        legend.title = element_blank(),
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
         axis.text.x = element_blank(),
@@ -259,11 +260,13 @@ ggsave(here::here(paste0("outputs/plots/fig2_iqr_panel_testing_", Sys.Date(), ".
        plot = k6_iqr_no_overlap, width = 8, height = 6, dpi = 300)
 
 panel <- all_k6_rg_nf_map / k6_iqr_no_overlap +
-  plot_layout(heights = unit(c(8, 6), c('cm', 'null')))
+  plot_layout(heights = unit(c(14, 6), c('cm', 'null')))
+
+
 
 ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig2_testing_", Sys.Date(), ".png")), 
-       plot = panel, width = 8, height = 8, dpi = 300)
+       plot = panel, width = 10, height = 12, dpi = 300)
 
 ggsave(here::here(paste0("outputs/plots/archetype_analysis_figure_2_testing_", Sys.Date(), ".jpeg")), 
-       plot = panel, width = 190, height = 190, dpi = 300, units = "mm", device = "jpeg")
+       plot = panel, width = 210, height = 210, dpi = 300, units = "mm", device = "jpeg")
 

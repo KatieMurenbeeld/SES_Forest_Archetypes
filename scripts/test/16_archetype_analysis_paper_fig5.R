@@ -443,9 +443,14 @@ test_join <- test_join %>%
 
 for_prod_box <- test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_for_prod), notch = FALSE) + 
-  ylim(0, 100) + 
-  theme_minimal() + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_for_prod, fill = as.factor(dom_archetype)),
+               median.color = "red",
+               notch = FALSE, 
+               outliers = FALSE) + 
+  ylim(0, 50) + 
+  scale_fill_met_d("Hokusai3") +
+  theme_minimal() +
+  theme(legend.position = "None") +
   #theme(axis.title.x = element_blank()) + 
   labs(subtitle = "Forest Products",
        x = " ", 
@@ -454,9 +459,14 @@ for_prod_box
 
 rec_box <- test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_rec), notch = FALSE) + 
-  ylim(0, 100) + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_rec, fill = as.factor(dom_archetype)),
+               median.colour = "red",
+               notch = FALSE, 
+               outliers = FALSE) + 
+  ylim(0, 50) + 
+  scale_fill_met_d("Hokusai3") +
   theme_minimal() + 
+  theme(legend.position = "None") +
   labs(subtitle = "Recreation", 
        x = "Dominant Cluster", 
        y = "Project Purpose (%)")
@@ -464,9 +474,14 @@ rec_box
 
 haz_fules_box <- test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_haz_fuel), notch = FALSE) + 
-  ylim(0, 100) + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_haz_fuel,  fill = as.factor(dom_archetype)),
+               median.colour = "red",
+               notch = FALSE, 
+               outliers = FALSE) + 
+  ylim(0, 50) + 
+  scale_fill_met_d("Hokusai3") +
   theme_minimal() + 
+  theme(legend.position = "None") +
   labs(subtitle = "Hazardous Fuels", 
        x = "Dominant Cluster", 
        y = "Project Purpose (%)")
@@ -474,9 +489,14 @@ haz_fules_box
 
 veg_mngt_box <- test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_veg_mngt), notch = FALSE) + 
-  ylim(0, 100) + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_veg_mngt,  fill = as.factor(dom_archetype)),
+               median.colour = "red",
+               notch = FALSE, 
+               outliers = FALSE) + 
+  ylim(0, 50) + 
+  scale_fill_met_d("Hokusai3") +
   theme_minimal() + 
+  theme(legend.position = "None") +
   labs(subtitle = "Veg. Management",
        x = "Dominant Cluster", 
        y = "Project Purpose (%)")
@@ -484,9 +504,14 @@ veg_mngt_box
 
 wildlife_box <- test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_wlife), notch = FALSE) + 
-  ylim(0, 100) + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_wlife,  fill = as.factor(dom_archetype)),
+               median.colour = "red",
+               notch = FALSE, 
+               outliers = FALSE) + 
+  ylim(0, 50) + 
+  scale_fill_met_d("Hokusai3") +
   theme_minimal() + 
+  theme(legend.position = "None") +
   labs(subtitle = "Wildlife",
        x = "Dominant Cluster",
        y = " ")
@@ -494,9 +519,14 @@ wildlife_box
 
 water_box <- test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_water), notch = FALSE) + 
-  ylim(0, 100) + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_water,  fill = as.factor(dom_archetype)),
+               median.colour = "red",
+               notch = FALSE, 
+               outliers = FALSE) + 
+  ylim(0, 50) + 
+  scale_fill_met_d("Hokusai3") +
   theme_minimal() + 
+  theme(legend.position = "None") +
   labs(subtitle = "Water",
        x = "Dominant Cluster", 
        y = "Project Purpose (%)")
@@ -504,9 +534,14 @@ water_box
 
 mine_box <- test_join %>%
   ggplot() + 
-  geom_boxplot(aes(as.factor(dom_archetype), pct_geo), notch = FALSE) + 
-  ylim(0, 100) + 
+  geom_boxplot(aes(as.factor(dom_archetype), pct_geo,  fill = as.factor(dom_archetype)),
+               median.colour = "red",
+               notch = FALSE, 
+               outliers = FALSE) + 
+  ylim(0, 50) + 
+  scale_fill_met_d("Hokusai3") +
   theme_minimal() + 
+  theme(legend.position = "None") +
   labs(subtitle = "Mining or Geology",
        x = " ", 
        y = "Project Purpose (%)")
@@ -526,6 +561,15 @@ cluster_val_fig <- (chart2) /
 
 ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig3_testing_", Sys.Date(), ".png")), 
        plot = cluster_val_fig, width = 13, height = 8, dpi = 300)
+
+just_boxplots <- (free(mine_box | for_prod_box, type = "label") /
+                    free(veg_mngt_box | wildlife_box, type = "label")) +
+  #plot_layout(heights = unit(c(6, 6), c('cm', 'null'))) +
+  plot_annotation(tag_levels = 'A')
+just_boxplots
+
+ggsave(here::here(paste0("outputs/plots/archetype_analysis_fig3_testing_only_boxplots_", Sys.Date(), ".png")), 
+       plot = just_boxplots, width = 10, height = 10, dpi = 300)
 
 # Test with the diversity class (hetero, homog, mid)
 #-----------------------------------------------------

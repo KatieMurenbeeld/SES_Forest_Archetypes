@@ -676,33 +676,116 @@ test_join %>%
   )
 
 kruskal.test(pct_spec_use ~ dom_archetype, data = test_join)
+pairwise.wilcox.test(test_join$pct_spec_use, test_join$dom_archetype,
+                     p.adjust.method = "BH")
+specuse_result <- pairwise.wilcox.test(test_join$pct_for_prod, test_join$dom_archetype,
+                                   p.adjust.method = "BH")
+specuse_p_values_df <- as.data.frame(specuse_result$p.value)
+specuse_p_values_df$Comparison1 <- rownames(specuse_p_values_df)
+specuse_p_values_long <- specuse_p_values_df %>%
+  pivot_longer(cols = -Comparison1, names_to = "Comparison2", values_to = "p_value") %>%
+  filter(!is.na(p_value)) %>% # Remove NA values from the upper triangle
+  mutate(p_value = case_when(p_value < 0.001 ~ "<0.001",
+                             p_value >= 0.001 ~ as.character(round(p_value, 3))),
+         project_purpose = "Special Use")
 
 kruskal.test(pct_for_prod ~ dom_archetype, data = test_join)
 pairwise.wilcox.test(test_join$pct_for_prod, test_join$dom_archetype,
                      p.adjust.method = "BH")
+for_result <- pairwise.wilcox.test(test_join$pct_for_prod, test_join$dom_archetype,
+                                   p.adjust.method = "BH")
+for_p_values_df <- as.data.frame(for_result$p.value)
+for_p_values_df$Comparison1 <- rownames(for_p_values_df)
+for_p_values_long <- for_p_values_df %>%
+  pivot_longer(cols = -Comparison1, names_to = "Comparison2", values_to = "p_value") %>%
+  filter(!is.na(p_value)) %>% # Remove NA values from the upper triangle
+  mutate(p_value = case_when(p_value < 0.001 ~ "<0.001",
+                             p_value >= 0.001 ~ as.character(round(p_value, 3))),
+         project_purpose = "Forest Products")
 
 kruskal.test(pct_rec ~ dom_archetype, data = test_join)
 pairwise.wilcox.test(test_join$pct_rec, test_join$dom_archetype,
                      p.adjust.method = "BH")
+rec_result <- pairwise.wilcox.test(test_join$pct_rec, test_join$dom_archetype,
+                                   p.adjust.method = "BH")
+rec_p_values_df <- as.data.frame(rec_result$p.value)
+rec_p_values_df$Comparison1 <- rownames(rec_p_values_df)
+rec_p_values_long <- rec_p_values_df %>%
+  pivot_longer(cols = -Comparison1, names_to = "Comparison2", values_to = "p_value") %>%
+  filter(!is.na(p_value)) %>% # Remove NA values from the upper triangle
+  mutate(p_value = case_when(p_value < 0.001 ~ "<0.001",
+                             p_value >= 0.001 ~ as.character(round(p_value, 3))),
+         project_purpose = "Recreation")
 
 kruskal.test(pct_haz_fuel ~ dom_archetype, data = test_join)
 pairwise.wilcox.test(test_join$pct_haz_fuel, test_join$dom_archetype,
                      p.adjust.method = "BH")
+haz_result <- pairwise.wilcox.test(test_join$pct_haz_fuel, test_join$dom_archetype,
+                                     p.adjust.method = "BH")
+haz_p_values_df <- as.data.frame(haz_result$p.value)
+haz_p_values_df$Comparison1 <- rownames(haz_p_values_df)
+haz_p_values_long <- haz_p_values_df %>%
+  pivot_longer(cols = -Comparison1, names_to = "Comparison2", values_to = "p_value") %>%
+  filter(!is.na(p_value)) %>% # Remove NA values from the upper triangle
+  mutate(p_value = case_when(p_value < 0.001 ~ "<0.001",
+                             p_value >= 0.001 ~ as.character(round(p_value, 3))),
+         project_purpose = "Hazardous Fuels")
 
 kruskal.test(pct_wlife ~ dom_archetype, data = test_join)
 pairwise.wilcox.test(test_join$pct_wlife, test_join$dom_archetype,
                      p.adjust.method = "BH")
+wlife_result <- pairwise.wilcox.test(test_join$pct_wlife, test_join$dom_archetype,
+                                   p.adjust.method = "BH")
+wlife_p_values_df <- as.data.frame(wlife_result$p.value)
+wlife_p_values_df$Comparison1 <- rownames(wlife_p_values_df)
+wlife_p_values_long <- wlife_p_values_df %>%
+  pivot_longer(cols = -Comparison1, names_to = "Comparison2", values_to = "p_value") %>%
+  filter(!is.na(p_value)) %>% # Remove NA values from the upper triangle
+  mutate(p_value = case_when(p_value < 0.001 ~ "<0.001",
+                             p_value >= 0.001 ~ as.character(round(p_value, 3))),
+         project_purpose = "Wildlife")
 
 kruskal.test(pct_geo ~ dom_archetype, data = test_join)
 pairwise.wilcox.test(test_join$pct_geo, test_join$dom_archetype,
                      p.adjust.method = "BH")
+geo_result <- pairwise.wilcox.test(test_join$pct_geo, test_join$dom_archetype,
+                                   p.adjust.method = "BH")
+geo_p_values_df <- as.data.frame(geo_result$p.value)
+geo_p_values_df$Comparison1 <- rownames(geo_p_values_df)
+geo_p_values_long <- geo_p_values_df %>%
+  pivot_longer(cols = -Comparison1, names_to = "Comparison2", values_to = "p_value") %>%
+  filter(!is.na(p_value)) %>% # Remove NA values from the upper triangle
+  mutate(p_value = case_when(p_value < 0.001 ~ "<0.001",
+                             p_value >= 0.001 ~ as.character(round(p_value, 3))),
+         project_purpose = "Geology and Mining")
 
 kruskal.test(pct_water ~ dom_archetype, data = test_join)
 
 kruskal.test(pct_veg_mngt ~ dom_archetype, data = test_join)
 pairwise.wilcox.test(test_join$pct_veg_mngt, test_join$dom_archetype,
                      p.adjust.method = "BH")
+veg_result <- pairwise.wilcox.test(test_join$pct_veg_mngt, test_join$dom_archetype,
+                                   p.adjust.method = "BH")
+veg_p_values_df <- as.data.frame(veg_result$p.value)
+veg_p_values_df$Comparison1 <- rownames(veg_p_values_df)
+veg_p_values_long <- veg_p_values_df %>%
+  pivot_longer(cols = -Comparison1, names_to = "Comparison2", values_to = "p_value") %>%
+  filter(!is.na(p_value)) %>% # Remove NA values from the upper triangle
+  mutate(p_value = case_when(p_value < 0.001 ~ "<0.001",
+                             p_value >= 0.001 ~ as.character(round(p_value, 3))),
+         project_purpose = "Veg. Management")
 
+project_purpose_pwc <- rbind(specuse_p_values_long,
+                             for_p_values_long, rec_p_values_long,
+                             haz_p_values_long, wlife_p_values_long,
+                             geo_p_values_long, veg_p_values_long)
+
+write_csv(project_purpose_pwc, 
+          file = here::here(paste0("outputs/tables/project_purpose_pairwise_wilcox_", Sys.Date(), ".csv")))
+
+
+library(knitr)
+kable(veg_p_values_long, caption = "Pairwise Wilcoxon Test P-values", digits = 3)
 
 
 # Look at special uses by region

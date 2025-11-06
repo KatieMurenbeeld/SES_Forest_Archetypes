@@ -25,6 +25,9 @@ k_r2 <- ggplot(Df_r2)+
   xlab("Number of groups")+
   ylab("R2 of classification")
 k_r2
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_r2_k50_no_na_", 
+                             Sys.Date(), ".jpeg")), 
+           plot = k_r2, height = 6, width = 10, dpi = 300)
 
 INERTs <- sapply(2:50,function(k){
   Clust <- kmeans(na.omit(df_complete), centers=k, iter.max = 150)
@@ -41,6 +44,9 @@ k_inert <- ggplot(Df_INERT)+
   xlab("Number of groups")+
   ylab("Inertia (within cluster sum-of-squares) of classification")
 k_inert
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_inertia_k50_no_na_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = k_inert, height = 6, width = 10, dpi = 300)
 
 k_clusters <- kmeans(df_complete, centers = 20, iter.max = 100, nstart = 10)
 # 3. Associate clusters back to the original data frame (this is the key step)
@@ -94,6 +100,9 @@ fcm_ei <- ggplot(FCMvalues) +
   scale_fill_viridis() +
   coord_fixed(ratio=2)
 fcm_ei
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_fcm_ei_no_na_test_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = fcm_ei, height = 6, width = 10, dpi = 300)
 
 fcm_db <- ggplot(FCMvalues) + 
   geom_raster(aes(x = k, y = m, fill = DaviesBoulin.index)) + 
@@ -101,6 +110,9 @@ fcm_db <- ggplot(FCMvalues) +
   scale_fill_viridis() +
   coord_fixed(ratio=2)
 fcm_db
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_fcm_db_no_na_test_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = fcm_db, height = 6, width = 10, dpi = 300)
 
 # test out mapping the clusters back to the raster
 FCM_result <- CMeans(df_complete, k = 18, m = 1.2, standardize = FALSE,
@@ -117,6 +129,6 @@ values(r_fcm_clusters) <- fcm_clusters_all
 names(r_fcm_clusters) <- "cluster"
 
 # Plot the results
-plot(r_fcm_clusters, main="Fuzzy C-Means Clusters (NA values removed)")
+fcm_plot <- plot(r_fcm_clusters, main="Fuzzy C-Means Clusters (NA values removed)")
 
 ## IT WORKED!! ##

@@ -34,15 +34,18 @@ nf_buffers <- st_intersection(nf_sf, fs_reg.crop)
 attri_crop <- crop(df_attri, nf_buffers, mask = TRUE)
 attri_crop_sc <- (attri_crop - global(attri_crop, "min", na.rm=TRUE)[,1])/(global(attri_crop, "max", na.rm=TRUE)[,1] - global(attri_crop, "min", na.rm=TRUE)[,1])
 
-#attri_crop_sc[is.na(attri_crop_sc)] <- 100
-#plot(attri_crop_sc$aip)
+## I'M NOT SURE IS THIS IS APPROPRIATE OR NOT ##
+attri_crop_sc[is.na(attri_crop_sc)] <- -999 
+plot(attri_crop_sc$aip)
 
 ## save for the next scripts (this could be its own small script)
 writeRaster(attri_crop, filename = here::here(paste0("data/processed/nf_buffers_all_attributes_", 
                                           Sys.Date(), ".tif")))
 
-writeRaster(attri_crop_sc, filename = here::here(paste0("data/processed/nf_buffers_all_attributes_scaled_", 
+writeRaster(attri_crop_sc, filename = here::here(paste0("data/processed/nf_buffers_all_attributes_cropped_then_scaled_", 
                                                      Sys.Date(), ".tif")), overwrite = TRUE)
+
+#attri_crop_sc <- rast(here::here("data/processed/nf_buffers_all_attributes_cropped_then_scaled_2025-11-06.tif"))
 
 # 3. Format for use in geocmeans
 dataset <- lapply(names(attri_crop_sc), function(n){
@@ -56,13 +59,15 @@ names(dataset) <- names(attri_crop_sc)
 # finding the best k by using the r2 and total within cluster
 # sum-of-squares (inertia) of the classification
 # trying for k from 2 to 20
-R2s <- sapply(2:20,function(k){
+
+## ISSUE: I can't seem to omit NAs which are created with crop(x, y, mask = TRUE)
+R2s <- sapply(2:50, function(k){
   Clust <- kmeans(na.omit(attri_crop_sc), centers=k, iter.max = 150)
   R2 <- Clust$betweenss / Clust$totss
   return(R2)
 })
 
-Df_r2 <- data.frame(K=2:20,
+Df_r2 <- data.frame(K=2:50,
                  R2 = R2s)
 
 k_r2 <- ggplot(Df_r2)+
@@ -71,17 +76,17 @@ k_r2 <- ggplot(Df_r2)+
   xlab("Number of groups")+
   ylab("R2 of classification")
 k_r2
-ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_r2_", 
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_r2_k50_", 
                          Sys.Date(), ".jpeg")), 
        plot = k_r2, height = 6, width = 10, dpi = 300)
 
-INERTs <- sapply(2:20,function(k){
+INERTs <- sapply(2:50,function(k){
   Clust <- kmeans(na.omit(attri_crop_sc), centers=k, iter.max = 150)
   INERT <- Clust$tot.withinss
   return(INERT)
 })
 
-Df_INERT <- data.frame(K=2:20,
+Df_INERT <- data.frame(K=2:50,
                     INERT = INERTs)
 
 k_inert <- ggplot(Df_INERT)+
@@ -90,15 +95,15 @@ k_inert <- ggplot(Df_INERT)+
   xlab("Number of groups")+
   ylab("Inertia (within cluster sum-of-squares) of classification")
 k_inert
-ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_inertia_", 
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_inertia_k50_", 
                          Sys.Date(), ".jpeg")), 
        plot = k_inert, height = 6, width = 10, dpi = 300)
 
-#### STOP HERE: 5 NOV 2025 ####
+
 #----Use a non spatial and non generalized fuzzy c-means to determine number of k and value for m
 future::plan(future::multisession(workers = 2))
 FCMvalues <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
-                                  k = 2:20, m = seq(1.1,2,0.1), spconsist = FALSE, 
+                                  k = 2:50, m = seq(1.1,2,0.1), spconsist = FALSE, 
                                   indices = c("XieBeni.index", "Explained.inertia",
                                               "Negentropy.index", "Silhouette.index"),
                                   seed = 1234, verbose = TRUE) 
@@ -130,8 +135,8 @@ ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_fcm_ei_",
                          Sys.Date(), ".jpeg")), 
        plot = fcm_ei, height = 6, width = 10, dpi = 300)
 
-# FCM seed 1234 SI = 0.32, k = 4, m = 1.5. SI = 0.31, k = 3, m = 1.9
 
+#### STOP HERE: 6 NOV 2025 ####
 #----Use a generalized fuzzy c-means to determine the value for m and beta
 # k = 4
 GFCMvalues_k4 <- select_parameters.mc(algo = "GFCM", data = dataset, seed = 6891,

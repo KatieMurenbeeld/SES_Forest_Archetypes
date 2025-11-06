@@ -57,19 +57,47 @@ names(r_clusters) <- "cluster"
 # Plot the results
 plot(r_clusters, main="K-means Clusters (NA values removed)")
 
-# But will this work for geocmeans?
-dataset <- lapply(names(df_complete), function(n){
+#----But will this work for geocmeans?------------------------------------------
+dataset_test <- lapply(names(df_complete), function(n){
   aband <- df_complete[[n]]
   return(aband)
 })
-names(dataset) <- names(df_complete)
+names(dataset_test) <- names(df_complete)
+
+dataset <- lapply(names(attri_crop_sc), function(n){
+  aband <- attri_crop_sc[[n]]
+  return(aband)
+})
+names(dataset) <- names(attri_crop_sc)
+
+## I don't need to do the above ^^ can use df_complete ##
 
 
 ## just a quick test with k = 2:5 and m = seq(1.1, 2, 0.5)
 #----Use a non spatial and non generalized fuzzy c-means to determine number of k and value for m
 future::plan(future::multisession(workers = 2))
-FCMvalues <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
+FCMvalues <- select_parameters.mc(algo = "FCM", data = df_complete, standardize = FALSE,
                                   k = 2:5, m = seq(1.1,2,0.5), spconsist = FALSE, 
                                   indices = c("XieBeni.index", "Explained.inertia",
-                                              "Negentropy.index", "Silhouette.index"),
+                                              "Negentropy.index", "DaviesBoulin.index"),
                                   seed = 1234, verbose = TRUE) 
+
+# could not use Silhouette.index 
+# warning("impossible to calculate Silhouette index with fclust::SIL.F, This is
+# most likely due to a large dataset. We use here an approximation by subsampling..."
+# see lines 17-25 https://github.com/JeremyGelb/geocmeans/blob/master/R/clustering_evaluation.R
+
+
+fcm_ei <- ggplot(FCMvalues) + 
+  geom_raster(aes(x = k, y = m, fill = Explained.inertia)) + 
+  geom_text(aes(x = k, y = m, label = round(Explained.inertia,2)), size = 2.5)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=2)
+fcm_ei
+
+fcm_db <- ggplot(FCMvalues) + 
+  geom_raster(aes(x = k, y = m, fill = DaviesBoulin.index)) + 
+  geom_text(aes(x = k, y = m, label = round(DaviesBoulin.index,2)), size = 2.5)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=2)
+fcm_db

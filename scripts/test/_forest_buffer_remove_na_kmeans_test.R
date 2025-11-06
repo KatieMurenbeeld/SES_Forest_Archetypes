@@ -101,3 +101,22 @@ fcm_db <- ggplot(FCMvalues) +
   scale_fill_viridis() +
   coord_fixed(ratio=2)
 fcm_db
+
+# test out mapping the clusters back to the raster
+FCM_result <- CMeans(df_complete, k = 18, m = 1.2, standardize = FALSE,
+                      seed = 6891, tol = 0.001, verbose = TRUE, init = "kpp")
+
+# Create a vector for all cells, initialized to NA
+fcm_clusters_all <- rep(NA, nrow(df))
+# Fill in the cluster assignments for the non-NA cases
+fcm_clusters_all[as.numeric(rownames(df_complete))] <- FCM_result$Groups
+
+# 4. Create a new SpatRaster with the cluster results
+r_fcm_clusters <- rast(r, nlyr=1) # Create an empty SpatRaster with same dimensions
+values(r_fcm_clusters) <- fcm_clusters_all
+names(r_fcm_clusters) <- "cluster"
+
+# Plot the results
+plot(r_fcm_clusters, main="Fuzzy C-Means Clusters (NA values removed)")
+
+## IT WORKED!! ##

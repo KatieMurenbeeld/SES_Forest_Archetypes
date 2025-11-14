@@ -24,7 +24,7 @@ names(dataset) <- names(rst_sc)
 
 #----Use a non spatial and non generalized fuzzy c-means to determine number of k and value for m
 future::plan(future::multisession(workers = 2))
-FCMvalues <- select_parameters.mc(algo = "FCM", data = dataset, 
+FCMvalues <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
                                   k = 2:10, m = seq(1.1,2,0.1), spconsist = FALSE, 
                                   indices = c("XieBeni.index", "Explained.inertia",
                                               "Negentropy.index", "Silhouette.index"),

@@ -11,6 +11,8 @@ library(future)
 library(spdep)
 library(classInt)
 
+options(future.globals.maxSize = 8000 * 1024^2)
+
 #----Load the data----
 rst_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
 rst <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
@@ -25,54 +27,104 @@ names(dataset) <- names(rst_sc)
 #----Use a non spatial and non generalized fuzzy c-means to determine number of k and value for m
 future::plan(future::multisession(workers = 2))
 FCMvalues <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
-                                  k = 2:10, m = seq(1.1,2,0.1), spconsist = FALSE, 
+                                  k = 2:20, m = seq(1.1,2,0.1), spconsist = FALSE, 
                                   indices = c("XieBeni.index", "Explained.inertia",
                                               "Negentropy.index", "Silhouette.index"),
                                   seed = 1234, verbose = TRUE) 
 
-write_csv(FCMvalues, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/fcm_all_attri_param_indices_",
+write_csv(FCMvalues, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/fcm_all_attri_param_indices_k2_20_",
                             Sys.Date(), ".csv"), append = FALSE)
 
 # plotting the silhouette index
 fcm_si <- ggplot(FCMvalues) + 
   geom_raster(aes(x = k, y = m, fill = Silhouette.index)) + 
-  geom_text(aes(x = k, y = m, label = round(Silhouette.index,2)), size = 2.5)+
+  geom_text(aes(x = k, y = m, label = round(Silhouette.index,2)), size = 2)+
   scale_fill_viridis() +
   coord_fixed(ratio=2)
 fcm_si
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_si_", 
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_si_k2_20_", 
                   Sys.Date(), ".jpeg")), 
        plot = fcm_si, height = 6, width = 10, dpi = 300)
 # plotting the Xie Beni index
 fcm_xb <- ggplot(FCMvalues) + 
   geom_raster(aes(x = k, y = m, fill = XieBeni.index)) + 
-  geom_text(aes(x = k, y = m, label = round(XieBeni.index,2)), size = 2.5)+
+  geom_text(aes(x = k, y = m, label = round(XieBeni.index,2)), size = 2)+
   scale_fill_viridis() +
   coord_fixed(ratio=2)
 fcm_xb
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_xb_", 
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_xb_k2_20_", 
                   Sys.Date(), ".jpeg")), 
        plot = fcm_xb, height = 6, width = 10, dpi = 300)
-# seed 6891 SI = 0.32, k = 3, m = 1.5 (SI = 0.34, k = 9, m = 1.6 but 9 too high)
-# FCM seed 1234 SI = 0.45, k = 6, m = 1.6. SI = 0.43, k = 8, m = 1.6
+# plotting the Explained Inertia
+fcm_ei <- ggplot(FCMvalues) + 
+  geom_raster(aes(x = k, y = m, fill = Explained.inertia)) + 
+  geom_text(aes(x = k, y = m, label = round(Explained.inertia,2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=2)
+fcm_ei
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_ei_k2_20_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = fcm_xb, height = 6, width = 10, dpi = 300)
 
-# Highest silhouette index = 0.48  with k = 5 and m = 1.6
-# Silhouette index = 0.46 with k = 8 and m = 1.6
-
-#----Use a generalized fuzzy c-means to determine the value for m and beta
-# k = 6
-GFCMvalues_k6 <- select_parameters.mc(algo = "GFCM", data = dataset, seed = 6891,
-                                  k = 6, m = seq(1.1,2,0.1), beta = seq(0.1,0.9,0.1),
-                                  spconsist = FALSE, verbose = TRUE, init = "kpp",
+# Test out up to 50 clusters
+FCMvalues_k21_50 <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
+                                  k = 21:50, m = seq(1.1,2,0.1), spconsist = FALSE, 
                                   indices = c("XieBeni.index", "Explained.inertia",
-                                              "Negentropy.index", "Silhouette.index"))  
+                                              "Negentropy.index", "Silhouette.index"),
+                                  seed = 1234, verbose = TRUE) 
 
-write_csv(GFCMvalues_k6, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/gfcm_all_attri_param_indices_k6_",
+write_csv(FCMvalues_k21_50, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/fcm_all_attri_param_indices_k21_50_",
+                            Sys.Date(), ".csv"), append = FALSE)
+
+# plotting the silhouette index
+fcm_si <- ggplot(FCMvalues_k21_50) + 
+  geom_raster(aes(x = k, y = m, fill = Silhouette.index)) + 
+  geom_text(aes(x = k, y = m, label = round(Silhouette.index,2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=2)
+fcm_si
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_si_k21_50_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = fcm_si, height = 6, width = 10, dpi = 300)
+
+# plotting the Explained Inertia
+fcm_ei <- ggplot(FCMvalues_k21_50) + 
+  geom_raster(aes(x = k, y = m, fill = Explained.inertia)) + 
+  geom_text(aes(x = k, y = m, label = round(Explained.inertia,2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=2)
+fcm_ei
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_ei_k21_50_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = fcm_xb, height = 6, width = 10, dpi = 300)
+
+# Some options
+# k = 6, m = 1.6, SI = 0.44
+# k = 7, m = 1.7, SI = 0.44
+# k = 15, m = 1.8, SI = 0.48 relatively high XB
+# k = 15, m = 1.9, SI = 0.44 relatively high XB
+# k = 24, m = 1.9, SI = 0.44
+
+#----Use a generalized fuzzy c-means to determine the value for and beta
+
+GFCMvalues <- select_parameters.mc(algo = "GFCM", data = dataset, 
+                                   standardize = FALSE, seed = 6891,
+                                   k = c(6, 7, 15, 15, 24), 
+                                   m = c(1.6, 1.7, 1.8, 1.9, 1.9), 
+                                   beta = seq(0.1,0.9,0.1),
+                                   spconsist = FALSE, verbose = TRUE, 
+                                   init = "kpp",
+                                   indices = c("XieBeni.index", 
+                                               "Explained.inertia",
+                                               "Negentropy.index", 
+                                               "Silhouette.index"))  
+
+write_csv(GFCMvalues, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/gfcm_all_attri_param_indices_",
                             Sys.Date(), ".csv"), append = FALSE)
 
 
 # plotting the silhouette index
-gfcm_si <- ggplot(GFCMvalues_k6) + 
+gfcm_si <- ggplot(GFCMvalues) + 
   geom_raster(aes(x = m, y = beta, fill = Silhouette.index)) + 
   geom_text(aes(x = m, y = beta, label = round(Silhouette.index,2)), size = 2)+
   scale_fill_viridis() +
@@ -82,7 +134,7 @@ ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_gfcm_si_",
                          Sys.Date(), ".jpeg")), 
        plot = gfcm_si, height = 6, width = 10, dpi = 300)
 # plotting the Xie Beni
-gfcm_xb <- ggplot(GFCMvalues_k6) + 
+gfcm_xb <- ggplot(GFCMvalues) + 
   geom_raster(aes(x = m, y = beta, fill = XieBeni.index)) + 
   geom_text(aes(x = m, y = beta, label = round(XieBeni.index, 2)), size = 2)+
   scale_fill_viridis() +
@@ -91,40 +143,16 @@ gfcm_xb
 ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_gfcm_xb_", 
                          Sys.Date(), ".jpeg")), 
        plot = gfcm_xb, height = 6, width = 10, dpi = 300)
-# Silhouette index = 0.46, k = 5, m = 1.6, beta = 0.1 (XB = 1288.89)
-# Silhouette index = 0.45, k = 5, m = 2.0, beta = 0.3 (XB = 714.09) !!
-# Silhouette index = 0.30, k = 5, m = 1.5, beta = 0.2 (XB = 18.6)
-# FCM seed = 1234, SI = 0.46, k = 6, m = 1.9, beta = 0.3
-
-# k = 8
-GFCMvalues_k8 <- select_parameters.mc(algo = "GFCM", data = dataset, seed = 6891,
-                                     k = 8, m = seq(1.1,2,0.1), beta = seq(0.1,0.9,0.1),
-                                     spconsist = FALSE, verbose = TRUE, init = "kpp",
-                                     indices = c("XieBeni.index", "Explained.inertia",
-                                                 "Negentropy.index", "Silhouette.index"))  
-
-write_csv(GFCMvalues_k8, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/gfcm_all_attri_param_indices_k8_",
-                                Sys.Date(), ".csv"), append = FALSE)
-
-
-# plotting the silhouette index
-ggplot(GFCMvalues_k8) + 
-  geom_raster(aes(x = m, y = beta, fill = Silhouette.index)) + 
-  geom_text(aes(x = m, y = beta, label = round(Silhouette.index,2)), size = 2)+
+# plotting the Explained Inertia
+gfcm_ei <- ggplot(GFCMvalues) + 
+  geom_raster(aes(x = m, y = beta, fill = Explained.inertia)) + 
+  geom_text(aes(x = m, y = beta, label = round(Explained.inertia, 2)), size = 2)+
   scale_fill_viridis() +
   coord_fixed(ratio=1)
-
-# plotting the Xie Beni
-ggplot(GFCMvalues_k8) + 
-  geom_raster(aes(x = m, y = beta, fill = XieBeni.index)) + 
-  geom_text(aes(x = m, y = beta, label = round(XieBeni.index, 2)), size = 2)+
-  scale_fill_viridis() +
-  coord_fixed(ratio=1)
-
-# Silhouette index = 0.43, k = 8, m = 1.6, beta = 0.1 (XB = 2770.66)
-# Silhouette index = 0.42, k = 8, m = 1.9, beta = 0.3 (XB = 1390.96)!!
-# Silhouette index = 0.36, k = 8, m = 1.8, beta = 0.2 (XB = 385.27)
-# FCM seed = 1234, SI = 0.42, k = 8, m = 1.9, beta = 0.3
+gfcm_ei
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_gfcm_ei_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = gfcm_ei, height = 6, width = 10, dpi = 300)
 
 
 # Spatial FCM
@@ -134,7 +162,8 @@ w3 <- matrix(1, nrow = 7, ncol = 7)
 
 # k = 6
 SFCMvalues_k6 <- select_parameters.mc(algo = "SFCM", data = dataset, 
-                                          k = 6, m = 1.9,
+                                      standardize = FALSE,
+                                          k = 6, m = c(1.8, 1.9),
                                           alpha = seq(0.1,2,0.1),
                                           window = list(w1,w2,w3),
                                           spconsist = TRUE, nrep = 5, 
@@ -174,11 +203,11 @@ sfcm_xb
 ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sfcm_xb_", 
                          Sys.Date(), ".jpeg")), 
        plot = sfcm_xb, height = 6, width = 10, dpi = 300)
-# Silhouette index = 0.36, k = 5, m = 2.0, window = 3x3 (w1), alpha = 0.3
-# FCM seed = 1234, SI = 0.34, k = 6, m = 1.9, window =  7x7 (w3), alpha = 1.1
 
-# k = 8
-SFCMvalues_k8 <- select_parameters.mc(algo = "SFCM", data = dataset, 
+
+# k = 7
+SFCMvalues_k7 <- select_parameters.mc(algo = "SFCM", data = dataset, 
+                                      standardize = FALSE, 
                                       k = 8, m = 1.9,
                                       alpha = seq(0.1,2,0.1),
                                       window = list(w1,w2,w3),
@@ -194,30 +223,27 @@ dict <- data.frame(
   window = c("3x3","5x5","7x7")
 )
 
-SFCMvalues_k8$window <- dict$window[match(SFCMvalues_k8$window,dict$w)]
-write_csv(SFCMvalues_k8, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/sfcm_all_attri_param_indices_k8_", 
+SFCMvalues_k7$window <- dict$window[match(SFCMvalues_k7$window,dict$w)]
+write_csv(SFCMvalues_k7, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/sfcm_all_attri_param_indices_k8_", 
                                 Sys.Date(), ".csv"), append = FALSE)
 
 
 # plotting the silhouette index
-ggplot(SFCMvalues_k8) + 
+ggplot(SFCMvalues_k7) + 
   geom_raster(aes(x = alpha, y = window, fill = Silhouette.index)) + 
   geom_text(aes(x = alpha, y = window, label = round(Silhouette.index,2)), size = 2)+
   scale_fill_viridis() +
   coord_fixed(ratio=0.5)
 
 # plotting the Xie Beni
-ggplot(SFCMvalues_k8) + 
+ggplot(SFCMvalues_k7) + 
   geom_raster(aes(x = alpha, y = window, fill = XieBeni.index)) + 
   geom_text(aes(x = alpha, y = window, label = round(XieBeni.index, 2)), size = 2)+
   scale_fill_viridis() +
   coord_fixed(ratio=0.5)
 
-# Silhouette index = 0.21, k = 8, m = 1.9, window = 3x3 (w1), alpha = 0.7
-# FCM seed = 1234, SI = 0.21, k = 8, m = 1.9, window =  3x3 (w1), alpha = 0.7
 
 # Spatial GFCM
-# Start here when you get home. 
 future::plan(future::multisession(workers = 2))
 # k = 6
 SGFCMvalues_k6 <- select_parameters.mc(algo = "SGFCM", data = dataset,

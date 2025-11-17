@@ -163,14 +163,14 @@ w3 <- matrix(1, nrow = 7, ncol = 7)
 # k = 6
 SFCMvalues_k6 <- select_parameters.mc(algo = "SFCM", data = dataset, 
                                       standardize = FALSE,
-                                          k = 6, m = c(1.8, 1.9),
-                                          alpha = seq(0.1,2,0.1),
-                                          window = list(w1,w2,w3),
-                                          spconsist = TRUE, nrep = 5, 
-                                          verbose = TRUE, chunk_size = 4,
-                                          seed = 6891, init = "kpp",
-                                          indices = c("XieBeni.index", "Explained.inertia",
-                                                      "Negentropy.index", "Silhouette.index"))
+                                      k = 6, m = c(1.8, 1.9),
+                                      alpha = seq(0.1,2,0.1),
+                                      window = list(w1,w2,w3),
+                                      spconsist = TRUE, nrep = 5, 
+                                      verbose = TRUE, chunk_size = 4,
+                                      seed = 6891, init = "kpp",
+                                      indices = c("XieBeni.index", "Explained.inertia",
+                                                  "Negentropy.index", "Silhouette.index"))
 
 
 dict <- data.frame(
@@ -208,7 +208,7 @@ ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sfcm_xb_",
 # k = 7
 SFCMvalues_k7 <- select_parameters.mc(algo = "SFCM", data = dataset, 
                                       standardize = FALSE, 
-                                      k = 8, m = 1.9,
+                                      k = 7, m = 1.9,
                                       alpha = seq(0.1,2,0.1),
                                       window = list(w1,w2,w3),
                                       spconsist = TRUE, nrep = 5, 
@@ -242,14 +242,52 @@ ggplot(SFCMvalues_k7) +
   scale_fill_viridis() +
   coord_fixed(ratio=0.5)
 
+# k = 15
+SFCMvalues_k15 <- select_parameters.mc(algo = "SFCM", data = dataset, 
+                                      standardize = FALSE, 
+                                      k = 15, m = 1.8,
+                                      alpha = seq(0.1,2,0.1),
+                                      window = list(w1,w2,w3),
+                                      spconsist = TRUE, nrep = 5, 
+                                      verbose = TRUE, chunk_size = 4,
+                                      seed = 6891, init = "kpp",
+                                      indices = c("XieBeni.index", "Explained.inertia",
+                                                  "Negentropy.index", "Silhouette.index"))
+
+
+dict <- data.frame(
+  w = c(1,2,3),
+  window = c("3x3","5x5","7x7")
+)
+
+SFCMvalues_k15$window <- dict$window[match(SFCMvalues_k15$window,dict$w)]
+write_csv(SFCMvalues_k15, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/sfcm_all_attri_param_indices_k15_", 
+                                Sys.Date(), ".csv"), append = FALSE)
+
+
+# plotting the silhouette index
+ggplot(SFCMvalues_k15) + 
+  geom_raster(aes(x = alpha, y = window, fill = Silhouette.index)) + 
+  geom_text(aes(x = alpha, y = window, label = round(Silhouette.index,2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=0.5)
+
+# plotting the Xie Beni
+ggplot(SFCMvalues_k15) + 
+  geom_raster(aes(x = alpha, y = window, fill = XieBeni.index)) + 
+  geom_text(aes(x = alpha, y = window, label = round(XieBeni.index, 2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=0.5)
+
 
 # Spatial GFCM
 future::plan(future::multisession(workers = 2))
-# k = 6
-SGFCMvalues_k6 <- select_parameters.mc(algo = "SGFCM", data = dataset,
-                                    k = 6, m = 1.9,
+# k = 6 and 7, all windows
+SGFCMvalues_w1 <- select_parameters.mc(algo = "SGFCM", data = dataset,
+                                       standardize = FALSE, 
+                                    k = 6:7, m = 1.8:1.9,
                                     beta = seq(0.1,0.9,0.1), alpha = seq(0.5,2,0.1),
-                                    window = w3,
+                                    window = w1,
                                     spconsist = TRUE, nrep = 5, 
                                     verbose = TRUE, chunk_size = 4,
                                     seed = 456, init = "kpp",
@@ -259,7 +297,7 @@ SGFCMvalues_k6 <- select_parameters.mc(algo = "SGFCM", data = dataset,
 
 #write_csv(SGFCMvalues_k6, here::here(paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/sgfcm_all_attri_param_indices_k6_", 
 #                             Sys.Date(), ".csv")), append = FALSE)
-write_csv(SGFCMvalues_k6, here::here(paste0("outputs/sgfcm_all_attri_param_indices_k6_", 
+write_csv(SGFCMvalues_w1, here::here(paste0("outputs/sgfcm_all_attri_param_indices_k6-7_w1_", 
                                             Sys.Date(), ".csv")), append = FALSE)
 #SGFCMvalues_k6_check <- read_csv(here::here("outputs/sgfcm_all_attri_param_indices_k6_2024-10-28.csv"))
 

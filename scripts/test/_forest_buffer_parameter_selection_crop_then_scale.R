@@ -29,7 +29,9 @@ fs_reg.crop <- st_crop(fs_reg.proj, ext(df_attri))
 ## create a new national forest buffers shape using st_intersection
 nf_buffers <- st_intersection(nf_sf, fs_reg.crop)
 
-# 2.Crop the raster to the nf_buffers. Then scale using global min-max
+# 2.Crop the raster to the nf_buffers. Then scale using global min-max.
+## Because this is cropped. I should look at the variace of the values. 
+## the z-score may be appropriate once restricted to the forest buffers.
 
 attri_crop <- crop(df_attri, nf_buffers, mask = TRUE)
 attri_crop_sc <- (attri_crop - global(attri_crop, "min", na.rm=TRUE)[,1])/(global(attri_crop, "max", na.rm=TRUE)[,1] - global(attri_crop, "min", na.rm=TRUE)[,1])

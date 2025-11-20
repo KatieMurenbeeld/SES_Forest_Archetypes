@@ -64,7 +64,7 @@ fcm_ei <- ggplot(FCMvalues) +
 fcm_ei
 ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_ei_k2_20_", 
                          Sys.Date(), ".jpeg")), 
-       plot = fcm_xb, height = 6, width = 10, dpi = 300)
+       plot = fcm_ei, height = 6, width = 10, dpi = 300)
 
 # Test out up to 50 clusters
 FCMvalues_k21_50 <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
@@ -96,7 +96,7 @@ fcm_ei <- ggplot(FCMvalues_k21_50) +
 fcm_ei
 ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_ei_k21_50_", 
                          Sys.Date(), ".jpeg")), 
-       plot = fcm_xb, height = 6, width = 10, dpi = 300)
+       plot = fcm_ei, height = 6, width = 10, dpi = 300)
 
 # Some options
 # k = 6, m = 1.6, SI = 0.44
@@ -279,10 +279,10 @@ ggplot(SFCMvalues_k15) +
   scale_fill_viridis() +
   coord_fixed(ratio=0.5)
 
-
 # Spatial GFCM
+#-------------------------------------------------------------------------------
 future::plan(future::multisession(workers = 2))
-# k = 6 and 7, all windows
+# k = 6 and 7, window = w1 (3x3)
 SGFCMvalues_w1 <- select_parameters.mc(algo = "SGFCM", data = dataset,
                                        standardize = FALSE, 
                                     k = 6:7, m = 1.8:1.9,
@@ -295,14 +295,12 @@ SGFCMvalues_w1 <- select_parameters.mc(algo = "SGFCM", data = dataset,
                                                 "Negentropy.index", "Silhouette.index"))
 
 
-#write_csv(SGFCMvalues_k6, here::here(paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/sgfcm_all_attri_param_indices_k6_", 
-#                             Sys.Date(), ".csv")), append = FALSE)
+
 write_csv(SGFCMvalues_w1, here::here(paste0("outputs/sgfcm_all_attri_param_indices_k6-7_w1_", 
                                             Sys.Date(), ".csv")), append = FALSE)
-#SGFCMvalues_k6_check <- read_csv(here::here("outputs/sgfcm_all_attri_param_indices_k6_2024-10-28.csv"))
 
 # showing the silhouette index
-sgfcm_si <- ggplot(SGFCMvalues_k6) + 
+sgfcm_si <- ggplot(SGFCMvalues_w1) + 
   geom_raster(aes(x = alpha, y = beta, fill = Silhouette.index)) + 
   geom_text(aes(x = alpha, y = beta, label = round(Silhouette.index,2)), size = 2.5)+
   scale_fill_viridis() +
@@ -312,14 +310,14 @@ ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sgfcm_si_",
                          Sys.Date(), ".jpeg")), 
        plot = sgfcm_si, height = 6, width = 10, dpi = 300)
 # showing the spatial inconsistency
-ggplot(SGFCMvalues_k6) + 
+ggplot(SGFCMvalues_w1) + 
   geom_raster(aes(x = alpha, y = beta, fill = spConsistency)) + 
   geom_text(aes(x = alpha, y = beta, label = round(spConsistency,2)), size = 2.5)+
   scale_fill_viridis() +
   coord_fixed(ratio=1)
 
 # showing the Xie Beni index
-sgfcm_xb <- ggplot(SGFCMvalues_k6) + 
+sgfcm_xb <- ggplot(SGFCMvalues_w1) + 
   geom_raster(aes(x = alpha, y = beta, fill = XieBeni.index)) + 
   geom_text(aes(x = alpha, y = beta, label = round(XieBeni.index,2)), size = 2.5)+
   scale_fill_viridis() +
@@ -328,12 +326,102 @@ sgfcm_xb
 ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sgfcm_xb_", 
                          Sys.Date(), ".jpeg")), 
        plot = sgfcm_xb, height = 6, width = 10, dpi = 300)
-# Silhouette index = 0.51, k = 5, m = 2.0, beta = 0.8, alpha = 1.2, w = 3x3 (w1)
-# FCM seed = 1234, SI = 0.48, XB = 607.38, k = 6, m = 1.9, window =  7x7 (w3), alpha = 0.6, beta = 0.4
 
-# k = 8
-SGFCMvalues_k8 <- select_parameters.mc(algo = "SGFCM", data = dataset,
-                                       k = 8, m = 1.9,
+# k = 6 and 7, window = w2 (5x5)
+SGFCMvalues_w2 <- select_parameters.mc(algo = "SGFCM", data = dataset,
+                                       standardize = FALSE, 
+                                       k = 6:7, m = 1.8:1.9,
+                                       beta = seq(0.1,0.9,0.1), alpha = seq(0.5,2,0.1),
+                                       window = w2,
+                                       spconsist = TRUE, nrep = 5, 
+                                       verbose = TRUE, chunk_size = 4,
+                                       seed = 456, init = "kpp",
+                                       indices = c("XieBeni.index", "Explained.inertia",
+                                                   "Negentropy.index", "Silhouette.index"))
+
+
+
+write_csv(SGFCMvalues_w2, here::here(paste0("outputs/sgfcm_all_attri_param_indices_k6-7_w2_", 
+                                            Sys.Date(), ".csv")), append = FALSE)
+
+# showing the silhouette index
+sgfcm_si <- ggplot(SGFCMvalues_w2) + 
+  geom_raster(aes(x = alpha, y = beta, fill = Silhouette.index)) + 
+  geom_text(aes(x = alpha, y = beta, label = round(Silhouette.index,2)), size = 2.5)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=1)
+sgfcm_si
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sgfcm_si_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = sgfcm_si, height = 6, width = 10, dpi = 300)
+# showing the spatial inconsistency
+ggplot(SGFCMvalues_w2) + 
+  geom_raster(aes(x = alpha, y = beta, fill = spConsistency)) + 
+  geom_text(aes(x = alpha, y = beta, label = round(spConsistency,2)), size = 2.5)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=1)
+
+# showing the Xie Beni index
+sgfcm_xb <- ggplot(SGFCMvalues_w2) + 
+  geom_raster(aes(x = alpha, y = beta, fill = XieBeni.index)) + 
+  geom_text(aes(x = alpha, y = beta, label = round(XieBeni.index,2)), size = 2.5)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=1)
+sgfcm_xb 
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sgfcm_xb_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = sgfcm_xb, height = 6, width = 10, dpi = 300)
+
+# k = 6 and 7, window = w3 (7x7)
+SGFCMvalues_w3 <- select_parameters.mc(algo = "SGFCM", data = dataset,
+                                       standardize = FALSE, 
+                                       k = 6:7, m = 1.8:1.9,
+                                       beta = seq(0.1,0.9,0.1), alpha = seq(0.5,2,0.1),
+                                       window = w3,
+                                       spconsist = TRUE, nrep = 5, 
+                                       verbose = TRUE, chunk_size = 4,
+                                       seed = 456, init = "kpp",
+                                       indices = c("XieBeni.index", "Explained.inertia",
+                                                   "Negentropy.index", "Silhouette.index"))
+
+
+
+write_csv(SGFCMvalues_w3, here::here(paste0("outputs/sgfcm_all_attri_param_indices_k6-7_w3_", 
+                                            Sys.Date(), ".csv")), append = FALSE)
+
+# showing the silhouette index
+sgfcm_si <- ggplot(SGFCMvalues_w3) + 
+  geom_raster(aes(x = alpha, y = beta, fill = Silhouette.index)) + 
+  geom_text(aes(x = alpha, y = beta, label = round(Silhouette.index,2)), size = 2.5)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=1)
+sgfcm_si
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sgfcm_si_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = sgfcm_si, height = 6, width = 10, dpi = 300)
+# showing the spatial inconsistency
+ggplot(SGFCMvalues_w3) + 
+  geom_raster(aes(x = alpha, y = beta, fill = spConsistency)) + 
+  geom_text(aes(x = alpha, y = beta, label = round(spConsistency,2)), size = 2.5)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=1)
+
+# showing the Xie Beni index
+sgfcm_xb <- ggplot(SGFCMvalues_w3) + 
+  geom_raster(aes(x = alpha, y = beta, fill = XieBeni.index)) + 
+  geom_text(aes(x = alpha, y = beta, label = round(XieBeni.index,2)), size = 2.5)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=1)
+sgfcm_xb 
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sgfcm_xb_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = sgfcm_xb, height = 6, width = 10, dpi = 300)
+
+
+# k = 15 window = w1 (3x3)
+SGFCMvalues_k15_w1 <- select_parameters.mc(algo = "SGFCM", data = dataset,
+                                       standardize = FALSE, 
+                                       k = 15, m = 1.8,
                                        beta = seq(0.1,0.9,0.1), alpha = seq(0.5,2,0.1),
                                        window = w1,
                                        spconsist = TRUE, nrep = 5, 
@@ -343,40 +431,37 @@ SGFCMvalues_k8 <- select_parameters.mc(algo = "SGFCM", data = dataset,
                                                    "Negentropy.index", "Silhouette.index"))
 
 
-write_csv(SGFCMvalues_k8, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/sgfcm_all_attri_param_indices_k8_", 
-                                 Sys.Date(), ".csv"), append = FALSE)
+
+write_csv(SGFCMvalues_k15_w1, here::here(paste0("outputs/sgfcm_all_attri_param_indices_k15_w1_", 
+                                            Sys.Date(), ".csv")), append = FALSE)
+
 # showing the silhouette index
-ggplot(SGFCMvalues_k8) + 
+sgfcm_si <- ggplot(SGFCMvalues_k15_w1) + 
   geom_raster(aes(x = alpha, y = beta, fill = Silhouette.index)) + 
   geom_text(aes(x = alpha, y = beta, label = round(Silhouette.index,2)), size = 2.5)+
   scale_fill_viridis() +
   coord_fixed(ratio=1)
-
-
+sgfcm_si
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sgfcm_si_k15_w1_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = sgfcm_si, height = 6, width = 10, dpi = 300)
 # showing the spatial inconsistency
-ggplot(SGFCMvalues_k8) + 
+ggplot(SGFCMvalues_k15_w1) + 
   geom_raster(aes(x = alpha, y = beta, fill = spConsistency)) + 
   geom_text(aes(x = alpha, y = beta, label = round(spConsistency,2)), size = 2.5)+
   scale_fill_viridis() +
   coord_fixed(ratio=1)
 
 # showing the Xie Beni index
-ggplot(SGFCMvalues_k8) + 
+sgfcm_xb <- ggplot(SGFCMvalues_k15_w1) + 
   geom_raster(aes(x = alpha, y = beta, fill = XieBeni.index)) + 
   geom_text(aes(x = alpha, y = beta, label = round(XieBeni.index,2)), size = 2.5)+
   scale_fill_viridis() +
   coord_fixed(ratio=1)
-
-# Silhouette index = 0.47, k = 8, m = 1.9, beta = 0.5, alpha = 1.1, w = 3x3 (w1) 
-# seems that with this set of attributes the best SI I will get will be around 0.5
-# FCM seed = 1234, SI = 0.45, k = 8, m = 1.9, window =  3x3 (w1), alpha = 0.5, beta = 0.4 (a little lower XB than with an SI of 0.47) 
-
-# --- from a PREVIOUS EXAMPLE BUT I DIDN'T SET THE SEED
-# Silhouette index = 0.54, k = 8, m = 1.7, beta = 0.2, alpha = 1.1, w = 7x7 (but xie beni highest)
-# Silhouette index = 0.51, k = 8, m = 1.7, beta = 0.2, alpha = 1.7, w = 7x7 (xie beni lower)
-
-
-
+sgfcm_xb 
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_sgfcm_xb_k15_w1_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = sgfcm_xb, height = 6, width = 10, dpi = 300)
 
 #-------------------ignore code below: delete later--------------------------------------------------------
 # alpha of 1.3 will be good

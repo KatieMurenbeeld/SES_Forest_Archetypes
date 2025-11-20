@@ -17,13 +17,13 @@ df_complete <- na.omit(df)           # Remove rows with any NA values
 
 # 2. Run k-means on the complete data frame
 #k_clusters <- kmeans(df_complete, centers = 5, iter.max = 100, nstart = 10)
-R2s <- sapply(2:50, function(k){
+R2s <- sapply(2:154, function(k){
   Clust <- kmeans(df_complete, centers=k, iter.max = 150)
   R2 <- Clust$betweenss / Clust$totss
   return(R2)
 })
 
-Df_r2 <- data.frame(K=2:50,
+Df_r2 <- data.frame(K=2:154,
                     R2 = R2s)
 
 k_r2 <- ggplot(Df_r2)+
@@ -32,17 +32,17 @@ k_r2 <- ggplot(Df_r2)+
   xlab("Number of groups")+
   ylab("R2 of classification")
 k_r2
-ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_r2_k50_no_na_", 
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_r2_k154_no_na_", 
                              Sys.Date(), ".jpeg")), 
            plot = k_r2, height = 6, width = 10, dpi = 300)
 
-INERTs <- sapply(2:50,function(k){
+INERTs <- sapply(2:154,function(k){
   Clust <- kmeans(na.omit(df_complete), centers=k, iter.max = 150)
   INERT <- Clust$tot.withinss
   return(INERT)
 })
 
-Df_INERT <- data.frame(K=2:50,
+Df_INERT <- data.frame(K=2:154,
                        INERT = INERTs)
 
 k_inert <- ggplot(Df_INERT)+
@@ -51,7 +51,7 @@ k_inert <- ggplot(Df_INERT)+
   xlab("Number of groups")+
   ylab("Inertia (within cluster sum-of-squares) of classification")
 k_inert
-ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_inertia_k50_no_na_", 
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_inertia_k154_no_na_", 
                          Sys.Date(), ".jpeg")), 
        plot = k_inert, height = 6, width = 10, dpi = 300)
 

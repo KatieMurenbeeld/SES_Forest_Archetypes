@@ -9,6 +9,8 @@ library(viridis)
 # Example SpatRaster with NAs (replace with your data)
 r <- rast(here::here("data/processed/nf_buffers_all_attributes_cropped_then_scaled_2025-11-06.tif"))
 
+#plot(r$aip)
+
 # 1. Extract values to a data frame and remove NAs
 ## but maybe I don't need to do this? According to the geocmeans reference
 ## pixels with NAs are not considered in the classification.

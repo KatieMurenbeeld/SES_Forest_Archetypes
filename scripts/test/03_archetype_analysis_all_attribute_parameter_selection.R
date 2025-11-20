@@ -17,12 +17,101 @@ options(future.globals.maxSize = 8000 * 1024^2)
 rst_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
 rst <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 
+
+# Use terra::k_means() to make elbow plots?
+# or stats::kmeans() -- I need to use this in order to get the R2 and inertia
+
+df_nat <- as.data.frame(rst_sc, na.rm=FALSE) # Extract values including NAs
+df_nat_complete <- na.omit(df_nat)           # Remove rows with any NA values
+
+R2s <- sapply(2:100, function(k){
+  Clust <- k_means(df_nat_complete, centers=k, iter.max = 150)
+  R2 <- Clust$betweenss / Clust$totss
+  return(R2)
+})
+
+Df_r2 <- data.frame(K=2:100,
+                    R2 = R2s)
+
+k_r2 <- ggplot(Df_r2)+
+  geom_line(aes(x=K,y=R2s))+
+  geom_point(aes(x=K,y=R2s),color="red")+
+  xlab("Number of groups")+
+  ylab("R2 of classification")
+k_r2
+ggsave(here::here(paste0("outputs/plots/national_level_all_param_selection_kmeans_r2_k100_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = k_r2, height = 6, width = 10, dpi = 300)
+
+INERTs <- sapply(2:100,function(k){
+  Clust <- kmeans(df_nat_complete, centers=k, iter.max = 150)
+  INERT <- Clust$tot.withinss
+  return(INERT)
+})
+
+Df_INERT <- data.frame(K=2:100,
+                       INERT = INERTs)
+
+k_inert <- ggplot(Df_INERT)+
+  geom_line(aes(x=K,y=INERTs))+
+  geom_point(aes(x=K,y=INERTs),color="red")+
+  xlab("Number of groups")+
+  ylab("Inertia (within cluster sum-of-squares) of classification")
+k_inert
+ggsave(here::here(paste0("outputs/plots/nfbuffers_all_param_selection_kmeans_inertia_k100_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = k_inert, height = 6, width = 10, dpi = 300)
+
+
 # Format for use in geocmeans
 dataset <- lapply(names(rst_sc), function(n){
   aband <- rst_sc[[n]]
   return(aband)
 })
 names(dataset) <- names(rst_sc)
+
+#----Use a non spatial and non generalized c-means to determine number of k 
+## set m = 1
+future::plan(future::multisession(workers = 2))
+FCMvalues_m1 <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
+                                  k = 2:100, m = 1, spconsist = FALSE, 
+                                  indices = c("XieBeni.index", "Explained.inertia",
+                                              "Negentropy.index", "Silhouette.index"),
+                                  seed = 1234, verbose = TRUE) 
+
+write_csv(FCMvalues_m1, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/cm_all_attri_param_indices_k2_100_",
+                            Sys.Date(), ".csv"), append = FALSE)
+
+# plotting the silhouette index
+fcm_si <- ggplot(FCMvalues_m1) + 
+  geom_raster(aes(x = k, y = m, fill = Silhouette.index)) + 
+  geom_text(aes(x = k, y = m, label = round(Silhouette.index,2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=2)
+fcm_si
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_cm_si_k2_100_m1_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = fcm_si, height = 6, width = 10, dpi = 300)
+# plotting the Xie Beni index
+fcm_xb <- ggplot(FCMvalues_m1) + 
+  geom_raster(aes(x = k, y = m, fill = XieBeni.index)) + 
+  geom_text(aes(x = k, y = m, label = round(XieBeni.index,2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=2)
+fcm_xb
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_cm_xb_k2_100_m1_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = fcm_xb, height = 6, width = 10, dpi = 300)
+# plotting the Explained Inertia
+fcm_ei <- ggplot(FCMvalues_m1) + 
+  geom_raster(aes(x = k, y = m, fill = Explained.inertia)) + 
+  geom_text(aes(x = k, y = m, label = round(Explained.inertia,2)), size = 2)+
+  scale_fill_viridis() +
+  coord_fixed(ratio=2)
+fcm_ei
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_cm_ei_k2_100_m1_", 
+                         Sys.Date(), ".jpeg")), 
+       plot = fcm_ei, height = 6, width = 10, dpi = 300)
 
 #----Use a non spatial and non generalized fuzzy c-means to determine number of k and value for m
 future::plan(future::multisession(workers = 2))

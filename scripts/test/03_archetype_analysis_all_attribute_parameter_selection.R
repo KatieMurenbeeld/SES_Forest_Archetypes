@@ -33,7 +33,7 @@ library(spdep)
 library(classInt)
 ## update the future.globals.maxSize to avoid issues working with the future 
 ## package
-options(future.globals.maxSize = 8000 * 1024^2)
+options(future.globals.maxSize = 1000 * 1024^2)
 
 # STEP 1: Load the scaled data created in 02_archetype_analysis_raster_stack.R
 # ------------------------------------------------------------------------------
@@ -105,53 +105,6 @@ names(dataset) <- names(rst_sc)
 # STEP 4: Use a non spatial and non generalized fuzzy c-means 
 # to determine a range of appropriate k and m values. 
 # ------------------------------------------------------------------------------
-#----Use a non spatial and non generalized c-means to determine number of k 
-## set m = 1
-future::plan(future::multisession(workers = 2))
-FCMvalues_m1 <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
-                                  k = 2:100, m = 1.05, spconsist = FALSE, 
-                                  indices = c("XieBeni.index", "Explained.inertia",
-                                              "Negentropy.index", "Silhouette.index"),
-                                  seed = 1234, verbose = TRUE) 
-
-write_csv(FCMvalues_m1, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/cm_all_attri_param_indices_k2_100_",
-                            Sys.Date(), ".csv"), append = FALSE)
-
-# plotting the silhouette index
-fcm_si <- ggplot(FCMvalues_m1) + 
-  geom_raster(aes(x = k, y = m, fill = Silhouette.index)) + 
-  geom_text(aes(x = k, y = m, label = round(Silhouette.index,2)), size = 2)+
-  scale_fill_viridis() +
-  coord_fixed(ratio=2)
-fcm_si
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_cm_si_k2_100_m1_", 
-                         Sys.Date(), ".jpeg")), 
-       plot = fcm_si, height = 6, width = 10, dpi = 300)
-# plotting the Xie Beni index
-fcm_xb <- ggplot(FCMvalues_m1) + 
-  geom_raster(aes(x = k, y = m, fill = XieBeni.index)) + 
-  geom_text(aes(x = k, y = m, label = round(XieBeni.index,2)), size = 2)+
-  scale_fill_viridis() +
-  coord_fixed(ratio=2)
-fcm_xb
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_cm_xb_k2_100_m1_", 
-                         Sys.Date(), ".jpeg")), 
-       plot = fcm_xb, height = 6, width = 10, dpi = 300)
-# plotting the Explained Inertia
-fcm_ei <- ggplot(FCMvalues_m1) + 
-  geom_raster(aes(x = k, y = m, fill = Explained.inertia)) + 
-  geom_text(aes(x = k, y = m, label = round(Explained.inertia,2)), size = 2)+
-  scale_fill_viridis() +
-  coord_fixed(ratio=2)
-fcm_ei
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_cm_ei_k2_100_m1_", 
-                         Sys.Date(), ".jpeg")), 
-       plot = fcm_ei, height = 6, width = 10, dpi = 300)
-
-
-# STEP 4: Use a non spatial and non generalized fuzzy c-means 
-# to determine a range of appropriate k and m values. 
-# ------------------------------------------------------------------------------
 
 ## Set the number of workers since we will use the multicore option of the
 ## select_parameters.mc() function
@@ -210,52 +163,24 @@ ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_ei_k2_50_",
                          Sys.Date(), ".jpeg")), 
        plot = fcm_ei, height = 6, width = 10, dpi = 300)
 
-# Test out up to 50 clusters
-FCMvalues_k21_50 <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
-                                  k = 21:50, m = seq(1.1,2,0.1), spconsist = FALSE, 
-                                  indices = c("XieBeni.index", "Explained.inertia",
-                                              "Negentropy.index", "Silhouette.index"),
-                                  seed = 1234, verbose = TRUE) 
-
-write_csv(FCMvalues_k21_50, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/fcm_all_attri_param_indices_k21_50_",
-                            Sys.Date(), ".csv"), append = FALSE)
-
-# plotting the silhouette index
-fcm_si <- ggplot(FCMvalues_k21_50) + 
-  geom_raster(aes(x = k, y = m, fill = Silhouette.index)) + 
-  geom_text(aes(x = k, y = m, label = round(Silhouette.index,2)), size = 2)+
-  scale_fill_viridis() +
-  coord_fixed(ratio=2)
-fcm_si
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_si_k21_50_", 
-                         Sys.Date(), ".jpeg")), 
-       plot = fcm_si, height = 6, width = 10, dpi = 300)
-
-# plotting the Explained Inertia
-fcm_ei <- ggplot(FCMvalues_k21_50) + 
-  geom_raster(aes(x = k, y = m, fill = Explained.inertia)) + 
-  geom_text(aes(x = k, y = m, label = round(Explained.inertia,2)), size = 2)+
-  scale_fill_viridis() +
-  coord_fixed(ratio=2)
-fcm_ei
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_ei_k21_50_", 
-                         Sys.Date(), ".jpeg")), 
-       plot = fcm_ei, height = 6, width = 10, dpi = 300)
-
-# Some options
-# k = 6, m = 1.6, SI = 0.44
-# k = 7, m = 1.7, SI = 0.44
-# k = 15, m = 1.8, SI = 0.48 relatively high XB
-# k = 15, m = 1.9, SI = 0.44 relatively high XB
-# k = 24, m = 1.9, SI = 0.44
-
-#----Use a generalized fuzzy c-means to determine the value for beta
+# STEP 5: Use a non spatial, generalized fuzzy c-means 
+# to determine a range of appropriate k, m, and beta values. 
+# ------------------------------------------------------------------------------
+## Set the number of workers since we will use the multicore option of the
+## select_parameters.mc() function
 future::plan(future::multisession(workers = 2))
-GFCMvalues_low_m <- select_parameters.mc(algo = "GFCM", data = dataset, 
+## Because we are using scaled data, set standardize = FALSE,
+## Make sure to set a seed
+## Select a range of k from the elbow plots, a sequence of m values from 
+## 1.1 to 1.5 with steps of 0.1, and a sequence of beta values from 0.1-1.0,0.1
+## Select the Xie-Beni, Explained Inertia, Negentropy, and Silhouette Index 
+## as cluster evaluation metrics.
+## spconsist = FALSE because this is a non-spatial model.
+GFCMvalues <- select_parameters.mc(algo = "GFCM", data = dataset, 
                                    standardize = FALSE, seed = 6891,
-                                   k = 2:30, 
+                                   k = 25:75, 
                                    m = seq(1.1,1.5,0.1), 
-                                   beta = seq(0.1,0.9,0.1),
+                                   beta = seq(0.1,1.0,0.1),
                                    spconsist = FALSE, verbose = TRUE, 
                                    init = "kpp",
                                    indices = c("XieBeni.index", 

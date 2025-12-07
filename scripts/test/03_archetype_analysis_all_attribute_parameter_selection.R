@@ -1,3 +1,24 @@
+#===============================================================================
+# PARAMETER SELCTION FOR FUZZY C-MEANS CLUSTERING
+# Within this script we will select the appropriate k, m, beta, and alpha
+# values for a spatial (generalized) fuzzy c-means model. Following the workflow
+# of Jeremy Gelb (https://jeremygelb.github.io/geocmeans/articles/introduction.html)
+# we will:
+# 1. Determine an appropriate range of k values by investigating an elbow plot
+#    from a classical k-means model using stats::kmeans(). We will need to remove 
+#    any NAs from the data. 
+# 2. Determine appropriate ranges or values of k - m combinations using the 
+#    geocmeans::select_parameters.mc(algo = "FCM"). Here the dataset is 
+#    reformatted for use in geocmeans.
+# 3. Determine the appropriate ranges or values of k-m-beta combinations 
+#    combinations using the geocmeans::select_parameters.mc(algo = "GFCM") and
+#    the reformatted dataset.
+# 4. Determine the appropriate ranges or values of k-m-beta-window size-alpha
+#    combinations using the geocmeans::select_parameter.mc(algo = "SGFCM") and
+#    the reformatted dataset.
+
+
+# Load required packages
 library(tidyverse)
 library(terra)
 library(raster)
@@ -10,29 +31,35 @@ library(viridis)
 library(future)
 library(spdep)
 library(classInt)
-
+## update the future.globals.maxSize to avoid issues working with the future 
+## package
 options(future.globals.maxSize = 8000 * 1024^2)
 
-#----Load the data----
+# STEP 1: Load the scaled data created in 02_archetype_analysis_raster_stack.R
+# ------------------------------------------------------------------------------
 rst_sc <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_scaled_2024-10-08.tif")
 rst <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 
+# STEP 2: Use stats::kmeans() to determine an appropriate range of k values
+# ------------------------------------------------------------------------------
 
-# Use terra::k_means() to make elbow plots?
-# or stats::kmeans() -- I need to use this in order to get the R2 and inertia
-
+## Reformat the raster as a data frame and (as a precaution) remove any NAs
 df_nat <- as.data.frame(rst_sc, na.rm=FALSE) # Extract values including NAs
 df_nat_complete <- na.omit(df_nat)           # Remove rows with any NA values
 
+## Calculate the R^2 from the classical k-means clustering for a range of 
+## k values. 
 R2s <- sapply(2:100, function(k){
   Clust <- k_means(df_nat_complete, centers=k, iter.max = 150)
   R2 <- Clust$betweenss / Clust$totss
   return(R2)
 })
 
+## Create a data frame of the R^2 and K values.
 Df_r2 <- data.frame(K=2:100,
                     R2 = R2s)
 
+## Generate the elbow plot and save.
 k_r2 <- ggplot(Df_r2)+
   geom_line(aes(x=K,y=R2s))+
   geom_point(aes(x=K,y=R2s),color="red")+
@@ -43,15 +70,19 @@ ggsave(here::here(paste0("outputs/plots/national_level_all_param_selection_kmean
                          Sys.Date(), ".jpeg")), 
        plot = k_r2, height = 6, width = 10, dpi = 300)
 
+## Calculate the Inertia from the classical k-means clustering for a range of 
+## k values. 
 INERTs <- sapply(2:100,function(k){
   Clust <- kmeans(df_nat_complete, centers=k, iter.max = 150)
   INERT <- Clust$tot.withinss
   return(INERT)
 })
 
+## Create a data frame of the Inertia and K values.
 Df_INERT <- data.frame(K=2:100,
                        INERT = INERTs)
 
+## Generate the elbow plot and save.
 k_inert <- ggplot(Df_INERT)+
   geom_line(aes(x=K,y=INERTs))+
   geom_point(aes(x=K,y=INERTs),color="red")+
@@ -62,14 +93,18 @@ ggsave(here::here(paste0("outputs/plots/national_level_all_param_selection_kmean
                          Sys.Date(), ".jpeg")), 
        plot = k_inert, height = 6, width = 10, dpi = 300)
 
-
-# Format for use in geocmeans
+# STEP 3: Reformat the raster for use in geocmeans
+# ------------------------------------------------------------------------------
+## See https://jeremygelb.github.io/geocmeans/articles/web_vignettes/rasters.html
 dataset <- lapply(names(rst_sc), function(n){
   aband <- rst_sc[[n]]
   return(aband)
 })
 names(dataset) <- names(rst_sc)
 
+# STEP 4: Use a non spatial and non generalized fuzzy c-means 
+# to determine a range of appropriate k and m values. 
+# ------------------------------------------------------------------------------
 #----Use a non spatial and non generalized c-means to determine number of k 
 ## set m = 1
 future::plan(future::multisession(workers = 2))
@@ -114,18 +149,31 @@ ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_cm_ei_k2_100_m1_
        plot = fcm_ei, height = 6, width = 10, dpi = 300)
 
 
-#----Use a non spatial and non generalized fuzzy c-means to determine number of k and value for m
+# STEP 4: Use a non spatial and non generalized fuzzy c-means 
+# to determine a range of appropriate k and m values. 
+# ------------------------------------------------------------------------------
+
+## Set the number of workers since we will use the multicore option of the
+## select_parameters.mc() function
 future::plan(future::multisession(workers = 2))
+## Because we are using scaled data, set standardize = FALSE,
+## Make sure to set a seed
+## Select a range of k from the elbow plots and a sequence of m values from 
+## 1.1 to 2 with steps of 0.1.
+## Select the Xie-Beni, Explained Inertia, Negentropy, and Silhouette Index 
+## as cluster evaluation metrics.
+## spconsist = FALSE because this is a non-spatial model.
 FCMvalues <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
-                                  k = 2:50, m = seq(1.1,2,0.1), spconsist = FALSE, 
+                                  k = 25:75, m = seq(1.1,2,0.1), spconsist = FALSE, 
                                   indices = c("XieBeni.index", "Explained.inertia",
                                               "Negentropy.index", "Silhouette.index"),
                                   seed = 1234, verbose = TRUE) 
 
-write_csv(FCMvalues, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/fcm_all_attri_param_indices_k2_50_",
+## Save the indice outputs as a csv
+write_csv(FCMvalues, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/fcm_all_attri_param_indices_k25_75_",
                             Sys.Date(), ".csv"), append = FALSE)
 
-# plotting the silhouette index
+## Plot the silhouette index and k - m values as a heat map.
 fcm_si <- ggplot(FCMvalues) + 
   geom_raster(aes(x = k, y = m, fill = Silhouette.index)) + 
   geom_text(aes(x = k, y = m, label = round(Silhouette.index,2)), size = 2)+

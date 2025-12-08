@@ -16,7 +16,7 @@
 # 4. Determine the appropriate ranges or values of k-m-beta-window size-alpha
 #    combinations using the geocmeans::select_parameter.mc(algo = "SGFCM") and
 #    the reformatted dataset.
-
+#===============================================================================
 
 # Load required packages
 library(tidyverse)
@@ -135,7 +135,7 @@ fcm_si <- ggplot(FCMvalues) +
   labs(title = "Silhouette Index") +
   theme(legend.position = "NULL")
 fcm_si
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_si_k2_50_", 
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_si_k25_75_", 
                   Sys.Date(), ".jpeg")), 
        plot = fcm_si, height = 6, width = 10, dpi = 300)
 # plotting the Xie Beni index
@@ -147,7 +147,7 @@ fcm_xb <- ggplot(FCMvalues) +
   labs(title = "Xie Beni") +
   theme(legend.position = "NULL")
 fcm_xb
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_xb_k2_50_", 
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_xb_k25_75_", 
                   Sys.Date(), ".jpeg")), 
        plot = fcm_xb, height = 6, width = 10, dpi = 300)
 # plotting the Explained Inertia
@@ -159,7 +159,7 @@ fcm_ei <- ggplot(FCMvalues) +
   labs(title = "Explained Inertia") +
   theme(legend.position = "NULL")
 fcm_ei
-ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_ei_k2_50_", 
+ggsave(here::here(paste0("outputs/plots/appen_a_param_selection_fcm_ei_k25_75_", 
                          Sys.Date(), ".jpeg")), 
        plot = fcm_ei, height = 6, width = 10, dpi = 300)
 
@@ -188,7 +188,7 @@ GFCMvalues <- select_parameters.mc(algo = "GFCM", data = dataset,
                                                "Negentropy.index", 
                                                "Silhouette.index"))  
 
-write_csv(GFCMvalues_low_m, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/gfcm_low_m_all_attri_param_indices_",
+write_csv(GFCMvalues_low_m, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/outputs/gfcm_all_attri_param_indices_",
                             Sys.Date(), ".csv"), append = FALSE)
 
 

@@ -32,33 +32,37 @@ df_ei05 <- nf_fcm_df %>%
   mutate(Explained.inertia = round(Explained.inertia, digits = 2)) %>%
   filter(Explained.inertia >= 0.5)
 
-# 3. Plot Explained Inertia, Silhouette Index, and Xie Beni Index on y with k 
+df_ei05_si03 <- nf_fcm_df %>%
+  mutate(Explained.inertia = round(Explained.inertia, digits = 2),
+         Silhouette.index = round(Silhouette.index, digits = 2)) %>%
+  filter(Explained.inertia >= 0.5 & Silhouette.index >= 0.3)
+
+# 3. Plot Explained Inertia and Silhouette Index y with k 
 # on x and facet wrapped by m
 #-------------------------------------------------------------------------------
 
-df <- df_ei05
+df <- df_ei05_si03
 
 ei <- ggplot(df, aes(k, Explained.inertia)) + 
-  geom_line() +
+  geom_point() +
   facet_wrap(~m) +
-  labs(title = "FCM Evaluation Metrics: Explained Inertia >= 0.5")
+  labs(title = "FCM Evaluation Metrics: Explained Inertia >= 0.5 & Silhouette Index >= 0.3")
 
 si <- ggplot(df, aes(k, Silhouette.index)) + 
-  geom_line() +
+  geom_point() +
   facet_wrap(~m)
 
-xb <- ggplot(df, aes(k, XieBeni.index)) + 
-  geom_line() +
-  facet_wrap(~m)
+ei
+si
 
-ei / si / xb
+ei / si
 
 # 4. Save the figure
 #-------------------------------------------------------------------------------
 
-fmc_plot <- ei / si / xb
+fmc_plot <- ei / si 
 
-ggsave(here::here(paste0("outputs/nf_level/plots/nf_buffers_fcm_params_ei05_",
+ggsave(here::here(paste0("outputs/nf_level/plots/nf_buffers_fcm_params_ei05_si03_",
                          Sys.Date(), ".jpeg")),
        width = 8, height = 6, dpi = 300)
 

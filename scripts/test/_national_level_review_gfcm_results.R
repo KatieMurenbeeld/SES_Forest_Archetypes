@@ -13,7 +13,7 @@ library(tidyverse)
 library(here)
 library(ggplot2)
 library(patchwork)
-
+library(scales)
 
 # 1. Download and combine the parameter selection results
 #-------------------------------------------------------------------------------
@@ -32,7 +32,12 @@ df_ei05 <- gfcm_df %>%
   mutate(Explained.inertia = round(Explained.inertia, digits = 2)) %>%
   filter(Explained.inertia >= 0.5)
 
-# 3. Plot Explained Inertia, Silhouette Index, and Xie Beni Index on y with k 
+df_ei05_si03 <- gfcm_df %>%
+  mutate(Explained.inertia = round(Explained.inertia, digits = 2),
+         Silhouette.index = round(Silhouette.index, digits = 2)) %>%
+  filter(Explained.inertia >= 0.5 & Silhouette.index >= 0.3)
+
+# 3. Plot Explained Inertia and Silhouette Index on y with k 
 # on x and facet wrapped by m
 #-------------------------------------------------------------------------------
 
@@ -55,11 +60,6 @@ ei_si <- ggplot(df, aes(k)) +
   labs(title = "National Level GFCM: Explained Inertia >= 0.5")
 ei_si
 
-xb <- ggplot(df, aes(k, XieBeni.index)) + 
-  geom_line() +
-  facet_grid(rows = vars(beta), cols = vars(m)) +
-  labs(title = "National Level GFCM Xie Beni Index: Explained Inertia >= 0.5")
-
 # 4. Save the figures
 #-------------------------------------------------------------------------------
 
@@ -71,17 +71,53 @@ ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_param
                          Sys.Date(), ".jpeg")), plot = si,
        width = 6, height = 6, dpi = 300)
 
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_params_ei05_xb_", 
-                         Sys.Date(), ".jpeg")), plot = xb,
-       width = 6, height = 6, dpi = 300)
+ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_parma_ei05_si_combined_",
+                         Sys.Date(), ".jpeg")), plot = ei_si)
+
+# 5. Function and code for plotting with 2 y-axis
+#-------------------------------------------------------------------------------
+# From https://stackoverflow.com/questions/3099219/ggplot-with-2-y-axes-on-each-side-and-different-scales/66055331#66055331
+# Function factory for secondary axis transforms
+train_sec <- function(primary, secondary, na.rm = TRUE) {
+  # Thanks Henry Holm for including the na.rm argument!
+  from <- range(secondary, na.rm = na.rm)
+  to   <- range(primary, na.rm = na.rm)
+  # Forward transform for the data
+  forward <- function(x) {
+    rescale(x, from = from, to = to)
+  }
+  # Reverse transform for the secondary axis
+  reverse <- function(x) {
+    rescale(x, from = to, to = from)
+  }
+  list(fwd = forward, rev = reverse)
+}
+
+sec1 <- with(df_ei05, train_sec(Explained.inertia, Silhouette.index))
+sec2 <- with(df_ei05_si03, train_sec(Explained.inertia, Silhouette.index))
+
+ei05_si_scaled_y <- ggplot(df_ei05, aes(k)) +
+  geom_point(aes(y = Explained.inertia), colour = "blue", alpha = 0.5) +
+  geom_point(aes(y = sec1$fwd(Silhouette.index)), colour = "red", alpha = 0.5) +
+  scale_y_continuous(sec.axis = sec_axis(~sec1$rev(.), name = "Silhouette.index")) + 
+  facet_grid(rows = vars(beta), cols = vars(m)) +
+  labs(title = "National Level GFCM: Explained Inertia >= 0.5")
 
 
+ei05_si03_scaled_y <- ggplot(df_ei05_si03, aes(k)) +
+  geom_point(aes(y = Explained.inertia), colour = "blue", alpha = 0.5) +
+  geom_point(aes(y = sec2$fwd(Silhouette.index)), colour = "red", alpha = 0.5) + 
+  scale_y_continuous(sec.axis = sec_axis(~sec2$rev(.), name = "Silhouette.index")) + 
+  facet_grid(rows = vars(beta), cols = vars(m)) +
+  labs(title = "National Level GFCM: Explained Inertia >= 0.5 & \nSilhouette Index >= 0.3")
 
+# 6. Save the figures with the dual y-axis
+#-------------------------------------------------------------------------------
 
+ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_parma_ei05_si_scaled_y_",
+                         Sys.Date(), ".jpeg")), plot = ei05_si_scaled_y,
+       width = 10, height = 8, dpi = 300)
 
-
-
-
-
-
-
+ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_parma_ei05_si03_scaled_y_",
+                         Sys.Date(), ".jpeg")), plot = ei05_si03_scaled_y,
+       width = 7, height = 7, dpi = 300)

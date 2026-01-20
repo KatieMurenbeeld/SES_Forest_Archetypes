@@ -37,41 +37,53 @@ df_ei05_si03 <- gfcm_df %>%
          Silhouette.index = round(Silhouette.index, digits = 2)) %>%
   filter(Explained.inertia >= 0.5 & Silhouette.index >= 0.3)
 
+df_ei06_si03 <- gfcm_df %>%
+  mutate(Explained.inertia = round(Explained.inertia, digits = 2),
+         Silhouette.index = round(Silhouette.index, digits = 2)) %>%
+  filter(Explained.inertia >= 0.6 & Silhouette.index >= 0.3)
+
 # 3. Plot Explained Inertia and Silhouette Index on y with k 
 # on x and facet wrapped by m
 #-------------------------------------------------------------------------------
 
-df <- df_ei05
+df <- df_ei06_si03
 
 ei <- ggplot(df, aes(k, Explained.inertia)) + 
-  geom_line() +
+  geom_line(aes(group = 1)) +
   facet_grid(rows = vars(beta), cols = vars(m)) +
-  labs(title = "National Level GFCM Explained Inertia: Explained Inertia >= 0.5")
+  labs(title = "National Level GFCM Explained Inertia: Explained Inertia >= 0.6 
+       \n Silhouette Index >= 0.3")
 
 si <- ggplot(df, aes(k, Silhouette.index)) + 
-  geom_line() +
+  geom_line(aes(group = 1)) +
   facet_grid(rows = vars(beta), cols = vars(m)) +
-  labs(title = "National Level GFCM Silhouette Index: Explained Inertia >= 0.5")
+  labs(title = "National Level GFCM Silhouette Index: Explained Inertia >= 0.6
+       \n Silhouette Index >= 0.3")
 
 ei_si <- ggplot(df, aes(k)) + 
-  geom_line(aes(y=Silhouette.index, colour = "red")) +
-  geom_line(aes(y=Explained.inertia, color = "blue")) + 
+  geom_line(aes(y=Silhouette.index, colour = "red", group = 1)) +
+  geom_line(aes(y=Explained.inertia, color = "blue", group = 1)) + 
   facet_grid(rows = vars(beta), cols = vars(m)) +
-  labs(title = "National Level GFCM: Explained Inertia >= 0.5")
+  labs(title = "National Level GFCM: Explained Inertia >= 0.6
+       \n Silhouette Index >= 0.3")
 ei_si
+
+ei
+si
+ei / si
 
 # 4. Save the figures
 #-------------------------------------------------------------------------------
 
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_params_ei05_ei_", 
+ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_params_ei05_si03_ei_", 
                          Sys.Date(), ".jpeg")), plot = ei,
          width = 6, height = 6, dpi = 300)
 
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_params_ei05_si_", 
+ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_params_ei05_si03_si_", 
                          Sys.Date(), ".jpeg")), plot = si,
        width = 6, height = 6, dpi = 300)
 
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_parma_ei05_si_combined_",
+ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_parma_ei05_si03_combined_",
                          Sys.Date(), ".jpeg")), plot = ei_si)
 
 # 5. Function and code for plotting with 2 y-axis
@@ -95,6 +107,7 @@ train_sec <- function(primary, secondary, na.rm = TRUE) {
 
 sec1 <- with(df_ei05, train_sec(Explained.inertia, Silhouette.index))
 sec2 <- with(df_ei05_si03, train_sec(Explained.inertia, Silhouette.index))
+sec3 <- with(df_ei06_si03, train_sec(Explained.inertia, Silhouette.index))
 
 ei05_si_scaled_y <- ggplot(df_ei05, aes(k)) +
   geom_point(aes(y = Explained.inertia), colour = "blue", alpha = 0.5) +
@@ -111,6 +124,13 @@ ei05_si03_scaled_y <- ggplot(df_ei05_si03, aes(k)) +
   facet_grid(rows = vars(beta), cols = vars(m)) +
   labs(title = "National Level GFCM: Explained Inertia >= 0.5 & \nSilhouette Index >= 0.3")
 
+ei06_si03_scaled_y <- ggplot(df_ei06_si03, aes(k)) +
+  geom_point(aes(y = Explained.inertia), colour = "blue", alpha = 0.5) +
+  geom_point(aes(y = sec3$fwd(Silhouette.index)), colour = "red", alpha = 0.5) + 
+  scale_y_continuous(sec.axis = sec_axis(~sec3$rev(.), name = "Silhouette.index")) + 
+  facet_grid(rows = vars(beta), cols = vars(m)) +
+  labs(title = "National Level GFCM: Explained Inertia >= 0.6 & \nSilhouette Index >= 0.3")
+
 # 6. Save the figures with the dual y-axis
 #-------------------------------------------------------------------------------
 
@@ -120,4 +140,8 @@ ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_parma
 
 ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_parma_ei05_si03_scaled_y_",
                          Sys.Date(), ".jpeg")), plot = ei05_si03_scaled_y,
+       width = 7, height = 7, dpi = 300)
+
+ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_parma_ei06_si03_scaled_y_",
+                         Sys.Date(), ".jpeg")), plot = ei06_si03_scaled_y,
        width = 7, height = 7, dpi = 300)

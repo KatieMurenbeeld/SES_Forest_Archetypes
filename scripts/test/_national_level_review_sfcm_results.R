@@ -1,6 +1,6 @@
 ################################################################################
 # REVIEW FUZYY C-MEANS PARAMETER SELECTION RESULTS FROM NATIONAL LEVEL DATA   ##
-# 1. Download and combine all sfmc_all_attri_*.csv results                     ##
+# 1. Download and combine all sfmc_all_attri_*.csv results                    ##
 # 1.1 Note that the xxx.R script was run on a high performance computer       ##
 # 2. Filter for parameter combinations with explained inertia >= 0.5          ##
 # 3. Plot the evaluation metrics by k with a facet wrap by m.                 ##

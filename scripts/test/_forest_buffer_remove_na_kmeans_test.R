@@ -8,7 +8,7 @@ library(viridis)
 
 # Example SpatRaster with NAs (replace with your data)
 r <- rast(here::here("data/processed/nf_buffers_all_attributes_cropped_then_scaled_2025-11-06.tif"))
-
+r2 <- rast(here::here("data/processed/nf_buffers_all_attributes_2025-11-06.tif"))
 #plot(r$aip)
 
 # 1. Extract values to a data frame and remove NAs
@@ -92,7 +92,7 @@ names(dataset) <- names(r)
 #----Use a non spatial and non generalized fuzzy c-means to determine number of k and value for m
 future::plan(future::multisession(workers = 2))
 FCMvalues <- select_parameters.mc(algo = "FCM", data = dataset, standardize = FALSE,
-                                  k = 2:50, m = seq(1.1,2,0.1), spconsist = FALSE, 
+                                  k = 2, m = seq(1.1,2,0.1), spconsist = FALSE, 
                                   indices = c("XieBeni.index", "Explained.inertia",
                                               "Silhouette.index",
                                               "Negentropy.index", "DaviesBoulin.index"),

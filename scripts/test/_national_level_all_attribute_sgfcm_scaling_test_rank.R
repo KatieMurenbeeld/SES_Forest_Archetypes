@@ -3,11 +3,11 @@
 # 1. Download the original (unscaled) raster stack                            ##
 #     1.1 Rank scale and normalize the data                                   ##
 # 2. Quickly review a few variables distributions and plots pre and post scale##
-# 2. Run a SGFCM with the same parameters that were optimized using min-max   ##
+# 3. Run a SGFCM with the same parameters that were optimized using min-max   ##
 # scaling                                                                     ##
-# 3. Plot the resulting 32 clusters                                           ##
-# 4. Save the SGFCM as a RDS and save the figure                              ##
-# 5. Use the select_params.mc() to review the Silhouette index, Explained     ##
+# 4. Plot the resulting 32 clusters                                           ##
+# 5. Save the SGFCM as a RDS and save the figure                              ##
+# 6. Use the select_params.mc() to review the Silhouette index, Explained     ##
 # inertia and Spatial consistency                                             ##
 #                                                                             ##
 ################################################################################
@@ -28,21 +28,49 @@ library(viridis)
 rst <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/rast_stack_all_attributes_2024-10-08.tif")
 
 ## 1.1 Rank scale the data
-# Code from the AI results from a google search 
-# "apply rank scaling to all layers in a raster R"
+### Apply the rank scaling function to all layers (I could not come up with a 
+### more efficient way to do this)
+rst_rank_aip <- app(rst$aip, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_comm_cap <- app(rst$comm_cap, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_pct_forpay <- app(rst$pct_forpay, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_forprod <- app(rst$forprod, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_lesshs <- app(rst$lesshs, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_hsbrd <- app(rst$hsbrd, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_engbrd <- app(rst$engbrd, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_pm25 <- app(rst$pm25, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_travtime <- app(rst$travtime, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_rough <- app(rst$rough, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_precseas <- app(rst$precseas, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_tempseas <- app(rst$tempseas, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_distwild <- app(rst$distwild, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_distcrit <- app(rst$distcrit, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_pct_delmill <- app(rst$pct_delmill, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_fedrich <- app(rst$fedrich, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_treecov <- app(rst$treecov, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_treeage <- app(rst$treeage, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_forgain <- app(rst$forgain, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_whp <- app(rst$whp, fun = rank, na.last = "keep", ties.method = "random")
+rst_rank_netmig <- app(rst$netmig, fun = rank, na.last = "keep", ties.method = "random")
 
-# Define a rank scaling function (values range from 0 to 1)
-rank_scale_function <- function(x) {
-  # na.last = "keep" ensures NAs remain NA
-  ranked_values <- rank(x, na.last = "keep")
-  # Scale the ranks to a 0-1 range
-  scaled_ranks <- (ranked_values - min(ranked_values, na.rm = TRUE)) / 
-    (max(ranked_values, na.rm = TRUE) - min(ranked_values, na.rm = TRUE))
-  return(scaled_ranks)
-}
+### stack all of the rank scaled rasters
+rst_rank <- c(rst_rank_aip, rst_rank_comm_cap, rst_rank_pct_forpay, 
+                  rst_rank_forprod, rst_rank_lesshs, rst_rank_hsbrd, 
+                  rst_rank_engbrd, rst_rank_pm25, rst_rank_travtime, 
+                  rst_rank_rough, rst_rank_precseas, rst_rank_tempseas, 
+                  rst_rank_distwild, rst_rank_distcrit, rst_rank_pct_delmill, 
+                  rst_rank_fedrich, rst_rank_treecov, rst_rank_treeage, 
+                  rst_rank_forgain, rst_rank_whp, rst_rank_netmig)
+### rename layers
+names(rst_rank) <- c("aip", "comm_cap", "pct_forpay", "forprod", 
+                       "lesshs", "hsbrd", "engbrd", "pm25", "travtime",
+                       "rough", "precseas", "tempseas", "distwild", "distcrit", 
+                       "pct_delmill", "fedrich", "treecov", "treeage", "forgain",
+                       "whp", "netmig")
+### save the raster
+writeRaster(rst_rank, 
+            filename = paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/rast_stack_all_attributes_rank_scale_", 
+                              Sys.Date(), ".tif"), overwrite=TRUE)
 
-# Apply the rank scaling function to all layers
-rst_rank <- app(rst, fun = rank_scale_function)
 
 # 2. Check the distributions and rasters for a few variables
 #-------------------------------------------------------------------------------
@@ -58,6 +86,7 @@ plot(rst_rank$aip)
 hist(rst$pct_forpay)
 plot(rst$pct_forpay)
 ## Rank scaled and normalized
+hist(values(rst_rank$pct_forpay))
 hist(rst_rank$pct_forpay)
 plot(rst_rank$pct_forpay)
 
@@ -170,7 +199,7 @@ print(SGFCMvalues_rank_scale)
 ## Check the spatial consistency values
 consistIndex <- spConsistency(SGFCM_all_result_alpha03_rank_scale, window = w1, nrep = 100)
 ## Review the results
-print(consistIndex)
+print(consistIndex$Mean)
 ## Plot the results (The spatial consistency from the select_parameters.mc = 2.25)
 ggplot() +
   geom_histogram(aes(x = consistIndex$samples),

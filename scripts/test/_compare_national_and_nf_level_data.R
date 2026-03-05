@@ -18,6 +18,7 @@ library(here)
 library(ggplot2)
 library(terra)
 library(raster)
+library(reshape2)
 
 # 1. Load the unscaled national and national forest level raster stacks
 #-------------------------------------------------------------------------------
@@ -97,3 +98,32 @@ ggsave(here::here(paste0("outputs/plots/nat_nf_compare_boxplots_",
 ggsave(here::here(paste0("outputs/plots/nat_nf_compare_boxplots_nooutliers_",
                         Sys.Date(), ".png")),
       box_compare_nooutliers, width = 10, height = 10, dpi = 300)
+
+# 5. Create histograms of all variables and compare
+#-------------------------------------------------------------------------------
+d_nat <- melt(nat_df)
+nat_level_hist <- ggplot(d_nat,aes(x = value)) + 
+  facet_wrap(~variable,scales = "free_x") + 
+  geom_histogram() + 
+  labs(
+    title = "National Level Histograms",
+    subtitle = "bins = 30"
+  )
+
+d_nf <- melt(nf_df)
+nf_level_hist <- ggplot(d_nf,aes(x = value)) + 
+  facet_wrap(~variable,scales = "free_x") + 
+  geom_histogram() + 
+  labs(
+    title = "N. Forest Level Histograms",
+    subtitle = "bins = 30"
+  )
+
+# 6. Save the histogram plots
+#-------------------------------------------------------------------------------
+
+ggsave(here::here(paste0("outputs/plots/nation_level_attribute_histograms_", Sys.Date(), ".png")), 
+       plot = nat_level_hist, width = 20, height = 20, dpi = 300)
+
+ggsave(here::here(paste0("outputs/plots/nf_level_attribute_histograms_", Sys.Date(), ".png")), 
+       plot = nf_level_hist, width = 20, height = 20, dpi = 300)

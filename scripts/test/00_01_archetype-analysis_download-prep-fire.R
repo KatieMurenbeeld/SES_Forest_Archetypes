@@ -1,3 +1,20 @@
+################################################################################
+# SCRIPT TO DOWNLOAD AND PROCESS WILDFIRE HAZARD POTENTIAL DATA TO 3KM        ##
+# The raster produced in this step will act as your "reference raster" for    ##
+# the rest of the data preprocessing steps.                                   ##
+# 1. Set up a function to download the WHP data for each state                ##
+#  1.1 Create a list of states within the contiguous US (CONUS)               ##
+# 2. With a for loop over the list of states, use the function to download    ##
+#    the data for each state using the list of states                         ##
+# 3. Create a function to gather the WHP state tifs and merge them together   ##
+# 4. Aggregate the merged data to 3km                                         ##
+# 5. Using inverse distance weighting, fill in any missing data               ##
+# 6. Crop the raster to the CONUS state outlines from tigris                  ##
+# 7. Save the raster                                                          ##
+################################################################################
+
+# 0. Load the required libraries
+#-------------------------------------------------------------------------------
 library(tidyverse)
 library(sf)
 library(terra)
@@ -9,8 +26,9 @@ library(gstat)
 # Set the timeout to 100 minutes (6000 seconds)
 options(timeout=6000)
 
+# 1. Write a function to download the data
+#-------------------------------------------------------------------------------
 # Only want the wildfire hazard potential (WHP)
-
 download_fire <- function(st){    
   tmp <- tempfile()
   fs.url <- paste0("https://s3-us-west-2.amazonaws.com/fs.usda.rds/RDS-2020-0016/RDS-2020-0016_",st,".zip")
@@ -27,7 +45,7 @@ download_fire <- function(st){
   return(fnames)
 }
 
-# Create state list, excluding Alaska, DC, HI, and territories
+## 1.1 Create state list, excluding Alaska, DC, HI, and territories
 states <- st_drop_geometry(states())
 st_list <- states %>%
   dplyr::select(GEOID, NAME) %>%
@@ -36,50 +54,19 @@ st_list <- states %>%
   filter(GEOID != 2 & GEOID != 11 & GEOID != 15 & GEOID < 60) %>%
   dplyr::select(NAME)
 
-# may need to complete in chunks by indexing st_list
+# 2. Download the data. NOTE: may need to complete in chunks by indexing st_list
+#-------------------------------------------------------------------------------
 for (state in st_list[31:48,]) {
   download_fire(state)
 }
 
-fnames_list <- list.files(here::here("data/original/fire"), pattern = "WHP", full.names = TRUE)
 
-# For next time update this function to aggregate at 3km-3000m (fact = 100) and 1.5km-1500m (fact = 50)
-agg_fire <- function(ogrst, fac, res){
-  rasters <- rast(ogrst)
-  fnames.process <- paste0("data/processed/aggregated/",names(rasters), "_", res, "_", Sys.Date(), ".tif")
-  rasters.agg <- aggregate(rasters, fact=fac, cores = 2)
-  writeRaster(rasters.agg, fnames.process, overwrite=TRUE)
-  return(fnames.process) 
-}
-
-for (rst in fnames_list) {
-  agg_fire(rst, 100, "3000m")
-}
-
+# 3. Merge the state .tifs before aggregating to avoid gaps between the states
+#-------------------------------------------------------------------------------
+## Set the prefix
 prefix <- "WHP"
-res <- c("1500m", "3000m") 
 
-merge_all_rst <- function(res){
-  file.list <- list.files(here::here("data/processed/aggregated"), pattern = res, full.names = TRUE)
-  rasters <- lapply(file.list, function(x) rast(x))
-  rst.sprc <- sprc(rasters)
-  m <- merge(rst.sprc)
-  names(m) <- prefix
-  fnames.merge <- paste0(prefix, Sys.Date(), "_merge", res, ".tif")
-  writeRaster(m, filename = paste0("data/processed/merged/", fnames.merge), overwrite=TRUE)
-  return( paste0("data/processed/merged/", fnames.merge))
-}
-
-for (r in res) {
-  merge_all_rst(r)
-}
-
-merge_all_rst("3000m")
-plot(rast(here::here("data/processed/merged/WHP2024-08-09_merge3000m.tif")))
-
-#===================
-# merge then aggregate in order to avoid gaps between the states
-
+## Create a function to merge the state .tifs
 merge_all_rst <- function(prefix){
   fnames_list <- list.files(here::here("data/original/fire"), pattern = "WHP", full.names = TRUE)
   rasters <- lapply(fnames_list, function(x) rast(x))
@@ -91,47 +78,47 @@ merge_all_rst <- function(prefix){
   return(paste0("data/processed/merged/", fnames.merge))
 }
 
+## Run the merge_all_rst function
 merge_all_rst(prefix)
 
-# check the plot
-plot(rast(here::here("data/processed/merged/WHP_2024-08-09_merged.tif")))
-# read in the new raster
+# 4. Aggregate the newly merged raster to 3km
+#-------------------------------------------------------------------------------
+## Read in the new raster
 whp_merged <- rast(here::here("data/processed/merged/WHP_2024-08-09_merged.tif"))
-# aggregate to 3km
+
+## Aggregate to 3km
 conus_whp_3km_agg <- aggregate(whp_merged,
                                fact = 100,
                                cores = 2)
 
-conus_whp_1.5km_agg <- aggregate(whp_merged,
-                               fact = 50,
-                               cores = 2)
-# Check the plot
-plot(conus_whp_3km_agg)
-# save the new merged and aggregated WHP raster
+## Save the newly merged and aggregated WHP raster
 writeRaster(conus_whp_3km_agg, paste0(here::here("data/processed/merged/"), "conus_whp_3km_agg_", Sys.Date(), ".tif"))
-writeRaster(conus_whp_1.5km_agg, paste0(here::here("data/processed/merged/"), "conus_whp_15km_agg_", Sys.Date(), ".tif"))
 
-## fill in missing data through IDW
-### inverse distance weighted (IDW)
+# 5. Fill in missing data through inverse distance weighting (IDW)
+#-------------------------------------------------------------------------------
+## Read in the merged and aggregated WHP raster
 conus_whp_3km_agg <- rast(here::here("data/processed/merged/conus_whp_3km_agg_2024-08-09.tif"))
-plot(conus_whp_3km_agg)
+
+## Turn it into a dataframe for use with gstat
 whp_df <- as.data.frame(conus_whp_3km_agg, xy=TRUE)
 
+## Use gstat to create an IDW model
 mod <- gstat(id = "WHP", formula = WHP~1, locations = ~x+y, data = whp_df,
             nmax = 7, set = list(idp = 0.5))
 
+## Interpolate the merged and aggregated raster with the IDW model
 whp_interp <- interpolate(conus_whp_3km_agg, mod, debug.level = 0, index = 1)
 writeRaster(whp_interp, paste0(here::here("data/processed/merged/"), "conus_whp_3km_agg_interp_", Sys.Date(), ".tif"))
 
-whp_focal <- focal(conus_whp_3km_agg, w=3, fun=mean, na.policy="only", na.rm = TRUE)
-
-# Crop interpolated (focal and IDW) to conus states
-# Set the projection
+# 6. Crop interpolated raster to Conus states
+#-------------------------------------------------------------------------------
+## Set the projection
 projection <- "epsg:5070"
 
-### Load the states from tigris
+## Load the states from tigris
 states <- tigris::states(cb = TRUE)
-### Get Continental US list
+
+## Get Continental US list
 us.abbr <- unique(fips_codes$state)[1:51]
 us.name <- unique(fips_codes$state_name)[1:51]
 us.fips <- unique(fips_codes$state_code)[1:51]
@@ -142,21 +129,19 @@ us.states$state <- as.character(us.states$state)
 us.states$STATENAME <- as.character(us.states$STATENAME)
 continental.states <- us.states[us.states$state != "AK" & us.states$state != "HI",] #only CONUS
 
-### Filter tigris states for conus states and set crs to crs of raster
+## Filter tigris states for conus states and set crs to crs of raster
 conus_states <- states %>%
   filter(STUSPS %in% continental.states$state) %>%
   dplyr::select(STUSPS, GEOID, geometry) %>%
   st_transform(., crs = crs(projection))
 
-plot(conus_states$geometry)
-plot(crop(whp_focal, conus_states))
-plot(crop(whp_interp, conus_states, mask = TRUE))
-
-whp_focal_crop <- crop(whp_focal, conus_states)
+## Crop the interpolated whp raster to conus states. Make sure mask = TRUE
 whp_interp_crop <- crop(whp_interp, conus_states, mask = TRUE)
 
-writeRaster(whp_interp_crop, paste0(here::here("data/processed/merged/"), "conus_whp_3km_agg_interp_crop_", Sys.Date(), ".tif"))
-writeRaster(whp_focal_crop, paste0(here::here("data/processed/merged/"), "conus_whp_3km_agg_focal_crop_", Sys.Date(), ".tif"))
+# 7. Save the cropped interpolated raster 
+#-------------------------------------------------------------------------------
+writeRaster(whp_interp_crop, paste0(here::here("data/processed/variables/"), "conus_whp_3km_agg_interp_crop_", Sys.Date(), ".tif"))
 
-rast_check <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/merged/conus_whp_3km_agg_interp_crop_2024-09-27.tif")
+# As a quick check, read in the raster and plot it
+rast_check <- rast("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/conus_whp_3km_agg_interp_crop_2024-09-27.tif")
 plot(rast_check)

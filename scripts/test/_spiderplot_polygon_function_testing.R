@@ -82,6 +82,7 @@ create_poly <- function(group_number) {
   CGap <- ifelse(FALSE, 0, 1) #geocmeans uses centerzero=FALSE
   # This creates the guidelines for the radarchart
   # This is needed to scale the values to the radarchart
+  # because CGap is FALSE we need to set up the segments and some scaling
   seg <- 4 # usually 4 segments labeled 25%, 50%, 75%, 100%
   series <- length(datam[[1]])
   SX <- series-2

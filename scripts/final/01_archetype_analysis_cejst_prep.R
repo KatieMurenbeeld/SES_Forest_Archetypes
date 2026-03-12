@@ -1,3 +1,21 @@
+################################################################################
+# SCRIPT TO DOWNLOAD AND PROCESS C E J S T (CEJST) DATA TO 3KM  ##
+# THIS INCLUDES POP WITH LESS THAN HIGH SCHOOL EDUCATION, HOUSING BURDEN,     ##
+# ENERGY BURDEN, AND FINE PARTICULATE MATTER (PM2.5). THIS IS A SHAPEFILE.    ##
+# 1. Load the data                                                            ##
+#  1.1 Filter for state in the contiguous United States and select variables  ##
+#  1.2 Check that the new geometries are valid and not empty                  ##
+# 2. Join the aip data to the county geometeries                              ##
+#  2.1 Check that the new geometries are valid and not empty                  ##
+# 3. Fill in the missing data                                                 ##
+#  3.1 Create an empty raster with 3km resolution                             ##
+#  3.2 Use a custom function to interpolate the missing data                  ##
+# 4. Crop and mask the raster prediction to the ref_raster                    ##
+# 5. Save the raster                                                          ##
+################################################################################
+
+# 0. Load the required libraries
+#-------------------------------------------------------------------------------
 library(stringr)
 library(sf)
 library(terra)
@@ -12,14 +30,19 @@ library(stars)
 # Set the projection
 projection <- "epsg:5070"
 
-# Load the data
+# Load the reference raster
+ref_rast <- rast("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/conus_whp_3km_agg_interp_crop_2024-09-27.tif")
+
+# Read in the custom functions
+source(here::here("scripts/functions/custom_functions.R"))
+
+# 1. Load the data
+#-------------------------------------------------------------------------------
+
 cejst <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/usa.shp")
 
-# Load the reference raster and reproject
-ref_rast <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/merged/conus_whp_3km_agg_interp_crop_2024-09-27.tif")
-ref_rast_proj <- project(ref_rast, projection)
-
-# Filter states for CONUS
+## 1.1
+## Filter states for CONUS
 filt_cejst <- cejst %>%
   filter(SF != c("Hawaii", "Alaska", "Puerto Rico",
                  "Northern Mariana Islands", "Guam", "American Samoa"))
@@ -28,7 +51,7 @@ filt_cejst <- cejst %>%
 cejst_vars <- filt_cejst %>% 
   dplyr::select(geometry, HSEF, HBF_PFS, EBF_PFS, PM25F_PFS)
 
-
+## 1.2
 ## check for validity, remove empty geometries, and reproject 
 if (!all(st_is_valid(cejst_vars)))
   cejst_vars <- st_make_valid(cejst_vars)
@@ -39,7 +62,9 @@ cejst_vars <- cejst_vars %>%
 cejst_vars_proj <- cejst_vars %>%
   st_transform(projection)
 
-## Create a template raster for the shapefiles
+# 3. Fill in missing data
+#-------------------------------------------------------------------------------
+## 3.1 Create a template raster for the shapefiles
 XMIN <- ext(ref_rast_proj)$xmin
 XMAX <- ext(ref_rast_proj)$xmax
 YMIN <- ext(ref_rast_proj)$ymin
@@ -54,47 +79,38 @@ templateRas <- rast(ncol=NCOLS, nrow=NROWS,
 
 grd <- st_as_stars(templateRas)
 
-# function to rasterize variable, make points, make predictions
-# raster_grid is like a reference raster
-idw_preds <- function(data_proj, ref_raster, lay, empty_grid){
-  var.rst <- rasterize(data_proj, ref_raster, field = lay, fun = "mean")
-  var.pt <- as.points(var.rst) %>%
-    st_as_sf(.)
-  var.pred <- idw(var.pt[[1]]~1, var.pt, empty_grid)
-  var.pred.rst <- rasterize(st_as_sf(var.pred), ref_raster, field = "var1.pred")
-  names(var.pred.rst) <- paste0(lay, ".pred")
-  return(c(orig.rst = var.rst, pred.rst = var.pred.rst))
-}
+## 3.2 Use the idw_preds function to rasterize and fill in missing data using 
+##     inverse distance weigthing (idw)
 
-# Less high school
+### Less high school
 lesshs.preds <- idw_preds(cejst_vars_proj, templateRas, "HSEF", grd)
 plot(lesshs.preds$orig.rst)
 lesshs_crop <- crop(lesshs.preds$pred.rst, ref_rast_proj, mask = TRUE)
 plot(lesshs_crop)
-writeRaster(lesshs_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/cejst_lesshs_3km_pred_crop_", 
+writeRaster(lesshs_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_lesshs_3km_pred_crop_", 
                                          Sys.Date(), ".tif"), overwrite = TRUE)
 
-# Housing burden 
+### Housing burden 
 hsburd.preds <- idw_preds(cejst_vars_proj, templateRas, "HBF_PFS", grd)
 plot(hsburd.preds$orig.rst)
 houseburd_crop <- crop(hsburd.preds$pred.rst, ref_rast_proj, mask = TRUE)
 plot(houseburd_crop)
-writeRaster(houseburd_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/cejst_houseburd_3km_pred_crop_", 
+writeRaster(houseburd_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_houseburd_3km_pred_crop_", 
                                 Sys.Date(), ".tif"), overwrite = TRUE)
 
-# Energy burden 
+### Energy burden 
 engburd.preds <- idw_preds(cejst_vars_proj, templateRas, "EBF_PFS", grd)
 plot(engburd.preds$orig.rst)
 engburd_crop <- crop(engburd.preds$pred.rst, ref_rast_proj, mask = TRUE)
 plot(engburd_crop)
-writeRaster(engburd_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/cejst_engburd_3km_pred_crop_", 
+writeRaster(engburd_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_engburd_3km_pred_crop_", 
                                    Sys.Date(), ".tif"), overwrite = TRUE)
 
-# PM2.5 exposure 
+### PM2.5 exposure 
 pm25.preds <- idw_preds(cejst_vars_proj, templateRas, "PM25F_PFS", grd)
 plot(pm25.preds$orig.rst)
 pm25_crop <- crop(pm25.preds$pred.rst, ref_rast_proj, mask = TRUE)
 plot(pm25_crop)
-writeRaster(pm25_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/cejst_pm25_3km_pred_crop_", 
+writeRaster(pm25_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_pm25_3km_pred_crop_", 
                                  Sys.Date(), ".tif"), overwrite = TRUE)
 

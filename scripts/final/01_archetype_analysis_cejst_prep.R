@@ -5,13 +5,11 @@
 # 1. Load the data                                                            ##
 #  1.1 Filter for state in the contiguous United States and select variables  ##
 #  1.2 Check that the new geometries are valid and not empty                  ##
-# 2. Join the aip data to the county geometeries                              ##
-#  2.1 Check that the new geometries are valid and not empty                  ##
-# 3. Fill in the missing data                                                 ##
-#  3.1 Create an empty raster with 3km resolution                             ##
-#  3.2 Use a custom function to interpolate the missing data                  ##
-# 4. Crop and mask the raster prediction to the ref_raster                    ##
-# 5. Save the raster                                                          ##
+# 2. Fill in the missing data                                                 ##
+#  2.1 Create an empty raster with 3km resolution                             ##
+#  2.2 Use a custom function to interpolate the missing data                  ##
+#      Crop and mask the raster prediction to the ref_raster                  ##
+# 3. Save the rasters                                                         ##
 ################################################################################
 
 # 0. Load the required libraries
@@ -62,9 +60,9 @@ cejst_vars <- cejst_vars %>%
 cejst_vars_proj <- cejst_vars %>%
   st_transform(projection)
 
-# 3. Fill in missing data
+# 2. Fill in missing data
 #-------------------------------------------------------------------------------
-## 3.1 Create a template raster for the shapefiles
+## 2.1 Create a template raster for the shapefiles
 XMIN <- ext(ref_rast_proj)$xmin
 XMAX <- ext(ref_rast_proj)$xmax
 YMIN <- ext(ref_rast_proj)$ymin
@@ -79,38 +77,36 @@ templateRas <- rast(ncol=NCOLS, nrow=NROWS,
 
 grd <- st_as_stars(templateRas)
 
-## 3.2 Use the idw_preds function to rasterize and fill in missing data using 
-##     inverse distance weigthing (idw)
+## 2.2 Use the idw_preds function to rasterize and fill in missing data using 
+##     inverse distance weigthing (idw) and then crop to the reference raster
 
 ### Less high school
 lesshs.preds <- idw_preds(cejst_vars_proj, templateRas, "HSEF", grd)
-plot(lesshs.preds$orig.rst)
 lesshs_crop <- crop(lesshs.preds$pred.rst, ref_rast_proj, mask = TRUE)
 plot(lesshs_crop)
-writeRaster(lesshs_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_lesshs_3km_pred_crop_", 
-                                         Sys.Date(), ".tif"), overwrite = TRUE)
 
 ### Housing burden 
 hsburd.preds <- idw_preds(cejst_vars_proj, templateRas, "HBF_PFS", grd)
-plot(hsburd.preds$orig.rst)
 houseburd_crop <- crop(hsburd.preds$pred.rst, ref_rast_proj, mask = TRUE)
 plot(houseburd_crop)
-writeRaster(houseburd_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_houseburd_3km_pred_crop_", 
-                                Sys.Date(), ".tif"), overwrite = TRUE)
 
 ### Energy burden 
 engburd.preds <- idw_preds(cejst_vars_proj, templateRas, "EBF_PFS", grd)
-plot(engburd.preds$orig.rst)
 engburd_crop <- crop(engburd.preds$pred.rst, ref_rast_proj, mask = TRUE)
 plot(engburd_crop)
-writeRaster(engburd_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_engburd_3km_pred_crop_", 
-                                   Sys.Date(), ".tif"), overwrite = TRUE)
 
 ### PM2.5 exposure 
 pm25.preds <- idw_preds(cejst_vars_proj, templateRas, "PM25F_PFS", grd)
-plot(pm25.preds$orig.rst)
 pm25_crop <- crop(pm25.preds$pred.rst, ref_rast_proj, mask = TRUE)
 plot(pm25_crop)
-writeRaster(pm25_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_pm25_3km_pred_crop_", 
-                                 Sys.Date(), ".tif"), overwrite = TRUE)
 
+# 3. Save the rasters
+#-------------------------------------------------------------------------------
+writeRaster(lesshs_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_lesshs_3km_pred_crop_", 
+                                Sys.Date(), ".tif"), overwrite = TRUE)
+writeRaster(houseburd_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_houseburd_3km_pred_crop_", 
+                                   Sys.Date(), ".tif"), overwrite = TRUE)
+writeRaster(engburd_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_engburd_3km_pred_crop_", 
+                                 Sys.Date(), ".tif"), overwrite = TRUE)
+writeRaster(pm25_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/cejst_pm25_3km_pred_crop_", 
+                              Sys.Date(), ".tif"), overwrite = TRUE)

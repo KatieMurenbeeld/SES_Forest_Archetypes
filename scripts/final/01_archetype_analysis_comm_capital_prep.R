@@ -42,7 +42,7 @@ source(here::here("scripts/functions/custom_functions.R"))
 # 1. Load the data
 #-------------------------------------------------------------------------------
 # https://sc.edu/study/colleges_schools/artsandsciences/centers_and_institutes/hvri/documents/bric/bric2020_us_forweb.xlsx
-bric <- read_excel("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/bric2020_us.xlsx")
+bric <- read_excel("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/original/bric/bric2020_us.xlsx")
 
 ## 1.1
 ## Select variables and rename GEOID to FIPS and COMM CAPITAL to COMM_CAP

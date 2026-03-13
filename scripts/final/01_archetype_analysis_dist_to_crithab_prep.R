@@ -1,3 +1,17 @@
+################################################################################
+# SCRIPT TO DOWNLOAD AND PROCESS US FISH AND WILDLIFE CRITICAL HABITAT DATA TO##
+# A DISTANCE TO CRITICAL HABITAT METRIC AT 3KM RESOLUTION                     ##
+# 1. Load the data (this is a shapefile)                                      ##
+#  1.1 Check that the geometries are valid and not empty                      ##
+# 2. Rasterize the data                                                       ##
+#  2.1 Create an empty raster grid for the data                               ##
+# 3. Calculate the distance to critical habitat                               ## 
+# 4. Crop the distance raster to the reference raster and rename the variable ##
+# 5. Save the raster                                                          ##   
+################################################################################
+
+# 0. Load the required libraries
+#-------------------------------------------------------------------------------
 library(stringr)
 library(sf)
 library(terra)
@@ -9,17 +23,18 @@ library(spdep)
 library(gstat)
 library(stars)
 
-# Set projection 
-projection = "epsg:5070"
+# Set the projection
+projection <- "epsg:5070"
 
-# Load the reference raster and reproject
-ref_rast <- rast("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/merged/conus_whp_3km_agg_interp_crop_2024-09-27.tif")
-ref_rast_proj <- project(ref_rast, projection)
+# Load the reference raster
+ref_rast <- rast("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/conus_whp_3km_agg_interp_crop_2024-09-27.tif")
 
-# Load the Critical Habitat shapefile
-crithab <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/crithab_poly.shp")
+# 1. Load the data Critical Habitat shapefile 
+#-------------------------------------------------------------------------------
+# Can be downloaded from https://ecos.fws.gov/docs/crithab/crithab_all/crithab_all_layers.zip
+crithab <- st_read("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/original/crithab/crithab_poly.shp")
 
-## check for validity, remove empty geometries, and reproject 
+## 1.1 check for validity, remove empty geometries, and reproject 
 if (!all(st_is_valid(crithab)))
   crithab <- st_make_valid(crithab)
 
@@ -29,7 +44,9 @@ crithab <- crithab %>%
 crithab_proj <- crithab %>%
   st_transform(projection)
 
-## Create a template raster for the shapefiles
+# 2. Rasterize the data
+#-------------------------------------------------------------------------------
+## 2.1 Create a template raster for the shapefiles
 XMIN <- ext(ref_rast_proj)$xmin
 XMAX <- ext(ref_rast_proj)$xmax
 YMIN <- ext(ref_rast_proj)$ymin
@@ -42,19 +59,26 @@ templateRas <- rast(ncol=NCOLS, nrow=NROWS,
                     xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX,
                     vals=1, crs=crs(ref_rast_proj))
 
-# Rasterize the wilderness areas shapefile
+# Rasterize the critical habitat areas shapefile
 crithab_rast <- rasterize(vect(crithab_proj), templateRas)
 
-# Calculate the distance from wilderness areas
+# 3. Calculate the distance from wilderness areas
+#-------------------------------------------------------------------------------
+# Use terra::distance() to calculate the distance to critical habitat 
 crithab_dist_rast <- terra::distance(crithab_rast)
 
-# Crop to the reference raster and update variable names
+
+# 4. Crop the distance raster to the reference raster and rename the variable
+#-------------------------------------------------------------------------------
 crithab_dist_crop <- crop(crithab_dist_rast, ref_rast_proj, mask = TRUE)
-plot(crithab_dist_crop)
+plot(crithab_dist_crop) # quickly check the plot
+
+## Rename the distance variable
 names(crithab_dist_crop) <- "distance_to_crithab_m"
 
-# Save the raster
-writeRaster(crithab_dist_crop, paste0("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/processed/dist_to_crithab_3km_pred_crop_", 
+# 5. Save the raster
+#-------------------------------------------------------------------------------
+writeRaster(crithab_dist_crop, paste0("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/processed/variables/dist_to_crithab_3km_pred_crop_", 
                                  Sys.Date(), ".tif"), overwrite = TRUE)
 
 

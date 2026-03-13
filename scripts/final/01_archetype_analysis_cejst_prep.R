@@ -1,5 +1,6 @@
 ################################################################################
-# SCRIPT TO DOWNLOAD AND PROCESS C E J S T (CEJST) DATA TO 3KM  ##
+# SCRIPT TO DOWNLOAD AND PROCESS Climate and Economic Justice Screening Tool  ##
+# (CEJST) DATA TO 3KM                                                         ##
 # THIS INCLUDES POP WITH LESS THAN HIGH SCHOOL EDUCATION, HOUSING BURDEN,     ##
 # ENERGY BURDEN, AND FINE PARTICULATE MATTER (PM2.5). THIS IS A SHAPEFILE.    ##
 # 1. Load the data                                                            ##
@@ -37,7 +38,7 @@ source(here::here("scripts/functions/custom_functions.R"))
 # 1. Load the data
 #-------------------------------------------------------------------------------
 
-cejst <- st_read("/Users/katiemurenbeeld/Analysis/Archetype_Analysis/data/original/usa.shp")
+cejst <- st_read("/Users/katiemurenbeeld/Analysis/SES_Forest_Archetypes/data/original/cejst/usa/usa.shp")
 
 ## 1.1
 ## Filter states for CONUS

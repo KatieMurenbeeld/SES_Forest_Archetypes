@@ -3,8 +3,7 @@
 # 1. Download and combine all sfmc_all_attri_*.csv results                    ##
 # 1.1 Note that the xxx.R script was run on a high performance computer       ##
 # 2. Filter for parameter combinations with explained inertia >= 0.5          ##
-# 3. Plot the evaluation metrics by k with a facet wrap by m.                 ##
-# 4. Save the figure                                                          ##
+# 3. Save the filtered combinations as a table.                               ##
 #                                                                             ##
 ################################################################################
 
@@ -48,106 +47,18 @@ df_ei06_si03 <- sfcm_df %>%
          Silhouette.index = round(Silhouette.index, digits = 2)) %>%
   filter(Explained.inertia >= 0.6 & Silhouette.index >= 0.3)
 
-# 3. Plot Explained Inertia and Silhouette Index on y with k 
-# on x and facet wrapped by m
+## Select the evaluation metrics of interest and the parameters
+df_filt <- df_ei05_si03_sp %>%
+  select(Explained.inertia, Silhouette.index, spConsistency, k, m, alpha, window)
+
+## Review the table.
+## These are parameter combinations to test for the final clusters.
+print(df_filt)
+
+# 3. Save the table to a csv
 #-------------------------------------------------------------------------------
 
-df <- df_ei05_si03_sp
-
-ei <- ggplot(df, aes(k, Explained.inertia)) + 
-  geom_point(aes(group = 1)) +
-  facet_grid(rows = vars(alpha), cols = vars(window)) +
-  labs(title = "National Level GFCM Explained Inertia: Explained Inertia >= 0.6 
-       \n Silhouette Index >= 0.3")
-
-si <- ggplot(df, aes(k, Silhouette.index)) + 
-  geom_point(aes(group = 1)) +
-  facet_grid(rows = vars(alpha), cols = vars(window)) +
-  labs(title = "National Level GFCM Silhouette Index: Explained Inertia >= 0.6
-       \n Silhouette Index >= 0.3")
-
-ei_si <- ggplot(df, aes(k)) + 
-  geom_point(aes(y=Silhouette.index, colour = "red", group = 1)) +
-  geom_point(aes(y=Explained.inertia, color = "blue", group = 1)) + 
-  facet_grid(rows = vars(alpha), cols = vars(window)) +
-  labs(title = "National Level GFCM: Explained Inertia >= 0.6
-       \n Silhouette Index >= 0.3")
-ei_si
-
-ei
-si
-ei / si
-
-# 4. Save the figures
-#-------------------------------------------------------------------------------
-
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_params_ei05_si03_ei_", 
-                         Sys.Date(), ".jpeg")), plot = ei,
-         width = 6, height = 6, dpi = 300)
-
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_params_ei05_si03_si_", 
-                         Sys.Date(), ".jpeg")), plot = si,
-       width = 6, height = 6, dpi = 300)
-
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_gfcm_parma_ei05_si03_combined_",
-                         Sys.Date(), ".jpeg")), plot = ei_si)
-
-# 5. Function and code for plotting with 2 y-axis
-#-------------------------------------------------------------------------------
-# From https://stackoverflow.com/questions/3099219/ggplot-with-2-y-axes-on-each-side-and-different-scales/66055331#66055331
-# Function factory for secondary axis transforms
-train_sec <- function(primary, secondary, na.rm = TRUE) {
-  # Thanks Henry Holm for including the na.rm argument!
-  from <- range(secondary, na.rm = na.rm)
-  to   <- range(primary, na.rm = na.rm)
-  # Forward transform for the data
-  forward <- function(x) {
-    rescale(x, from = from, to = to)
-  }
-  # Reverse transform for the secondary axis
-  reverse <- function(x) {
-    rescale(x, from = to, to = from)
-  }
-  list(fwd = forward, rev = reverse)
-}
-
-sec1 <- with(df_ei05, train_sec(Explained.inertia, Silhouette.index))
-sec2 <- with(df_ei05_si03, train_sec(Explained.inertia, Silhouette.index))
-sec3 <- with(df_ei06_si03, train_sec(Explained.inertia, Silhouette.index))
-
-ei05_si_scaled_y <- ggplot(df_ei05, aes(k)) +
-  geom_point(aes(y = Explained.inertia), colour = "blue", alpha = 0.5) +
-  geom_point(aes(y = sec1$fwd(Silhouette.index)), colour = "red", alpha = 0.5) +
-  scale_y_continuous(sec.axis = sec_axis(~sec1$rev(.), name = "Silhouette.index")) + 
-  facet_grid(rows = vars(beta), cols = vars(m)) +
-  labs(title = "National Level GFCM: Explained Inertia >= 0.5")
+write_csv(df_filt, here::here(paste0("outputs/national_level/tables/national_level_potential_sfcm_para_results_",
+                                     Sys.Date(), ".csv")))
 
 
-ei05_si03_scaled_y <- ggplot(df_ei05_si03, aes(k)) +
-  geom_point(aes(y = Explained.inertia), colour = "blue", alpha = 0.5) +
-  geom_point(aes(y = sec2$fwd(Silhouette.index)), colour = "red", alpha = 0.5) + 
-  scale_y_continuous(sec.axis = sec_axis(~sec2$rev(.), name = "Silhouette.index")) + 
-  facet_grid(rows = vars(beta), cols = vars(m)) +
-  labs(title = "National Level GFCM: Explained Inertia >= 0.5 & \nSilhouette Index >= 0.3")
-
-ei06_si03_scaled_y <- ggplot(df_ei06_si03, aes(k)) +
-  geom_point(aes(y = Explained.inertia), colour = "blue", alpha = 0.5) +
-  geom_point(aes(y = sec3$fwd(Silhouette.index)), colour = "red", alpha = 0.5) + 
-  scale_y_continuous(sec.axis = sec_axis(~sec3$rev(.), name = "Silhouette.index")) + 
-  facet_grid(rows = vars(beta), cols = vars(m)) +
-  labs(title = "National Level GFCM: Explained Inertia >= 0.6 & \nSilhouette Index >= 0.3")
-
-# 6. Save the figures with the dual y-axis
-#-------------------------------------------------------------------------------
-
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_sfcm_parma_ei05_si_scaled_y_",
-                         Sys.Date(), ".jpeg")), plot = ei05_si_scaled_y,
-       width = 10, height = 8, dpi = 300)
-
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_sfcm_parma_ei05_si03_scaled_y_",
-                         Sys.Date(), ".jpeg")), plot = ei05_si03_scaled_y,
-       width = 7, height = 7, dpi = 300)
-
-ggsave(here::here(paste0("outputs/national_level/plots/national_level_sfcm_parma_ei06_si03_scaled_y_",
-                         Sys.Date(), ".jpeg")), plot = ei06_si03_scaled_y,
-       width = 7, height = 7, dpi = 300)

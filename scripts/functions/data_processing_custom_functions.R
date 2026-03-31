@@ -33,3 +33,13 @@ idw_preds <- function(data_proj, ref_raster, lay, empty_grid){
   # Return the raster
   return(c(orig.rst = var.rst, pred.rst = var.pred.rst))
 }
+
+
+#===============================================================================
+# Function for creating elbow plots as the first step for fuzzy c-means
+# parameterization.
+
+
+
+
+

@@ -34,7 +34,7 @@ elbow_plots <- function(data, num_k, file_name, option = "R2") {
       geom_point(aes(x=K,y=R2s),color="red")+
       xlab("Number of groups")+
       ylab("R2 of classification")
-    k_r2
+    print(k_r2)
     ggsave(here::here(paste0("outputs/plots/", file_name, 
                              "_param_selection_kmeans_r2_k",
                              num_k, "_", Sys.Date(), ".jpeg")), 
@@ -59,7 +59,7 @@ elbow_plots <- function(data, num_k, file_name, option = "R2") {
     geom_point(aes(x=K,y=INERTs),color="red")+
     xlab("Number of groups")+
     ylab("Inertia (within cluster sum-of-squares) of classification")
-  k_inert
+  print(k_inert)
   ggsave(here::here(paste0("outputs/plots/", file_name, 
                            "_param_selection_kmeans_inertia_k",
                            num_k, "_", Sys.Date(), ".jpeg")),

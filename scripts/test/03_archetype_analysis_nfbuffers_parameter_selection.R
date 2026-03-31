@@ -1,33 +1,22 @@
-#===============================================================================
-# PARAMETER SELCTION FOR FUZZY C-MEANS CLUSTERING
-# Within this script we will select the appropriate k, m, beta, and alpha
-# values for a spatial (generalized) fuzzy c-means model. Following the workflow
-# of Jeremy Gelb (https://jeremygelb.github.io/geocmeans/articles/introduction.html)
-# we will:
-# 1. Determine an appropriate range of k values by investigating an elbow plot
-#    from a classical k-means model using stats::kmeans(). We will need to remove 
-#    any NAs from the data. 
-# 2. Determine appropriate ranges or values of k - m combinations using the 
-#    geocmeans::select_parameters.mc(algo = "FCM"). Here the dataset is 
-#    reformatted for use in geocmeans.
-# 3. Determine the appropriate ranges or values of k-m-beta combinations 
-#    combinations using the geocmeans::select_parameters.mc(algo = "GFCM") and
-#    the reformatted dataset.
-# 4. Determine the appropriate ranges or values of k-m-beta-window size-alpha
-#    combinations using the geocmeans::select_parameter.mc(algo = "SGFCM") and
-#    the reformatted dataset.
-#===============================================================================
+################################################################################
+# SCRIPT TO DOWNLOAD AND PROCESS AMERICAN IDEOLOGY PROJECT (AIP) DATA TO 3KM  ##
+# 1. Load the scaled data created in name_of_script.R                         ##
+# 2. Reformat the raster as a data frame and (as a precaution) remove any NAs ##
+#  2.1 Optional: Select different sets of attributes                          ##
+# 3. Use the elbow_plots() function from parameterization_functions.R         ##
+#    to generate elbow plots to determine the optimal number of k cluster     ##
+#    centers or a range of k values to test further.                          ##
+#    NOTE: This function will automatically save the plots.                   ##
+################################################################################
 
-# Load required packages
+# 0. Load the required libraries
+#-------------------------------------------------------------------------------
 library(tidyverse)
 library(terra)
 library(raster)
 library(ggplot2)
 
-## update the future.globals.maxSize to avoid issues working with the future 
-## package
-options(future.globals.maxSize = 1000 * 1024^2)
-
+# Read in the custom functions
 source(here::here("scripts/functions/parameterization_functions.R"))
 
 # 1. Load the scaled data created in name_of_script.R
@@ -40,7 +29,7 @@ nfbuff <- rast(here::here("data/processed/nf_buffers_all_attributes_2025-11-06.t
 df_na <- as.data.frame(nfbuff_sc, na.rm=FALSE) # Extract values including NAs
 df_na_complete <- na.omit(df_na)           # Remove rows with any NA values
 
-## Optional: Select different sets of attributes
+## 2.1 Optional: Select different sets of attributes
 df_na_bio <- df_na_complete %>%
   dplyr::select(treecov, forprod, forgain, treeage, tempseas, precseas, rough, whp)
 
@@ -63,7 +52,7 @@ df_na_rules <- df_na_complete %>%
 ##            r2 values (between cluster sum of squares / total sum of scares) 
 ##            inertia values (total within cluster sum of squares)
 
-elbow_plots(df_nat_rules, 10, "test_elbow_plots_func", option = "R2")
-elbow_plots(df_nat_rules, 10, "test_elbow_plots_func", option = "INERT")
-elbow_plots(df_nat_rules, 10, "test_elbow_plots_func", option = "cat")
+elbow_plots(df_na_rules, 5, "test_elbow_plots_func", option = "R2")
+elbow_plots(df_na_rules, 5, "test_elbow_plots_func", option = "INERT")
+
 

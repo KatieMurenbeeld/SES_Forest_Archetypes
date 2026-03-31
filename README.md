@@ -18,11 +18,15 @@ Within the `/scripts/final/` you will find all of the scripts used for creating 
 The scripts are named in the order they should be run. The workflow is as follows:
 1. scripts starting with `01` are used for processing the spatial data to 3km and saving as a raster (.tif) file.
 2. scripts starting with `02` are used to stack the rasters and also to perform optional exploratory data analysis
-3. the script starting with `03` goes through the parameterization of the fuzzy c-mean cluster models
-4. the script starting with `04` runs the user decided final model/cluster analysis
-5. the script starting with `05` generates maps of the resulting archetype clusters
-6. the script starting with `06` calculates the variable distributions for each archetype
-7. the script starting with `07` calculates the entropy of each pixel based on the cluster belongings matrix
+3. scripts starting with `03` goes through the parameterization of the fuzzy c-mean cluster models\
+   **Please note:** The scripts with _hpc in the name were run on the Boise State University high performance computer Borah.\
+   These results were then reviewed in the scripts with _review in the name on a local computer.\
+   These results were reviewed and discussed in the slide deck here: \
+   https://docs.google.com/presentation/d/1R--JhFGt3R-ih-whQlMH25EMB8WYbcdHOxKhXomzClE/edit?slide=id.g3b6eda3812a_0_23#slide=id.g3b6eda3812a_0_23
+5. the script starting with `04` runs the user decided final model/cluster analysis
+6. the script starting with `05` generates maps of the resulting archetype clusters
+7. the script starting with `06` calculates the variable distributions for each archetype
+8. the script starting with `07` calculates the entropy of each pixel based on the cluster belongings matrix
 
 The parameterization `03`, analysis `04`, and entropy `07` rely heavily on the `geocmeans` package from Jeremy Gelb https://jeremygelb.github.io/geocmeans/.  
 

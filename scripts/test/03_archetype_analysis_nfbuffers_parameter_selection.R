@@ -1,5 +1,6 @@
 ################################################################################
-# SCRIPT TO DOWNLOAD AND PROCESS AMERICAN IDEOLOGY PROJECT (AIP) DATA TO 3KM  ##
+# SCRIPT TO GENERATE ELBOW PLOTS TO DETERMINE THE OPTIMAL NUMBER OF K OR A    ##
+# RANGE OF K TO TEST FOR THE FUZZY CMEANS PARAMETERIZATION                    ##
 # 1. Load the scaled data created in name_of_script.R                         ##
 # 2. Reformat the raster as a data frame and (as a precaution) remove any NAs ##
 #  2.1 Optional: Select different sets of attributes                          ##
